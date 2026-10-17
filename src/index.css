@@ -1,0 +1,29 @@
+/* 层级：antd 在 base 之上 (preflight 不覆盖组件)，工具类最高 (FRONTEND_ARCHITECTURE §4) */
+@layer theme, base, antd, components, utilities;
+@import "tailwindcss";
+
+/* antd 主题变量映射为 Tailwind 颜色 (变量由 antd <App> 根节点提供) */
+@theme inline {
+  --color-primary: var(--ant-color-primary);
+  --color-primary-bg: var(--ant-color-primary-bg);
+  --color-container: var(--ant-color-bg-container);
+  --color-layout: var(--ant-color-bg-layout);
+  --color-line: var(--ant-color-border-secondary);
+  --color-fg: var(--ant-color-text);
+  --color-fg-secondary: var(--ant-color-text-secondary);
+  --color-fg-tertiary: var(--ant-color-text-tertiary);
+  --color-success: var(--ant-color-success);
+  --color-warning: var(--ant-color-warning);
+  --color-danger: var(--ant-color-error);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,0 +1,104 @@
+import { FullscreenOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
+import { Badge, Button, Layout, Tooltip } from 'antd'
+import { Suspense } from 'react'
+import { Link, NavLink, Outlet } from 'react-router'
+import { BrandMark } from '@/components/Brand'
+import { FullPageSpinner } from '@/components/FullPageSpinner'
+import { unprocessedAlarmCountQuery } from '@/features/alarm/api'
+import { useCompanyId, useCurrentCompany, useMe } from '@/hooks/session'
+import { usePref } from '@/stores/pref'
+import { CompanySwitcher } from '../CompanySwitcher'
+import { UserMenu } from '../UserMenu'
+import { ScopeTree } from './ScopeTree'
+import { useScope } from './useScope'
+
+/** 数据端外壳：顶部导航 + 园区设备树 + 工作区 (FRONTEND_DESIGN §5.0) */
+export function AppLayout() {
+  const companyId = useCompanyId()
+  const company = useCurrentCompany()
+  const me = useMe()
+  const { siteId, scopeSearch } = useScope()
+  const collapsed = usePref((s) => s.scopeTreeCollapsed)
+  const setCollapsed = usePref((s) => s.setScopeTreeCollapsed)
+  const { data: alarmCount } = useQuery(unprocessedAlarmCountQuery(companyId))
+
+  const base = `/app/${companyId}`
+  const manageTo = company?.manageable ? `/tenant/${companyId}` : me.systemRole === 'admin' ? '/admin' : null
+  const nav = [
+    { to: `${base}/monitor`, label: '监测' },
+    { to: `${base}/alarms`, label: '告警', count: alarmCount },
+    { to: `${base}/operations`, label: '记录' },
+  ]
+
+  return (
+    <Layout className="h-full">
+      <Layout.Header className="flex items-center gap-2 border-line border-b border-solid">
+        <Link to={`${base}/monitor`} className="flex text-primary">
+          <BrandMark />
+        </Link>
+        <CompanySwitcher portal="app" variant="borderless" />
+        <nav className="ml-4 flex h-full items-stretch gap-1">
+          {nav.map((n) => (
+            <NavLink
+              key={n.to}
+              to={{ pathname: n.to, search: scopeSearch() }}
+              className={({ isActive }) =>
+                `flex items-center border-0 border-b-2 border-solid px-4 text-[15px] no-underline transition-colors ${
+                  isActive ? 'border-primary font-medium text-primary' : 'border-transparent text-fg hover:text-primary'
+                }`
+              }
+            >
+              <Badge count={n.count} size="small" offset={[8, -2]} overflowCount={99}>
+                <span className="text-inherit">{n.label}</span>
+              </Badge>
+            </NavLink>
+          ))}
+        </nav>
+        <div className="ml-auto flex items-center gap-1">
+          <Link to={`/screen/${companyId}${siteId ? `?siteId=${siteId}` : ''}`} target="_blank">
+            <Button type="text" icon={<FullscreenOutlined />}>
+              大屏
+            </Button>
+          </Link>
+          {manageTo && (
+            <Link to={manageTo}>
+              <Button type="text" icon={<SettingOutlined />}>
+                管理后台
+              </Button>
+            </Link>
+          )}
+          <UserMenu />
+        </div>
+      </Layout.Header>
+      <Layout>
+        <Layout.Sider
+          width={260}
+          collapsedWidth={0}
+          collapsed={collapsed}
+          trigger={null}
+          className="border-line border-r border-solid"
+        >
+          <ScopeTree />
+        </Layout.Sider>
+        <Layout.Content className="relative overflow-auto p-4">
+          <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
+            <Button
+              size="small"
+              className="absolute top-4 left-0 z-10 rounded-l-none!"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+          </Tooltip>
+          <div className="pl-6">
+            <Suspense fallback={<FullPageSpinner />}>
+              <Outlet />
+            </Suspense>
+          </div>
+        </Layout.Content>
+      </Layout>
+    </Layout>
+  )
+}
+
+export default AppLayout
