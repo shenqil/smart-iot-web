@@ -328,6 +328,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/devices/{id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 断开设备连接
+         * @description 同步断开设备与网关的连接 (最长约 5 秒)，设备会自动重连并加载最新配置；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。
+         */
+        post: operations["admin-disconnect-device"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/devices/{id}/relays": {
         parameters: {
             query?: never;
@@ -1028,6 +1048,26 @@ export interface paths {
          */
         put: operations["tenant-update-device-camera"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/devices/{id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 断开设备连接
+         * @description 同步断开设备与网关的连接 (最长约 5 秒)，设备会自动重连并加载最新配置；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。 设备须已授权给本企业；设备配置全局共享，断开会同时影响其他授权企业 (临时断开，设备会自动重连)。
+         */
+        post: operations["tenant-disconnect-device"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1805,6 +1845,10 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        DeviceDisconnectResult: {
+            /** @description 提示信息 */
+            notice: string;
+        };
         DeviceRelaysBody: {
             /** @description 继电器通道配置 */
             relays: components["schemas"]["RelayConfig"][];
@@ -2387,8 +2431,11 @@ export interface components {
             maxValue?: number;
             /** Format: double */
             minValue?: number;
-            /** Format: double */
-            resolution?: number;
+            /**
+             * Format: double
+             * @enum {number}
+             */
+            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
             /** Format: int64 */
             standardId?: number;
             standardName?: string;
@@ -2615,9 +2662,10 @@ export interface components {
             name: string;
             /**
              * Format: double
-             * @description 分辨率，如 0.1
+             * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 或不填表示未配置 (物理值 = 原始值 × 分辨率，并按分辨率舍入)
+             * @enum {number}
              */
-            resolution?: number;
+            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
             /**
              * Format: int64
              * @description 排序 (越小越靠前)，默认 0
@@ -3888,6 +3936,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageDeviceAvailableCompanyView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-disconnect-device": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceDisconnectResult"];
                 };
             };
             /** @description Error */
@@ -5717,6 +5797,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceDetailView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-disconnect-device": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceDisconnectResult"];
                 };
             };
             /** @description Error */
