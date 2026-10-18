@@ -10,8 +10,10 @@ export const bindNotify = (message: MessageInstance, modal: Omit<ModalStaticFunc
   modalApi = modal
 }
 
+type Content = Parameters<MessageInstance['success']>[0]
+
 export const notify = {
-  success: (content: string) => messageApi?.success(content),
+  success: (content: Content) => messageApi?.success(content),
   info: (content: string) => messageApi?.info(content),
   warning: (content: string) => messageApi?.warning(content),
   error: (content: string) => messageApi?.error(content),
