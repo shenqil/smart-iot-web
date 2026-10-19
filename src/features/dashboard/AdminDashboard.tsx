@@ -68,20 +68,30 @@ function SimpleList<T>({
   rowKey: (r: T) => string | number
   render: (r: T) => ReactNode
 }) {
-  if (loading) return <Skeleton active paragraph={{ rows: 4 }} />
-  if (!data.length) return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={empty} />
+  // 占满卡片剩余高度，列表在内部滚动；右侧留白让内容与滚动条拉开距离
   return (
-    <ul className="m-0 list-none divide-y divide-line p-0">
-      {data.map((r) => (
-        <li key={rowKey(r)} className="flex items-center gap-3 py-3">
-          {render(r)}
-        </li>
-      ))}
-    </ul>
+    <div className="layout-fill overflow-y-auto pr-3">
+      {loading ? (
+        <Skeleton active paragraph={{ rows: 4 }} />
+      ) : !data.length ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={empty} />
+      ) : (
+        <ul className="m-0 list-none divide-y divide-line p-0">
+          {data.map((r) => (
+            <li key={rowKey(r)} className="flex items-center gap-3 py-3">
+              {render(r)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
-/** 平台工作台 (FRONTEND_DESIGN §3.1)；后端暂无统计接口，数字取各列表 totalCount */
+/**
+ * 平台工作台 (FRONTEND_DESIGN §3.1)；后端暂无统计接口，数字取各列表 totalCount
+ * 布局：xl 及以上两张列表卡片并排，占满页面剩余高度、内部滚动；更窄时上下堆叠，各自固定高度内部滚动
+ */
 export default function AdminDashboard() {
   const types = useDeviceTypes()
   const stats = useQueries({
@@ -106,11 +116,12 @@ export default function AdminDashboard() {
   })
   const recent = useQuery({
     queryKey: ['admin', 0, 'dashboard', 'recent-devices'],
-    queryFn: () => unwrap(api.GET('/api/v1/admin/devices', { params: { query: { sort: '-createdAt', pageSize: 8 } } })),
+    queryFn: () =>
+      unwrap(api.GET('/api/v1/admin/devices', { params: { query: { sort: '-createdAt', pageSize: 20 } } })),
   })
 
   return (
-    <div className="space-y-4">
+    <div className="layout-fill gap-4 max-xl:flex-none">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         {STATS.map((s, i) => (
           <Link key={s.key} to={s.to}>
@@ -125,9 +136,10 @@ export default function AdminDashboard() {
           </Link>
         ))}
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="layout-fill grid gap-4 max-xl:flex-none xl:grid-cols-2 xl:grid-rows-[minmax(0,1fr)]">
         <Card
           variant="borderless"
+          className="layout-fill max-xl:h-100"
           title="即将过期 / 已过期的企业"
           extra={<Link to="/admin/companies?sort=expiredAt">全部</Link>}
         >
@@ -152,7 +164,12 @@ export default function AdminDashboard() {
             )}
           />
         </Card>
-        <Card variant="borderless" title="最近登记的设备" extra={<Link to="/admin/devices">全部</Link>}>
+        <Card
+          variant="borderless"
+          className="layout-fill max-xl:h-100"
+          title="最近登记的设备"
+          extra={<Link to="/admin/devices">全部</Link>}
+        >
           <SimpleList
             loading={recent.isPending}
             data={recent.data?.records ?? []}

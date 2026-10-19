@@ -94,7 +94,7 @@ export function RelationModal<T extends object>(props: RelationModalProps<T>) {
       onOk={confirm}
     >
       <div className="grid grid-cols-[1fr_300px] gap-4">
-        <div className="min-w-0">
+        <div className="layout-fill h-[520px] min-w-0">
           <Input
             allowClear
             className="mb-3"
@@ -119,6 +119,8 @@ export function RelationModal<T extends object>(props: RelationModalProps<T>) {
             loading={isFetching}
             columns={props.columns}
             dataSource={data?.records ?? []}
+            rootClassName="layout-fill"
+            scroll={{ x: 'max-content', y: 400 }}
             rowSelection={{
               selectedRowKeys: [...picked.keys()],
               preserveSelectedRowKeys: true,
@@ -140,7 +142,7 @@ export function RelationModal<T extends object>(props: RelationModalProps<T>) {
             }}
           />
         </div>
-        <div className="flex min-h-80 flex-col rounded-md border border-line border-solid">
+        <div className="flex h-[520px] flex-col rounded-md border border-line border-solid">
           <div className="flex items-center justify-between border-line border-b border-solid px-3 py-2">
             <span className="font-medium">已选 {picked.size}</span>
             {picked.size > 0 && (
@@ -149,7 +151,7 @@ export function RelationModal<T extends object>(props: RelationModalProps<T>) {
               </Button>
             )}
           </div>
-          <div className="max-h-96 flex-1 overflow-auto p-2">
+          <div className="min-h-0 flex-1 overflow-auto p-2">
             {picked.size === 0 ? (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="在左侧勾选" />
             ) : (

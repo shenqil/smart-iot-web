@@ -146,8 +146,10 @@ export default function UserDetailPage() {
           </>
         }
       />
-      <Card variant="borderless">
+      {/* 表格页签撑满剩余高度 (表格内滚动)；基本信息保持自然高度 */}
+      <Card variant="borderless" className={tab === 'info' ? undefined : 'layout-fill'}>
         <Tabs
+          className="layout-fill"
           activeKey={tab}
           onChange={(k) => setParams(k === 'companies' ? {} : { tab: k }, { replace: true })}
           destroyOnHidden

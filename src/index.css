@@ -27,3 +27,117 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
 }
+
+/*
+ * 高度撑满链：表格内滚动，表头与底部分页器恒固定
+ * - .page-content：布局内容区 (页面滚动容器)，纵向 flex，子元素默认保持自然高度
+ * - .layout-fill：占满父级剩余高度，自身也是纵向 flex 容器；嵌套的 .layout-fill 继续向下传递
+ * - antd Card / Tabs / Table 带 .layout-fill 时把内部节点接入这条链，最终由 .ant-table-body 承担滚动
+ * 父级未接入链 (普通块级容器) 时 .layout-fill 退化为自然高度，表格完整展开
+ */
+@layer components {
+  .page-content,
+  .layout-fill {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* antd 组件内部节点，接入撑满链后同样是纵向 flex 容器 */
+  .ant-card.layout-fill > .ant-card-body,
+  .ant-tabs.layout-fill > .ant-tabs-body-holder,
+  .ant-tabs.layout-fill > .ant-tabs-body-holder > .ant-tabs-body,
+  .ant-tabs.layout-fill > .ant-tabs-body-holder > .ant-tabs-body > .ant-tabs-content-active,
+  .ant-table-wrapper.layout-fill > .ant-spin,
+  .ant-table-wrapper.layout-fill > .ant-spin > .ant-spin-container,
+  .ant-table-wrapper.layout-fill > .ant-spin > .ant-spin-container > .ant-table,
+  .ant-table-wrapper.layout-fill > .ant-spin > .ant-spin-container > .ant-table > .ant-table-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+
+  /* 链上容器的子元素：默认保持自然高度；带 .layout-fill 的占满剩余高度 (:where 不计优先级) */
+  :where(
+    .page-content,
+    .layout-fill,
+    .ant-card.layout-fill > .ant-card-body,
+    .ant-tabs.layout-fill > .ant-tabs-body-holder > .ant-tabs-body > .ant-tabs-content-active,
+    .ant-table-wrapper.layout-fill > .ant-spin > .ant-spin-container,
+    .ant-table-wrapper.layout-fill > .ant-spin > .ant-spin-container > .ant-table > .ant-table-container
+  ) > * {
+    flex-shrink: 0;
+  }
+
+  :where(
+      .page-content,
+      .layout-fill,
+      .ant-card.layout-fill > .ant-card-body,
+      .ant-tabs.layout-fill > .ant-tabs-body-holder > .ant-tabs-body > .ant-tabs-content-active
+    )
+    > .layout-fill {
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+
+  /* 视口过矮时由页面整体滚动，保证表格仍有可视区域 */
+  .page-content > .layout-fill {
+    min-height: 420px;
+  }
+
+  /* 表体占满剩余高度 (覆盖 scroll.y 写入的行内 max-height)，行少时分页器仍贴底 */
+  .ant-table-wrapper.layout-fill
+    > .ant-spin
+    > .ant-spin-container
+    > .ant-table
+    > .ant-table-container
+    > .ant-table-body {
+    flex: 1 1 0%;
+    min-height: 0;
+    /* biome-ignore lint/complexity/noImportantStyles: 需覆盖 antd 写入的行内 max-height */
+    max-height: none !important;
+  }
+}
+
+/*
+ * 滚动条：无轨道，细滑块常驻显示 (颜色取 antd 主题变量，暗色大屏自动适配)
+ * 放在 components 层以覆盖 antd 表格自带的 scrollbar-color (Chrome 121+ 设置了标准属性会忽略 ::-webkit-scrollbar)
+ */
+@layer components {
+  /* Chrome / Edge / Safari */
+  @supports selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-color: auto;
+      scrollbar-width: auto;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background-clip: padding-box;
+      background-color: var(--ant-color-text-quaternary, rgb(0 0 0 / 0.25));
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--ant-color-text-tertiary, rgb(0 0 0 / 0.45));
+    }
+  }
+
+  /* Firefox */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--ant-color-text-quaternary, rgb(0 0 0 / 0.25)) transparent;
+    }
+  }
+}

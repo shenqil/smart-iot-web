@@ -254,7 +254,7 @@ export function SensorsEditor({
   const editing = correcting != null ? byChannel.get(correcting) : undefined
 
   return (
-    <div>
+    <div className="layout-fill">
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span>
           已配置 <b>{list.length}</b> / {maxChannels} 个通道
@@ -301,7 +301,8 @@ export function SensorsEditor({
         columns={columns}
         dataSource={rows}
         pagination={rows.length > 64 ? { pageSize: 64, showSizeChanger: false } : false}
-        scroll={{ x: 'max-content' }}
+        rootClassName="layout-fill"
+        scroll={{ x: 'max-content', y: 400 }}
         rowClassName={(r) => (r.cfg ? '' : 'opacity-70')}
         expandable={{
           expandedRowKeys: expanded,

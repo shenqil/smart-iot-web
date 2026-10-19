@@ -20,6 +20,9 @@ export interface ExtraTab {
   children: ReactNode
 }
 
+/** 表单类页签：保持自然高度；其余 (表格) 页签撑满剩余高度 */
+const FORM_TABS = new Set(['basic', 'camera'])
+
 /**
  * 设备配置页 (FRONTEND_DESIGN §3.4)：基本信息 / 传感器 / 继电器 / 摄像头 + 端特有页签 (平台：授权企业；企业：挂载园区)
  * 有未保存修改时，切换页签或离开页面都会确认
@@ -156,9 +159,11 @@ export function DeviceConfigPage({
           )
         }
       />
-      <Card variant="borderless">
+      {/* 表格类页签 (传感器 / 继电器 / 扩展页签) 撑满剩余高度，表格内滚动；表单页签保持自然高度 */}
+      <Card variant="borderless" className={FORM_TABS.has(tab) ? undefined : 'layout-fill'}>
         {d && (
           <Tabs
+            className="layout-fill"
             activeKey={tab}
             onChange={switchTab}
             destroyOnHidden

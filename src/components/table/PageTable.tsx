@@ -45,6 +45,8 @@ export interface PageTableProps<T> {
 /**
  * 通用列表 (FRONTEND_DESIGN §7)：筛选栏 + 表格 + 分页 + 排序 + 批量选择，参数同步网址。
  * 后端分页约定：page / pageSize (≤200) / keyword / sort → {records, totalCount}
+ * 高度：占满父级剩余高度 (.layout-fill)，表体内滚动，筛选栏 / 表头 / 分页器固定；
+ * 父级需接入撑满链 (布局 .page-content 直接子元素，或 .layout-fill 的 Card / Tabs 内)
  */
 export function PageTable<T extends object>(props: PageTableProps<T>) {
   const {
@@ -138,11 +140,13 @@ export function PageTable<T extends object>(props: PageTableProps<T>) {
       )}
       <Table<T>
         {...props.tableProps}
+        rootClassName={['layout-fill', props.tableProps?.rootClassName].filter(Boolean).join(' ')}
         rowKey={rowKey as never}
         loading={isFetching && !data}
         columns={tableColumns}
         dataSource={data?.records ?? []}
-        scroll={{ x: 'max-content', ...props.tableProps?.scroll }}
+        // y 仅用于开启固定表头，实际高度由 .layout-fill 撑满
+        scroll={{ x: 'max-content', y: 400, ...props.tableProps?.scroll }}
         rowSelection={
           batchActions
             ? {
@@ -172,5 +176,11 @@ export function PageTable<T extends object>(props: PageTableProps<T>) {
       />
     </>
   )
-  return props.bare ? body : <Card variant="borderless">{body}</Card>
+  return props.bare ? (
+    <div className="layout-fill">{body}</div>
+  ) : (
+    <Card variant="borderless" className="layout-fill">
+      {body}
+    </Card>
+  )
 }

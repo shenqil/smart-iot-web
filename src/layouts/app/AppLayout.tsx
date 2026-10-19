@@ -81,7 +81,7 @@ export function AppLayout() {
         >
           <ScopeTree />
         </Layout.Sider>
-        <Layout.Content className="relative overflow-auto p-4">
+        <Layout.Content className="page-content relative overflow-auto py-4 pr-4 pl-10">
           <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
             <Button
               size="small"
@@ -90,11 +90,9 @@ export function AppLayout() {
               onClick={() => setCollapsed(!collapsed)}
             />
           </Tooltip>
-          <div className="pl-6">
-            <Suspense fallback={<FullPageSpinner />}>
-              <Outlet />
-            </Suspense>
-          </div>
+          <Suspense fallback={<FullPageSpinner />}>
+            <Outlet />
+          </Suspense>
         </Layout.Content>
       </Layout>
     </Layout>

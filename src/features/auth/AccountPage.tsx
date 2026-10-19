@@ -133,6 +133,7 @@ function CompaniesCard() {
         rowKey="companyId"
         size="middle"
         pagination={false}
+        scroll={{ y: 360 }}
         dataSource={companies}
         locale={{ emptyText: '尚未加入任何企业' }}
         columns={[

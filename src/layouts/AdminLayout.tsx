@@ -73,7 +73,7 @@ export function AdminLayout({ portal, basePath, menu }: Props) {
             </Button>
           </div>
         </Layout.Sider>
-        <Layout.Content className="overflow-auto p-6">
+        <Layout.Content className="page-content overflow-auto p-6">
           <Breadcrumbs />
           <Suspense fallback={<FullPageSpinner />}>
             <Outlet />

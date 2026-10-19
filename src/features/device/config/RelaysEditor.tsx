@@ -45,7 +45,7 @@ export function RelaysEditor({
     )
 
   return (
-    <div>
+    <div className="layout-fill">
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span>
           已配置 <b>{list.length}</b> / {maxChannels} 路
@@ -74,6 +74,8 @@ export function RelaysEditor({
         rowKey="channelNum"
         dataSource={rows}
         pagination={rows.length > 64 ? { pageSize: 64, showSizeChanger: false } : false}
+        rootClassName="layout-fill"
+        scroll={{ x: 'max-content', y: 400 }}
         rowClassName={(r) => (r.cfg ? '' : 'opacity-70')}
         columns={[
           {
