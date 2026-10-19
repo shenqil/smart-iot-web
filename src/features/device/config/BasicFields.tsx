@@ -4,7 +4,8 @@ import { LocationPicker } from '@/components/map/LocationPicker'
 import { useDeviceTypes } from '@/features/dict/api'
 
 /** 设备基本信息字段 (登记与修改共用；SN 与通道数只在登记时填写) */
-export function BasicFields() {
+/** showFault：设备已被系统标记为损坏时显示 (不可选) 的"损坏"选项，人工只能改为启用 / 停用 */
+export function BasicFields({ showFault = false }: { showFault?: boolean }) {
   const types = useDeviceTypes()
   return (
     <>
@@ -39,12 +40,13 @@ export function BasicFields() {
           <Input />
         </Form.Item>
       </div>
-      <Form.Item name="status" label="状态" tooltip="停用的设备立即断开且不能接入">
+      <Form.Item name="status" label="状态" tooltip="停用的设备不能接入；已在线的设备在下次重连或手动断开后生效">
         <Radio.Group
           optionType="button"
           options={[
             { value: 'active', label: '启用' },
             { value: 'inactive', label: '停用' },
+            ...(showFault ? [{ value: 'fault', label: '损坏', disabled: true }] : []),
           ]}
         />
       </Form.Item>

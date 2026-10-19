@@ -10,6 +10,11 @@ export const ACTIVE_STATUS: Record<string, EnumDef> = {
   active: { label: '启用', color: 'success' },
   inactive: { label: '停用', color: 'default' },
 }
+/** 设备状态：fault 由系统判定 (上报路数少于配置的通道数，已断开)，只能人工改回启用 */
+export const DEVICE_STATUS: Record<string, EnumDef> = {
+  ...ACTIVE_STATUS,
+  fault: { label: '损坏', color: 'error' },
+}
 export const SITE_STATUS: Record<string, EnumDef> = {
   active: { label: '运营中', color: 'success' },
   inactive: { label: '停用', color: 'default' },

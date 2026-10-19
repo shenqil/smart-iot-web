@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import type { Schemas } from '@/api/client'
-import { ACTIVE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
+import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import type { PageColumn } from '@/components/table/PageTable'
 import { fmtDateTime } from '@/lib/time'
 
@@ -38,7 +38,7 @@ export function deviceColumns(
       dataIndex: 'status',
       width: 80,
       sortField: 'status',
-      render: (v) => <EnumTag value={v} defs={ACTIVE_STATUS} />,
+      render: (v) => <EnumTag value={v} defs={DEVICE_STATUS} />,
     },
     { title: '创建时间', dataIndex: 'createdAt', width: 160, sortField: 'createdAt', render: fmtDateTime },
   ]

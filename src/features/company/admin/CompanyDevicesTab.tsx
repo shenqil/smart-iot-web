@@ -5,7 +5,7 @@ import type { Key } from 'react'
 import { useState } from 'react'
 import { fetchAllPages } from '@/api/page'
 import { notify } from '@/app/notify'
-import { ACTIVE_STATUS, enumOptions, OnlineTag } from '@/components/StatusTag'
+import { DEVICE_STATUS, enumOptions, OnlineTag } from '@/components/StatusTag'
 import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { RelationModal } from '@/components/table/RelationModal'
 import { deviceColumns } from '@/features/device/columns'
@@ -75,7 +75,7 @@ export function CompanyDevicesTab({ companyId }: { companyId: number }) {
             width: 140,
           },
           { name: 'deviceTypeId', type: 'number', placeholder: '设备类型', options: types.options, width: 140 },
-          { name: 'status', placeholder: '状态', options: enumOptions(ACTIVE_STATUS), width: 100 },
+          { name: 'status', placeholder: '状态', options: enumOptions(DEVICE_STATUS), width: 100 },
         ]}
         toolbar={
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAdding(true)}>

@@ -24,7 +24,15 @@ export function decimalsOf(resolution: number | null | undefined): number {
   }
 }
 
+/** 传感器"无读数"标记 (该通道无传感器)：实时 / 历史 / 环比数组中的 2147483647，与后端 entity.SensorInvalidValue 一致 */
+export const INVALID_READING = 2147483647
+
+/** 是否为有效读数 (画图、统计前过滤) */
+export const isValidReading = (v: number | null | undefined): v is number =>
+  v != null && !Number.isNaN(v) && v !== INVALID_READING
+
 export function formatValue(value: number | null | undefined, resolution?: number | null): string {
+  if (value === INVALID_READING) return '无读数'
   if (value == null || Number.isNaN(value)) return '—'
   return value.toFixed(decimalsOf(resolution))
 }

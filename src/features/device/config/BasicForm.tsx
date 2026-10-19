@@ -1,11 +1,16 @@
-import { Button, Descriptions, Form } from 'antd'
+import { Alert, Button, Descriptions, Form } from 'antd'
 import { useEffect } from 'react'
 import { type LngLat, toLngLat } from '@/components/map/LocationPicker'
 import { fmtDateTime } from '@/lib/time'
 import type { DeviceDetail, DeviceUpdateBody } from './api'
 import { BasicFields } from './BasicFields'
 
-type FormValues = Omit<DeviceUpdateBody, 'name' | 'longitude' | 'latitude'> & { name: string; location?: LngLat }
+// 状态多一个只读的 fault (系统判定损坏)，提交时不回传
+type FormValues = Omit<DeviceUpdateBody, 'name' | 'longitude' | 'latitude' | 'status'> & {
+  name: string
+  location?: LngLat
+  status?: DeviceDetail['status']
+}
 
 const toForm = (d: DeviceDetail): FormValues => ({
   name: d.name,
@@ -45,9 +50,11 @@ export function BasicForm({
         className="max-w-2xl"
         requiredMark="optional"
         onValuesChange={() => onDirtyChange?.(true)}
-        onFinish={async ({ location, ...v }) => {
+        onFinish={async ({ location, status, ...v }) => {
           await onSave({
             ...v,
+            // 损坏 (fault) 只能由系统设置：未改为启用 / 停用时不提交状态
+            ...(status === 'fault' ? {} : { status }),
             name: v.name.trim(),
             deviceTypeId: v.deviceTypeId ?? null,
             longitude: location ? location[0] : null,
@@ -55,7 +62,16 @@ export function BasicForm({
           })
         }}
       >
-        <BasicFields />
+        {device.status === 'fault' && (
+          <Alert
+            className="mb-4"
+            type="error"
+            showIcon
+            message="设备已被系统标记为损坏"
+            description="设备上报的传感器 / 继电器路数少于登记的通道数，已断开且不能接入 (详情见告警记录)。通道数登记后不可修改：请更换为相符的设备，或删除后按实际规格重新登记；处理后把状态改为「启用」并保存，设备重连即可上线。"
+          />
+        )}
+        <BasicFields showFault={device.status === 'fault'} />
         <Button type="primary" htmlType="submit" loading={saving}>
           保存基本信息
         </Button>

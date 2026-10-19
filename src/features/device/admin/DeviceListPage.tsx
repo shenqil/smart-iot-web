@@ -4,7 +4,7 @@ import { Button, Space } from 'antd'
 import type { Key } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { ACTIVE_STATUS, enumOptions } from '@/components/StatusTag'
+import { DEVICE_STATUS, enumOptions } from '@/components/StatusTag'
 import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { useDeviceTypes } from '@/features/dict/api'
 import { affectedText, confirmAction } from '@/lib/confirm'
@@ -69,7 +69,7 @@ export default function DeviceListPage() {
         defaultSort="-createdAt"
         filters={[
           { name: 'deviceTypeId', type: 'number', placeholder: '设备类型', options: types.options, width: 150 },
-          { name: 'status', placeholder: '状态', options: enumOptions(ACTIVE_STATUS), width: 100 },
+          { name: 'status', placeholder: '状态', options: enumOptions(DEVICE_STATUS), width: 100 },
           {
             name: 'unassigned',
             type: 'boolean',

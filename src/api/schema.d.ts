@@ -716,7 +716,7 @@ export interface paths {
         };
         /**
          * 历史数据 (原始数据)
-         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整传感器数组 (下标即通道号)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
+         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整传感器数组 (下标即通道号，2147483647 表示无读数)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
          */
         get: operations["app-device-history"];
         put?: never;
@@ -758,7 +758,7 @@ export interface paths {
         put?: never;
         /**
          * 控制继电器
-         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发 (见 docs/RELAY_CONTROL.md §4.1)。
+         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、已被标记为损坏 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发 (见 docs/RELAY_CONTROL.md §4.1)。
          */
         post: operations["app-control-relay"];
         delete?: never;
@@ -1392,7 +1392,7 @@ export interface components {
             /** @description greater / less / equal / range */
             alarmSubType: string;
             /** @enum {string} */
-            alarmType: "threshold_breach" | "device_offline" | "device_online";
+            alarmType: "threshold_breach" | "device_offline" | "device_online" | "device_fault";
             /** @description 告警编码：传感器告警为规则编码 (UUID)，离线为 offline，上线为 online */
             alertCode: string;
             /**
@@ -1718,10 +1718,10 @@ export interface components {
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description 停用的设备拒绝接入
+             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
-            status: "active" | "inactive";
+            status: "active" | "inactive" | "fault";
             /** Format: date-time */
             updatedAt: string;
         };
@@ -1889,10 +1889,10 @@ export interface components {
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description 停用的设备拒绝接入
+             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
-            status: "active" | "inactive";
+            status: "active" | "inactive" | "fault";
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2022,7 +2022,7 @@ export interface components {
             readInterval?: number;
             simCard?: string;
             /**
-             * @description 停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
+             * @description 停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)；损坏 (fault) 的设备更换为与登记通道数相符的硬件后改为 active 即可重新接入 (仍不符会再次被标记)
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -2079,10 +2079,10 @@ export interface components {
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description 停用的设备拒绝接入
+             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
-            status: "active" | "inactive";
+            status: "active" | "inactive" | "fault";
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2896,7 +2896,7 @@ export interface components {
              * @description 继电器状态最近一次写入时间，没有数据时为 null
              */
             relaysAt: string | null;
-            /** @description 传感器数组：长度 = 传感器通道数，下标即通道号；没有数据时为 null */
+            /** @description 传感器数组：长度 = 传感器通道数，下标即通道号；值为 2147483647 表示该通道无读数 (无传感器)；没有数据时为 null */
             sensors: number[] | null;
             /**
              * Format: date-time
@@ -3290,8 +3290,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
             };
@@ -3337,8 +3337,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
             };
             header?: never;
             path: {
@@ -3755,8 +3755,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
                 /** @description 只看公海设备 (未授权给任何企业) */
                 unassigned?: boolean;
             };
@@ -4897,7 +4897,7 @@ export interface operations {
                 /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
                 level?: number;
                 /** @description 告警类型 */
-                type?: "threshold_breach" | "device_offline" | "device_online";
+                type?: "threshold_breach" | "device_offline" | "device_online" | "device_fault";
                 /** @description 是否已处理 */
                 processed?: "true" | "false";
                 /** @description 告警时间起 (含，RFC3339) */
@@ -5022,8 +5022,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
             };
@@ -5788,8 +5788,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
             };
@@ -6451,8 +6451,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
             };
             header: {
                 /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
@@ -6577,8 +6577,8 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive";
+                /** @description 按状态筛选 (fault：系统判定损坏) */
+                status?: "active" | "inactive" | "fault";
             };
             header: {
                 /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */

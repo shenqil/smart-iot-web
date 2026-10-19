@@ -5,7 +5,7 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useBlocker, useSearchParams } from 'react-router'
 import { notify } from '@/app/notify'
 import { DetailHeader } from '@/components/DetailHeader'
-import { ACTIVE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
+import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import { useDeviceTypes } from '@/features/dict/api'
 import { confirmDisconnect, showConfigNotice } from './actions'
 import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey } from './api'
@@ -130,7 +130,7 @@ export function DeviceConfigPage({
           d && (
             <>
               <OnlineTag online={d.online} />
-              <EnumTag value={d.status} defs={ACTIVE_STATUS} />
+              <EnumTag value={d.status} defs={DEVICE_STATUS} />
               <Tag>{types.nameOf(d.deviceTypeId)}</Tag>
             </>
           )
