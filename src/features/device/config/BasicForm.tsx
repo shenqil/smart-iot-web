@@ -1,11 +1,11 @@
 import { Button, Descriptions, Form } from 'antd'
 import { useEffect } from 'react'
-import { fromLngLat, type LngLat, toLngLat } from '@/components/map/LocationPicker'
+import { type LngLat, toLngLat } from '@/components/map/LocationPicker'
 import { fmtDateTime } from '@/lib/time'
-import type { DeviceBasicBody, DeviceDetail } from './api'
+import type { DeviceDetail, DeviceUpdateBody } from './api'
 import { BasicFields } from './BasicFields'
 
-type FormValues = Omit<DeviceBasicBody, 'longitude' | 'latitude'> & { location?: LngLat }
+type FormValues = Omit<DeviceUpdateBody, 'name' | 'longitude' | 'latitude'> & { name: string; location?: LngLat }
 
 const toForm = (d: DeviceDetail): FormValues => ({
   name: d.name,
@@ -19,7 +19,7 @@ const toForm = (d: DeviceDetail): FormValues => ({
   status: d.status,
 })
 
-/** 基本信息：接口为整体替换，提交时带上全部字段 (坐标为空即清除) */
+/** 基本信息：接口为部分更新 (未传不修改)，提交时带上全部字段；清空的设备类型与坐标显式传 null */
 export function BasicForm({
   device,
   saving,
@@ -28,7 +28,7 @@ export function BasicForm({
 }: {
   device: DeviceDetail
   saving: boolean
-  onSave: (b: DeviceBasicBody) => Promise<unknown>
+  onSave: (b: DeviceUpdateBody) => Promise<unknown>
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const [form] = Form.useForm<FormValues>()
@@ -49,8 +49,9 @@ export function BasicForm({
           await onSave({
             ...v,
             name: v.name.trim(),
-            deviceTypeId: v.deviceTypeId ?? undefined,
-            ...fromLngLat(location),
+            deviceTypeId: v.deviceTypeId ?? null,
+            longitude: location ? location[0] : null,
+            latitude: location ? location[1] : null,
           })
         }}
       >

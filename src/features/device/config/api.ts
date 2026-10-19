@@ -1,12 +1,15 @@
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 
 export type DeviceDetail = Schemas['DeviceDetailView']
-export type DeviceBasicBody = Schemas['DeviceBasicBody']
+/** 修改基本信息 (部分更新：未传的字段不修改；deviceTypeId、经纬度传 null 表示清除) */
+export type DeviceUpdateBody = Schemas['DeviceUpdateBody']
 export type SensorConfig = Schemas['SensorConfig']
 export type SensorAlertConfig = Schemas['SensorAlertConfig']
 export type SensorCorrection = Schemas['SensorCorrection']
 export type RelayConfig = Schemas['RelayConfig']
 export type CameraConfig = Schemas['CameraConfig']
+/** 修改摄像头配置 (部分更新) */
+export type CameraBody = Schemas['DeviceCameraBody']
 
 /**
  * 设备配置页的接口：平台端与企业端路径不同，页面只依赖这个接口 (FRONTEND_DESIGN §3.4，企业端 §4.3 复用)
@@ -15,10 +18,10 @@ export interface DeviceConfigApi {
   /** 缓存键前缀 (端 + 企业) */
   keyPrefix: readonly unknown[]
   detail: (id: number) => Promise<DeviceDetail>
-  updateBasic: (id: number, body: DeviceBasicBody) => Promise<DeviceDetail>
+  updateBasic: (id: number, body: DeviceUpdateBody) => Promise<DeviceDetail>
   updateSensors: (id: number, sensors: SensorConfig[]) => Promise<DeviceDetail>
   updateRelays: (id: number, relays: RelayConfig[]) => Promise<DeviceDetail>
-  updateCamera: (id: number, camera: CameraConfig) => Promise<DeviceDetail>
+  updateCamera: (id: number, camera: CameraBody) => Promise<DeviceDetail>
   disconnect: (id: number) => Promise<{ notice: string }>
 }
 

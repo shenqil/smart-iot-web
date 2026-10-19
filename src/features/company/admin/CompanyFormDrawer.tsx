@@ -26,13 +26,12 @@ export function CompanyFormDrawer({
     : { status: 'active' }
 
   const submit = async (v: FormValues) => {
-    const body: CompanyBody = {
-      ...v,
-      name: v.name.trim(),
-      properties: company?.properties ?? undefined,
-      expiredAt: v.expiredAt ? v.expiredAt.tz(BIZ_TZ, true).endOf('day').format() : undefined,
-    }
-    const saved = company ? await companyApi.update(company.id, body) : await companyApi.create(body)
+    const expiredAt = v.expiredAt ? v.expiredAt.tz(BIZ_TZ, true).endOf('day').format() : undefined
+    const body: CompanyBody = { ...v, name: v.name.trim(), properties: company?.properties ?? undefined, expiredAt }
+    // 修改为部分更新 (未传不修改)：清空过期时间要显式传 null
+    const saved = company
+      ? await companyApi.update(company.id, { ...body, expiredAt: expiredAt ?? null })
+      : await companyApi.create(body)
     qc.invalidateQueries({ queryKey: companyKeys.all })
     onSaved?.(saved.id)
   }

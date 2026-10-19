@@ -38,7 +38,10 @@ export interface paths {
         };
         /** 企业详情 */
         get: operations["admin-get-company"];
-        /** 修改企业 */
+        /**
+         * 修改企业
+         * @description 部分更新：未传的字段不修改；expiredAt 传 null 表示改为不过期。
+         */
         put: operations["admin-update-company"];
         post?: never;
         delete?: never;
@@ -186,7 +189,10 @@ export interface paths {
         };
         /** 设备类型详情 */
         get: operations["admin-get-device-type"];
-        /** 修改设备类型 */
+        /**
+         * 修改设备类型
+         * @description 部分更新：未传的字段不修改。
+         */
         put: operations["admin-update-device-type"];
         post?: never;
         delete?: never;
@@ -254,7 +260,7 @@ export interface paths {
         get: operations["admin-get-device"];
         /**
          * 修改设备基本信息
-         * @description 整体替换基本信息 (含状态、采集间隔)。保存后设备会被断开 (后台执行，不等待)，配置在设备重连后生效 (响应中 notice 给出提示)。
+         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
          */
         put: operations["admin-update-device"];
         post?: never;
@@ -274,7 +280,7 @@ export interface paths {
         get?: never;
         /**
          * 修改摄像头配置
-         * @description secret 传空串或 ****** 表示保留原值。
+         * @description 部分更新：未传的字段保留原值；secret 传空串或 ****** 也保留原值。
          */
         put: operations["admin-update-device-camera"];
         post?: never;
@@ -375,7 +381,7 @@ export interface paths {
         get?: never;
         /**
          * 修改传感器配置
-         * @description 整体替换传感器通道配置 (含告警规则)。保存后设备会被断开 (后台执行，不等待)，配置在设备重连后生效 (响应中 notice 给出提示)。
+         * @description 整体替换传感器通道配置 (含告警规则)。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
          */
         put: operations["admin-update-device-sensors"];
         post?: never;
@@ -416,7 +422,10 @@ export interface paths {
         };
         /** 标准继电器详情 */
         get: operations["admin-get-standard-relay"];
-        /** 修改标准继电器 */
+        /**
+         * 修改标准继电器
+         * @description 部分更新：未传的字段不修改。
+         */
         put: operations["admin-update-standard-relay"];
         post?: never;
         delete?: never;
@@ -456,7 +465,10 @@ export interface paths {
         };
         /** 标准传感器详情 */
         get: operations["admin-get-standard-sensor"];
-        /** 修改标准传感器 */
+        /**
+         * 修改标准传感器
+         * @description 部分更新：未传的字段不修改。
+         */
         put: operations["admin-update-standard-sensor"];
         post?: never;
         delete?: never;
@@ -504,7 +516,7 @@ export interface paths {
         get: operations["admin-get-user"];
         /**
          * 修改用户
-         * @description 不能修改自己的系统角色与状态。修改角色或停用后该用户的登录立即失效。
+         * @description 部分更新：未传的字段不修改；phone 传 null 或空串表示清空。不能修改自己的系统角色与状态。修改角色或停用后该用户的登录立即失效。
          */
         put: operations["admin-update-user"];
         post?: never;
@@ -584,7 +596,7 @@ export interface paths {
         };
         /**
          * 告警列表 (分页)
-         * @description 当前授权给本企业的设备的全部告警。关键字匹配：设备 SN、设备名称、告警编码、描述；可排序字段：alarmCount, alarmLevel, createdAt, id, lastAlarmAt。siteId 按设备当前的园区挂载筛选。
+         * @description 当前授权给本企业的设备的全部告警。不返回总数 (hasMore 表示是否还有下一页)；未处理数量见 GET /alarms/unprocessed-count。关键字匹配：设备 SN、设备名称、告警编码、描述；可排序字段：alarmCount, alarmLevel, createdAt, id, lastAlarmAt。siteId 按设备当前的园区挂载筛选。
          */
         get: operations["app-list-alarms"];
         put?: never;
@@ -609,6 +621,26 @@ export interface paths {
          * @description 记录处理人 (当前用户名称快照)、处理时间与备注；已处理、范围外的告警忽略。处理状态在各企业间共享。
          */
         post: operations["app-process-alarms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/alarms/unprocessed-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 未处理告警数
+         * @description 当前授权给本企业的设备的未处理告警数 (顶栏角标、设备树、大屏级别分布)，可按园区 / 设备 / 级别筛选；最多数到 1000，达到上限时 capped=true (显示 999+)。
+         */
+        get: operations["app-count-unprocessed-alarms"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -684,7 +716,7 @@ export interface paths {
         };
         /**
          * 历史数据 (原始数据)
-         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整传感器数组 (下标即通道号)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。
+         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整传感器数组 (下标即通道号)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
          */
         get: operations["app-device-history"];
         put?: never;
@@ -744,7 +776,7 @@ export interface paths {
         };
         /**
          * 操作日志 (分页)
-         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。关键字匹配：设备 SN、操作人；可排序字段：createdAt, id。siteId 按设备当前的园区挂载筛选。
+         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、操作人；可排序字段：createdAt, id。siteId 按设备当前的园区挂载筛选。
          */
         get: operations["app-list-operations"];
         put?: never;
@@ -838,7 +870,7 @@ export interface paths {
         };
         /** 当前用户信息 */
         get: operations["auth-me"];
-        /** 修改自己的昵称与手机号 */
+        /** 修改自己的昵称与手机号 (部分更新：未传的字段不修改) */
         put: operations["auth-update-me"];
         post?: never;
         delete?: never;
@@ -975,7 +1007,7 @@ export interface paths {
         get: operations["tenant-get-company"];
         /**
          * 修改本企业资料
-         * @description 企业名称、状态与服务过期时间只能由平台管理端修改。
+         * @description 部分更新：未传的字段不修改。企业名称、状态与服务过期时间只能由平台管理端修改。
          */
         put: operations["tenant-update-company"];
         post?: never;
@@ -1024,7 +1056,7 @@ export interface paths {
         get: operations["tenant-get-device"];
         /**
          * 修改设备基本信息
-         * @description 设备配置全局共享。保存后设备会被断开 (后台执行，不等待)，配置在设备重连后生效 (响应中 notice 给出提示)。
+         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。设备配置全局共享。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
          */
         put: operations["tenant-update-device"];
         post?: never;
@@ -1044,7 +1076,7 @@ export interface paths {
         get?: never;
         /**
          * 修改摄像头配置
-         * @description secret 传空串或 ****** 表示保留原值。
+         * @description 部分更新：未传的字段保留原值；secret 传空串或 ****** 也保留原值。
          */
         put: operations["tenant-update-device-camera"];
         post?: never;
@@ -1101,7 +1133,7 @@ export interface paths {
         get?: never;
         /**
          * 修改传感器配置
-         * @description 整体替换传感器通道配置 (含告警规则)。保存后设备会被断开 (后台执行，不等待)，配置在设备重连后生效 (响应中 notice 给出提示)。
+         * @description 整体替换传感器通道配置 (含告警规则)。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
          */
         put: operations["tenant-update-device-sensors"];
         post?: never;
@@ -1186,7 +1218,10 @@ export interface paths {
         };
         /** 园区详情 */
         get: operations["tenant-get-site"];
-        /** 修改园区 */
+        /**
+         * 修改园区
+         * @description 部分更新：未传的字段不修改；经纬度成对修改，两者传 null 表示清除坐标；images、properties 传值即整体替换。
+         */
         put: operations["tenant-update-site"];
         post?: never;
         delete?: never;
@@ -1327,6 +1362,15 @@ export interface components {
              * @description 实际影响的记录数 (不存在的 ID 会被忽略)
              */
             affected: number;
+        };
+        AlarmCountView: {
+            /** @description 是否达到上限 (实际数量可能更多，前端显示 999+) */
+            capped: boolean;
+            /**
+             * Format: int64
+             * @description 数量 (最多 1000)
+             */
+            count: number;
         };
         AlarmProcessBody: {
             /** @description 告警 ID (已处理的忽略) */
@@ -1535,10 +1579,32 @@ export interface components {
             description?: string;
             /** @description Logo URL */
             logo?: string;
-            /** @description 前端自定义扩展属性 (任意 JSON 对象) */
+            /** @description 前端自定义扩展属性 (整体替换) */
             properties?: {
                 [key: string]: unknown;
             };
+        };
+        CompanyUpdateBody: {
+            address?: string;
+            contactEmail?: string;
+            contactPerson?: string;
+            contactPhone?: string;
+            description?: string;
+            /**
+             * Format: date-time
+             * @description 服务过期时间；传 null 表示不过期，不传表示不修改
+             */
+            expiredAt?: string | null;
+            /** @description Logo URL */
+            logo?: string;
+            /** @description 企业全称 (唯一) */
+            name?: string;
+            /** @description 前端自定义扩展属性 (整体替换) */
+            properties?: {
+                [key: string]: unknown;
+            };
+            /** @enum {string} */
+            status?: "active" | "inactive";
         };
         CompanyView: {
             address: string;
@@ -1668,37 +1734,22 @@ export interface components {
             /** Format: date-time */
             expiredAt: string | null;
         };
-        DeviceBasicBody: {
-            coverImage?: string;
-            description?: string;
+        DeviceCameraBody: {
+            /** @description 开放平台 AppKey */
+            appKey?: string;
             /**
              * Format: int64
-             * @description 设备类型 ID，不传表示未分类
+             * @description 监控通道号
              */
-            deviceTypeId?: number;
-            /**
-             * Format: double
-             * @description 纬度 (与经度同时传入)
-             */
-            latitude?: number;
-            /**
-             * Format: double
-             * @description 经度 (与纬度同时传入)
-             */
-            longitude?: number;
-            macAddress?: string;
-            name: string;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒，1~3600)，默认 60
-             */
-            readInterval?: number;
-            simCard?: string;
-            /**
-             * @description 默认 active；停用后设备立即断开且不能接入
-             * @enum {string}
-             */
-            status?: "active" | "inactive";
+            channelNumber?: number;
+            /** @description 直播 / 推流播放地址 */
+            liveUrl?: string;
+            /** @description 开放平台 Secret；不传、空串或 ****** 表示保留原值 */
+            secret?: string;
+            /** @description 摄像头序列号 */
+            serialNumber?: string;
+            /** @description 摄像头品牌 / 协议，如 ezviz、hikvision、dahua、rtsp、onvif */
+            type?: string;
         };
         DeviceChangeResult: {
             /**
@@ -1768,7 +1819,7 @@ export interface components {
             readInterval?: number;
             simCard?: string;
             /**
-             * @description 默认 active；停用后设备立即断开且不能接入
+             * @description 默认 active；停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -1822,7 +1873,7 @@ export interface components {
              */
             maxSensorChannels: number;
             name: string;
-            /** @description 提示信息：修改基本信息、传感器配置后返回 "配置将在设备重连后生效" */
+            /** @description 提示信息：修改基本信息、传感器配置后返回 (配置在设备下次重连时生效，需要立即生效请手动断开连接) */
             notice?: string;
             /** @description 是否在线 (Redis 不可用时为 false) */
             online: boolean;
@@ -1898,7 +1949,7 @@ export interface components {
             /** @description 挂载到本企业的园区 (1~50 个) */
             siteIds: number[] | null;
             /**
-             * @description 默认 active；停用后设备立即断开且不能接入
+             * @description 默认 active；停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -1912,6 +1963,18 @@ export interface components {
             /**
              * Format: int64
              * @description 排序 (越小越靠前)，默认 0
+             */
+            sort?: number;
+        };
+        DeviceTypePatch: {
+            description?: string;
+            /** @description 图标 URL */
+            icon?: string;
+            /** @description 类型名称 (唯一) */
+            name?: string;
+            /**
+             * Format: int64
+             * @description 排序 (越小越靠前)
              */
             sort?: number;
         };
@@ -1931,6 +1994,38 @@ export interface components {
             sort: number;
             /** Format: date-time */
             updatedAt: string;
+        };
+        DeviceUpdateBody: {
+            coverImage?: string;
+            description?: string;
+            /**
+             * Format: int64
+             * @description 设备类型 ID；传 null 表示未分类，不传表示不修改
+             */
+            deviceTypeId?: number | null;
+            /**
+             * Format: double
+             * @description 纬度：与经度成对修改
+             */
+            latitude?: number | null;
+            /**
+             * Format: double
+             * @description 经度：与纬度成对修改，两者传 null 表示清除坐标
+             */
+            longitude?: number | null;
+            macAddress?: string;
+            name?: string;
+            /**
+             * Format: int64
+             * @description 采集间隔 (秒，1~3600)
+             */
+            readInterval?: number;
+            simCard?: string;
+            /**
+             * @description 停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
+             * @enum {string}
+             */
+            status?: "active" | "inactive";
         };
         DeviceView: {
             /** @description 封面图 URL */
@@ -2062,25 +2157,6 @@ export interface components {
             /** @description 上传成功后的永久访问链接 (保存到业务字段，如 logo、coverImage) */
             url: string;
         };
-        PageAlarmView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["AlarmView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
         PageCompanyView: {
             /**
              * Format: int64
@@ -2189,25 +2265,6 @@ export interface components {
             pageSize: number;
             /** @description 当前页数据 */
             records: components["schemas"]["DeviceView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageRelayView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["RelayView"][];
             /**
              * Format: int64
              * @description 符合条件的总条数
@@ -2583,6 +2640,35 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        SiteUpdateBody: {
+            address?: string;
+            city?: string;
+            /** @description 封面图 URL (上传场景 site-cover) */
+            coverImage?: string;
+            description?: string;
+            district?: string;
+            /** @description 图片 URL 列表 (整体替换) */
+            images?: string[];
+            /**
+             * Format: double
+             * @description 纬度：与经度成对修改
+             */
+            latitude?: number | null;
+            /**
+             * Format: double
+             * @description 经度：与纬度成对修改，两者传 null 表示清除坐标
+             */
+            longitude?: number | null;
+            /** @description 园区名称 (企业内唯一) */
+            name?: string;
+            /** @description 前端自定义扩展属性 (整体替换) */
+            properties?: {
+                [key: string]: unknown;
+            };
+            province?: string;
+            /** @enum {string} */
+            status?: "active" | "inactive" | "under_construction";
+        };
         SiteView: {
             address: string;
             city: string;
@@ -2619,12 +2705,55 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        SliceAlarmView: {
+            /** @description 是否还有下一页 */
+            hasMore: boolean;
+            /**
+             * Format: int64
+             * @description 页码
+             */
+            page: number;
+            /**
+             * Format: int64
+             * @description 每页条数
+             */
+            pageSize: number;
+            /** @description 当前页数据 */
+            records: components["schemas"]["AlarmView"][];
+        };
+        SliceRelayView: {
+            /** @description 是否还有下一页 */
+            hasMore: boolean;
+            /**
+             * Format: int64
+             * @description 页码
+             */
+            page: number;
+            /**
+             * Format: int64
+             * @description 每页条数
+             */
+            pageSize: number;
+            /** @description 当前页数据 */
+            records: components["schemas"]["RelayView"][];
+        };
         StandardRelayBody: {
             /** @description 名称 (唯一) */
             name: string;
             /**
              * Format: int64
              * @description 排序 (越小越靠前)，默认 0
+             */
+            sort?: number;
+            /** @description 图标 URL */
+            url?: string;
+        };
+        StandardRelayPatch: {
+            /** @description 名称 (唯一) */
+            name?: string;
+            /**
+             * Format: int64
+             * @description 排序 (越小越靠前)
              */
             sort?: number;
             /** @description 图标 URL */
@@ -2669,6 +2798,35 @@ export interface components {
             /**
              * Format: int64
              * @description 排序 (越小越靠前)，默认 0
+             */
+            sort?: number;
+            /** @description 单位，如 ℃ */
+            unit?: string;
+            /** @description 图标 URL */
+            url?: string;
+        };
+        StandardSensorPatch: {
+            /**
+             * Format: double
+             * @description 量程最大值
+             */
+            maxValue?: number;
+            /**
+             * Format: double
+             * @description 量程最小值
+             */
+            minValue?: number;
+            /** @description 名称 (唯一) */
+            name?: string;
+            /**
+             * Format: double
+             * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 表示未配置
+             * @enum {number}
+             */
+            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
+            /**
+             * Format: int64
+             * @description 排序 (越小越靠前)
              */
             sort?: number;
             /** @description 单位，如 ℃ */
@@ -2756,10 +2914,10 @@ export interface components {
             vals: number[];
         };
         UpdateMeInputBody: {
-            /** @description 昵称 (可为空) */
-            nickname: string;
-            /** @description 手机号，空串或不传表示清空 */
-            phone?: string;
+            /** @description 昵称 (可为空串)；不传表示不修改 */
+            nickname?: string;
+            /** @description 手机号；传 null 或空串表示清空，不传表示不修改 */
+            phone?: string | null;
         };
         UserCreateBody: {
             nickname?: string;
@@ -2870,10 +3028,10 @@ export interface components {
         };
         UserUpdateBody: {
             nickname?: string;
-            /** @description 手机号，空串或不传表示清空 */
-            phone?: string;
+            /** @description 手机号 (唯一)；传 null 或空串表示清空，不传表示不修改 */
+            phone?: string | null;
             /**
-             * @description 默认 active；停用后该用户立即下线
+             * @description 停用后该用户立即下线
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -2881,9 +3039,9 @@ export interface components {
              * @description 系统角色；修改后该用户需重新登录
              * @enum {string}
              */
-            systemRole: "admin" | "none";
+            systemRole?: "admin" | "none";
             /** @description 用户名 (唯一) */
-            username: string;
+            username?: string;
         };
         UserView: {
             /** Format: date-time */
@@ -3095,7 +3253,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyBody"];
+                "application/json": components["schemas"]["CompanyUpdateBody"];
             };
         };
         responses: {
@@ -3560,7 +3718,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceTypeBody"];
+                "application/json": components["schemas"]["DeviceTypePatch"];
             };
         };
         responses: {
@@ -3771,7 +3929,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceBasicBody"];
+                "application/json": components["schemas"]["DeviceUpdateBody"];
             };
         };
         responses: {
@@ -3807,7 +3965,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CameraConfig"];
+                "application/json": components["schemas"]["DeviceCameraBody"];
             };
         };
         responses: {
@@ -4201,7 +4359,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardRelayBody"];
+                "application/json": components["schemas"]["StandardRelayPatch"];
             };
         };
         responses: {
@@ -4373,7 +4531,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardSensorBody"];
+                "application/json": components["schemas"]["StandardSensorPatch"];
             };
         };
         responses: {
@@ -4762,7 +4920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageAlarmView"];
+                    "application/json": components["schemas"]["SliceAlarmView"];
                 };
             };
             /** @description Error */
@@ -4799,6 +4957,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AffectedBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-count-unprocessed-alarms": {
+        parameters: {
+            query?: {
+                /** @description 只数当前挂载在该园区的设备 */
+                siteId?: number;
+                /** @description 只数该设备 */
+                deviceId?: number;
+                /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
+                level?: number;
+            };
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmCountView"];
                 };
             };
             /** @description Error */
@@ -5088,7 +5285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageRelayView"];
+                    "application/json": components["schemas"]["SliceRelayView"];
                 };
             };
             /** @description Error */
@@ -5747,7 +5944,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceBasicBody"];
+                "application/json": components["schemas"]["DeviceUpdateBody"];
             };
         };
         responses: {
@@ -5786,7 +5983,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CameraConfig"];
+                "application/json": components["schemas"]["DeviceCameraBody"];
             };
         };
         responses: {
@@ -6217,7 +6414,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteBody"];
+                "application/json": components["schemas"]["SiteUpdateBody"];
             };
         };
         responses: {

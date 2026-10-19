@@ -6,6 +6,8 @@ import type { PageParams } from '@/api/types'
 export type Company = Schemas['CompanyView']
 export type CompanyDetail = Schemas['CompanyDetailView']
 export type CompanyBody = Schemas['CompanyBody']
+/** 修改企业 (部分更新：未传的字段不修改；expiredAt 传 null 表示不过期) */
+export type CompanyUpdateBody = Schemas['CompanyUpdateBody']
 export type Member = Schemas['UserMemberView']
 export type UserRow = Schemas['UserView']
 export type DeviceRow = Schemas['DeviceView']
@@ -30,7 +32,7 @@ export const companyApi = {
       queryFn: () => unwrap(api.GET('/api/v1/admin/companies/{id}', p(id))),
     }),
   create: (body: CompanyBody) => unwrap(api.POST('/api/v1/admin/companies', { body })),
-  update: (id: number, body: CompanyBody) => unwrap(api.PUT('/api/v1/admin/companies/{id}', { ...p(id), body })),
+  update: (id: number, body: CompanyUpdateBody) => unwrap(api.PUT('/api/v1/admin/companies/{id}', { ...p(id), body })),
   remove: (ids: number[]) => unwrap(api.DELETE('/api/v1/admin/companies', { body: { ids } })),
 
   members: (id: number, q: PageParams) =>
