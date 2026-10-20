@@ -1,7 +1,7 @@
-import { LinkOutlined, LogoutOutlined } from '@ant-design/icons'
+import { ExportOutlined, LinkOutlined, LogoutOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button } from 'antd'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useCompanyId } from '@/hooks/session'
 import { confirmAction } from '@/lib/confirm'
 import { invalidateTenant } from '@/lib/tenant'
@@ -57,29 +57,34 @@ export default function DeviceDetailPage() {
         </div>
       }
       headerExtra={(d) => (
-        <Button
-          danger
-          icon={<LogoutOutlined />}
-          onClick={() =>
-            confirmAction({
-              title: `将设备「${d.name}」移出本企业？`,
-              content: DEVICE_REMOVE_TIP,
-              okText: '移出',
-              onOk: () => api.remove([id]),
-              successText: '设备已移出本企业',
-              onDone: () => {
-                navigate(`/tenant/${cid}/devices`, { replace: true })
-                // 先移除该设备自身的缓存，避免仍挂载的页面重新请求得到 404
-                qc.removeQueries({ queryKey: [...tenantDeviceKeys.all(cid), 'detail', id] })
-                qc.removeQueries({ queryKey: tenantDeviceKeys.sites(cid, id) })
-                qc.invalidateQueries({ queryKey: tenantDeviceKeys.list(cid) })
-                invalidateTenant(qc, cid, 'sites', 'company')
-              },
-            })
-          }
-        >
-          移出本企业
-        </Button>
+        <>
+          <Link to={`/tenant/${cid}/export?deviceId=${id}`}>
+            <Button icon={<ExportOutlined />}>导出数据</Button>
+          </Link>
+          <Button
+            danger
+            icon={<LogoutOutlined />}
+            onClick={() =>
+              confirmAction({
+                title: `将设备「${d.name}」移出本企业？`,
+                content: DEVICE_REMOVE_TIP,
+                okText: '移出',
+                onOk: () => api.remove([id]),
+                successText: '设备已移出本企业',
+                onDone: () => {
+                  navigate(`/tenant/${cid}/devices`, { replace: true })
+                  // 先移除该设备自身的缓存，避免仍挂载的页面重新请求得到 404
+                  qc.removeQueries({ queryKey: [...tenantDeviceKeys.all(cid), 'detail', id] })
+                  qc.removeQueries({ queryKey: tenantDeviceKeys.sites(cid, id) })
+                  qc.invalidateQueries({ queryKey: tenantDeviceKeys.list(cid) })
+                  invalidateTenant(qc, cid, 'sites', 'company')
+                },
+              })
+            }
+          >
+            移出本企业
+          </Button>
+        </>
       )}
       extraTabs={[
         {

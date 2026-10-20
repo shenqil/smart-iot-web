@@ -27,6 +27,7 @@
     "@uiw/react-codemirror": "^4.25.12",
     "antd": "^6.6.6",
     "dayjs": "^1.11.23",
+    "fflate": "^0.8.3",
     "leaflet": "^1.9.4",
     "openapi-fetch": "^0.17.0",
     "react": "^19.3.1",

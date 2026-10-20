@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 
-/** 企业管理端 (FRONTEND_DESIGN §4)：概览 · 园区 · 设备 · 成员 · 企业信息 */
+/** 企业管理端 (FRONTEND_DESIGN §4)：概览 · 园区 · 设备 · 数据导出 · 成员 · 企业信息 */
 export const tenantRoutes: RouteObject[] = [
   {
     index: true,
@@ -35,6 +35,11 @@ export const tenantRoutes: RouteObject[] = [
         lazy: async () => ({ Component: (await import('@/features/device/tenant/DeviceDetailPage')).default }),
       },
     ],
+  },
+  {
+    path: 'export',
+    handle: { crumb: '数据导出' },
+    lazy: async () => ({ Component: (await import('@/features/telemetry/export/DataExportPage')).default }),
   },
   {
     path: 'users',
