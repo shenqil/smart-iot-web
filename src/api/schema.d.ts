@@ -713,6 +713,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/devices/{id}/camera/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 摄像头预览信息
+         * @description 萤石云摄像头返回 ezopen 播放地址、accessToken (由后端用设备配置的 AppKey / Secret 换取并缓存，Secret 不出后端) 与云台能力，前端用 EZUIKit 播放；只配置了直播地址的设备返回直播地址。没有配置摄像头 404 CAMERA_NOT_CONFIGURED；配置有误 409 CAMERA_CONFIG_INVALID；萤石服务不可用 503 CAMERA_UNAVAILABLE。
+         */
+        get: operations["app-device-camera-live"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{id}/camera/ptz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 云台控制
+         * @description 按下方向键时 action=start 开始转动，松开时 action=stop 停止 (前端须保证每个 start 都有对应的 stop)。不支持云台 409 CAMERA_PTZ_UNSUPPORTED；已转到限位 409 CAMERA_PTZ_LIMIT；摄像头不在线 409 CAMERA_OFFLINE；萤石服务不可用 503 CAMERA_UNAVAILABLE。
+         */
+        post: operations["app-device-camera-ptz"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/devices/{id}/comparison/daily": {
         parameters: {
             query?: never;
@@ -1565,6 +1605,43 @@ export interface components {
             secret?: string;
             serialNumber?: string;
             type?: string;
+        };
+        CameraLiveView: {
+            /** @description 萤石 accessToken (仅 ezviz)：播放器需要；不要写入日志或持久化 */
+            accessToken?: string;
+            /**
+             * Format: date-time
+             * @description accessToken 到期时间 (仅 ezviz)
+             */
+            expireAt?: string;
+            /**
+             * @description ezviz 萤石云 (用 EZUIKit 播放 url，需 accessToken)；url 直播地址 (HLS / FLV 等)
+             * @enum {string}
+             */
+            provider: "ezviz" | "url";
+            /** @description 是否支持云台方向控制 */
+            ptz: boolean;
+            /** @description ezviz：ezopen 播放地址；url：直播地址 */
+            url: string;
+            /** @description 是否支持变倍 (放大 / 缩小) */
+            zoom: boolean;
+        };
+        CameraPTZBody: {
+            /**
+             * @description start 开始转动 (按下方向键)；stop 停止 (松开)
+             * @enum {string}
+             */
+            action: "start" | "stop";
+            /**
+             * Format: int64
+             * @description 0 上、1 下、2 左、3 右、4 左上、5 左下、6 右上、7 右下、8 放大、9 缩小、10 近焦距、11 远焦距
+             */
+            direction: number;
+            /**
+             * Format: int64
+             * @description 0 慢、1 适中 (默认)、2 快；stop 时忽略
+             */
+            speed?: number;
         };
         ChangePasswordInputBody: {
             /** @description 8~64 个字符，必须同时包含字母和数字 */
@@ -5332,6 +5409,78 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PageDeviceAppView"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-camera-live": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraLiveView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-camera-ptz": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraPTZBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

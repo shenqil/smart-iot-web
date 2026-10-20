@@ -5,7 +5,8 @@ server {
     server_name _;
     root /usr/share/nginx/html;
 
-    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://*.tianditu.gov.cn https://*.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:" always;
+    # 萤石视频 (EZUIKit)：解码库来自 openstatic.ys7.com (WebAssembly)，接口 open.ys7.com，取流 wss://*.ys7.com:端口
+    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://*.tianditu.gov.cn https://*.aliyuncs.com https://*.ys7.com; connect-src 'self' https://*.aliyuncs.com https://*.ys7.com https://*.ys7.com:* wss://*.ys7.com:*; style-src 'self' 'unsafe-inline' https://openstatic.ys7.com; script-src 'self' 'wasm-unsafe-eval' https://openstatic.ys7.com; worker-src 'self' blob: https://openstatic.ys7.com; media-src 'self' blob:; font-src 'self' data: https://openstatic.ys7.com" always;
 
     location = /index.html { add_header Cache-Control "no-cache"; }
     location /assets/      { add_header Cache-Control "public, max-age=31536000, immutable"; }

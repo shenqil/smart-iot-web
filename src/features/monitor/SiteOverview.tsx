@@ -110,7 +110,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
               <span title={`${weather.stale ? '天气服务暂不可用，显示的是旧数据；' : ''}发布于 ${weather.updateTime}`}>
                 <CloudOutlined className="mr-1" />
                 {weather.weather} {weather.temperature}℃，湿度 {weather.humidity}%
-                {weather.windDirection && `，${weather.windDirection}风 ${weather.windPower}级`}
+                {weather.windDirection && `，${weather.windDirection} ${weather.windPower}`}
               </span>
             )}
           </div>

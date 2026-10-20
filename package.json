@@ -28,6 +28,7 @@
     "antd": "^6.6.6",
     "dayjs": "^1.11.23",
     "echarts": "^6.1.0",
+    "ezuikit-js": "8.2.7",
     "fflate": "^0.8.3",
     "leaflet": "^1.9.4",
     "openapi-fetch": "^0.17.0",

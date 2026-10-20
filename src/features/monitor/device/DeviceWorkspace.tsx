@@ -48,7 +48,7 @@ export function DeviceWorkspace({ siteId, deviceId }: { siteId: number; deviceId
     return (
       <div className="flex flex-col gap-4">
         <DeviceHero device={device} type={type} online={device.online} hideInterval />
-        <VideoPanel />
+        <VideoPanel device={device} />
       </div>
     )
   return <TelemetryWorkspace key={device.id} device={device} type={type} />
