@@ -19,26 +19,23 @@ function Screen({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * 视频监控设备：实时画面 + 云台控制
- * 萤石云摄像头用 EZUIKit 播放 (accessToken 由后端换取)；只配置了直播地址的用 <video> 直接播放
+ * 实时画面 (不含云台)：萤石云摄像头用 EZUIKit 播放 (accessToken 由后端换取)；只配置了直播地址的用 <video> 直接播放
+ * 数据端视频设备与大屏「实时监控」共用
  */
-export function VideoPanel({ device }: { device: AppDevice }) {
+export function LiveView({ device }: { device: AppDevice }) {
   const companyId = useCompanyId()
   const live = useQuery(cameraLiveQuery(companyId, device.id))
   const v = live.data
-  const controls = v?.provider === 'ezviz' && (v.ptz || v.zoom)
-
-  let screen: React.ReactNode
-  if (live.isPending) {
-    screen = (
+  if (live.isPending)
+    return (
       <Screen>
         <Spin />
         <span className="text-sm">正在获取播放地址…</span>
       </Screen>
     )
-  } else if (live.isError) {
+  if (live.isError) {
     const notConfigured = isApiError(live.error) && live.error.code === 'CAMERA_NOT_CONFIGURED'
-    screen = (
+    return (
       <Screen>
         <VideoCameraOutlined className="text-5xl text-white/40" />
         <div className="text-base text-white/80">{notConfigured ? '该设备还没有配置摄像头' : '无法播放'}</div>
@@ -52,16 +49,25 @@ export function VideoPanel({ device }: { device: AppDevice }) {
         )}
       </Screen>
     )
-  } else if (v?.provider === 'ezviz' && v.accessToken) {
-    screen = <EzvizPlayer url={v.url} accessToken={v.accessToken} />
-  } else if (v) {
-    screen = <UrlPlayer url={v.url} />
   }
+  if (v?.provider === 'ezviz' && v.accessToken) return <EzvizPlayer url={v.url} accessToken={v.accessToken} />
+  if (v) return <UrlPlayer url={v.url} />
+  return null
+}
+
+/** 视频监控设备：实时画面 + 云台控制 */
+export function VideoPanel({ device }: { device: AppDevice }) {
+  const companyId = useCompanyId()
+  // 与 LiveView 共用同一个查询 (缓存)，这里只读取云台能力
+  const v = useQuery(cameraLiveQuery(companyId, device.id)).data
+  const controls = v?.provider === 'ezviz' && (v.ptz || v.zoom)
 
   return (
     <Card variant="borderless" title="实时画面">
       <div className={controls ? 'grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_260px]' : ''}>
-        <div className="mx-auto w-full max-w-[calc(72vh*16/9)]">{screen}</div>
+        <div className="mx-auto w-full max-w-[calc(72vh*16/9)]">
+          <LiveView device={device} />
+        </div>
         {controls && v && (
           <div className="rounded-lg border border-line border-solid px-4 py-5">
             <div className="mb-4 font-medium">云台控制</div>

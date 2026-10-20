@@ -19,8 +19,11 @@ export const unprocessedAlarmCountQuery = (companyId: number) =>
     meta: { silent: true },
   })
 
-/** 某个范围 (园区 / 设备) 的未处理告警数 {count, capped}，60s 刷新 */
-export const scopedUnprocessedCountQuery = (companyId: number, scope: { siteId?: number; deviceId?: number }) =>
+/** 某个范围 (园区 / 设备，可按级别) 的未处理告警数 {count, capped}，60s 刷新 */
+export const scopedUnprocessedCountQuery = (
+  companyId: number,
+  scope: { siteId?: number; deviceId?: number; level?: number },
+) =>
   queryOptions({
     queryKey: ['app', companyId, 'alarms', 'unprocessed-count', scope],
     queryFn: () =>

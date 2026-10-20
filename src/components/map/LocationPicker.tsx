@@ -1,9 +1,12 @@
 import { AimOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { Button, InputNumber, Modal, Select, Space, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { CircleMarker, useMap } from 'react-leaflet'
+import { Marker, useMap } from 'react-leaflet'
+import { pickMarkerIcon } from './markers'
 import { TdtMap } from './TdtMap'
 import { isValidLngLat, type PlaceResult, searchPlace, useTdtBrowserKey } from './tianditu'
+
+const pickIcon = pickMarkerIcon()
 
 /** 表单值：[经度, 纬度]，未定位为 null */
 export type LngLat = [number, number] | null
@@ -84,13 +87,7 @@ function PickerModal({
         zoom={point ? 15 : 4}
         onClick={(lng, lat) => setPoint([Number(lng.toFixed(6)), Number(lat.toFixed(6))])}
       >
-        {point && (
-          <CircleMarker
-            center={[point[1], point[0]]}
-            radius={9}
-            pathOptions={{ color: '#0f766e', fillOpacity: 0.85 }}
-          />
-        )}
+        {point && <Marker position={[point[1], point[0]]} icon={pickIcon} interactive={false} />}
         <FlyTo point={point} />
       </TdtMap>
       <div className="mt-3 flex items-center gap-2">

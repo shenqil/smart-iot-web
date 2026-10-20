@@ -72,7 +72,7 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1">
-          <Link to={`/screen/${companyId}${siteId ? `?siteId=${siteId}` : ''}`} target="_blank">
+          <Link to={`/screen/${companyId}${scopeSearch()}`} target="_blank">
             <Button type="text" icon={<FullscreenOutlined />}>
               大屏
             </Button>

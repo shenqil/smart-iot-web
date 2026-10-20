@@ -1,0 +1,348 @@
+/* 数据大屏 (FRONTEND_DESIGN §5.7)：暗色，设计稿 1920 × 1080 等比缩放 */
+.screen-root {
+  --sc-bg: #04101c;
+  --sc-panel: rgb(5 19 33 / 0.88);
+  --sc-line: rgb(34 211 238 / 0.22);
+  --sc-accent: #22d3ee;
+  --sc-text: #e6f1f8;
+  --sc-text-2: #9fb6ca;
+  --sc-text-3: #7f9bb3;
+  --sc-num: "DIN Alternate", "Bahnschrift", "Roboto Condensed", "Arial Narrow", sans-serif;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--sc-bg);
+  color: var(--sc-text);
+}
+
+.screen-num {
+  font-family: var(--sc-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 地图铺满视口；两侧加暗角让面板更清晰 */
+.screen-map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.screen-map .leaflet-container {
+  background: #13241d;
+}
+
+.screen-map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(4 16 28 / 0.82), rgb(4 16 28 / 0) 28%, rgb(4 16 28 / 0) 72%, rgb(4 16 28 / 0.82)),
+    linear-gradient(180deg, rgb(4 16 28 / 0.55), rgb(4 16 28 / 0) 22%);
+}
+
+/* 设计稿图层：不拦截地图操作，只有面板和控件接收指针 */
+.screen-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.screen-stage > * {
+  pointer-events: auto;
+}
+
+.screen-header-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 5;
+  background: rgb(3 12 22 / 0.96);
+  border-bottom: 1px solid rgb(34 211 238 / 0.35);
+}
+
+/* 面板 */
+.screen-panel {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 14px;
+  border: 1px solid var(--sc-line);
+  border-radius: 4px;
+  background: var(--sc-panel);
+  backdrop-filter: blur(6px);
+  animation: screen-in 0.35s ease-out;
+}
+
+.screen-panel::before,
+.screen-panel::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.screen-panel::before {
+  left: -1px;
+  top: -1px;
+  border-left: 2px solid var(--sc-accent);
+  border-top: 2px solid var(--sc-accent);
+  border-top-left-radius: 4px;
+}
+
+.screen-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 2px solid var(--sc-accent);
+  border-bottom: 2px solid var(--sc-accent);
+  border-bottom-right-radius: 4px;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-panel {
+    animation: none;
+  }
+}
+
+.screen-panel__head {
+  position: relative;
+  flex: none;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgb(34 211 238 / 0.16);
+}
+
+.screen-panel__head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 48px;
+  height: 2px;
+  background: var(--sc-accent);
+}
+
+.screen-panel__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--sc-accent);
+  transform: rotate(45deg);
+}
+
+.screen-panel__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--sc-text);
+  white-space: nowrap;
+}
+
+.screen-panel__body {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 可滚动但不显示滚动条 (滚轮 / 触摸) */
+.screen-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.screen-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.screen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid rgb(34 211 238 / 0.35);
+  background: rgb(34 211 238 / 0.08);
+  color: #cff7fe;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.screen-btn:hover:not(:disabled) {
+  background: rgb(34 211 238 / 0.18);
+}
+
+.screen-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.screen-btn:focus-visible,
+.screen-row:focus-visible {
+  outline: 2px solid var(--sc-accent);
+  outline-offset: 1px;
+}
+
+.screen-btn.is-active {
+  border-color: var(--sc-accent);
+  background: rgb(34 211 238 / 0.2);
+  color: #fff;
+}
+
+.screen-btn.is-quiet {
+  border-color: rgb(148 163 184 / 0.3);
+  background: transparent;
+  color: var(--sc-text-2);
+}
+
+.screen-btn.is-warn {
+  border-color: #f59e0b;
+  background: rgb(245 158 11 / 0.12);
+  color: #fcd34d;
+}
+
+.screen-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid rgb(148 163 184 / 0.1);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+button.screen-row {
+  cursor: pointer;
+}
+
+button.screen-row:hover {
+  background: rgb(34 211 238 / 0.06);
+}
+
+.screen-empty {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--sc-text-2);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 大屏里的 Leaflet 弹窗 (选中设备的实时值气泡) */
+.screen-bubble .leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  border: 1px solid #facc15;
+  background: rgb(5 19 33 / 0.95);
+  color: var(--sc-text);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.6);
+}
+
+.screen-bubble .leaflet-popup-content {
+  margin: 10px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.screen-bubble .leaflet-popup-tip {
+  background: #facc15;
+}
+
+/* 继电器开关 */
+.screen-switch {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  width: 54px;
+  height: 26px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+.screen-switch.is-on {
+  justify-content: flex-end;
+  background: #0891b2;
+}
+
+.screen-switch.is-off {
+  justify-content: flex-start;
+  background: #334155;
+}
+
+.screen-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.screen-switch__knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-spin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgb(8 145 178 / 0.3);
+  border-top-color: #0891b2;
+  animation: screen-spin 0.9s linear infinite;
+}
+
+@keyframes screen-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

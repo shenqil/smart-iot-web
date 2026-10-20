@@ -1,0 +1,440 @@
+/*
+ * 地图标点 (markers.ts)。图标容器为 0×0、锚点在针尖，子元素相对锚点绝对定位
+ * 颜色：在线 #06b6d4 / 离线 #64748b / 告警 #ef4444 / 选中金环 #facc15 (影像与矢量底图上都需清晰可辨)
+ */
+.siot-mk,
+.siot-site {
+  --mk-on: #06b6d4;
+  --mk-off: #64748b;
+  --mk-al: #ef4444;
+  --mk-sel: #facc15;
+  position: absolute;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.siot-mk__pin {
+  position: absolute;
+  left: -18px;
+  top: -46px;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--mk-on);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: transform 0.15s ease-out;
+}
+
+.siot-mk__glyph {
+  transform: rotate(45deg);
+  display: flex;
+}
+
+.siot-mk__glyph img {
+  width: 18px;
+  height: 18px;
+  max-width: none;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.siot-mk.is-offline .siot-mk__pin {
+  background: var(--mk-off);
+}
+
+.siot-mk.is-offline .siot-mk__glyph {
+  opacity: 0.75;
+}
+
+.siot-mk.is-alarm .siot-mk__pin {
+  background: var(--mk-al);
+}
+
+/* 选点针：主色 */
+.siot-mk.is-pick .siot-mk__pin {
+  background: var(--ant-color-primary, #0f766e);
+}
+
+.siot-mk.is-sel .siot-mk__pin {
+  left: -22px;
+  top: -56px;
+  width: 44px;
+  height: 44px;
+  box-shadow:
+    0 0 0 3px var(--mk-sel),
+    0 0 22px rgb(250 204 21 / 0.65),
+    0 4px 10px rgb(0 0 0 / 0.5);
+}
+
+.siot-mk.is-sel .siot-mk__glyph img {
+  width: 22px;
+  height: 22px;
+}
+
+.leaflet-marker-icon.siot-mk:hover .siot-mk__pin,
+.leaflet-marker-icon.siot-mk:focus-visible .siot-mk__pin {
+  transform: rotate(-45deg) scale(1.08);
+}
+
+.leaflet-marker-icon.siot-mk:focus-visible {
+  outline: none;
+}
+
+.leaflet-marker-icon.siot-mk:focus-visible .siot-mk__pin {
+  outline: 2px solid var(--mk-sel);
+  outline-offset: 3px;
+}
+
+.siot-mk__gnd {
+  position: absolute;
+  left: -6px;
+  top: -3px;
+  width: 12px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.siot-mk__badge {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+.siot-mk__badge.is-off {
+  color: #475569;
+  font-size: 11px;
+}
+
+.siot-mk.is-sel .siot-mk__badge {
+  left: 12px;
+  top: -72px;
+}
+
+/* 名称标签：默认隐藏；缩放 ≥ 15 级 (容器 .siot-labels)、告警、选中时显示 */
+.siot-mk__lbl {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  transform: translateX(-50%);
+  display: none;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.siot-mk__st {
+  margin-left: 4px;
+}
+
+.siot-mk--dark .siot-mk__lbl {
+  background: rgb(4 16 28 / 0.86);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  color: #f1f5f9;
+}
+
+.siot-mk--light .siot-mk__lbl {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #1f2937;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.15);
+}
+
+.siot-mk--light .siot-mk__gnd {
+  background: rgb(15 23 42 / 0.25);
+}
+
+.siot-labels .siot-mk__lbl {
+  display: block;
+}
+
+.siot-mk.is-alarm .siot-mk__lbl {
+  display: block;
+}
+
+.siot-mk.is-sel .siot-mk__lbl {
+  display: block;
+  top: 10px;
+  font-weight: 700;
+}
+
+.siot-mk--dark.is-alarm .siot-mk__st {
+  color: #fca5a5;
+}
+
+.siot-mk--dark.is-offline .siot-mk__st {
+  color: #cbd5e1;
+}
+
+.siot-mk--dark.is-sel .siot-mk__lbl {
+  border-color: var(--mk-sel);
+  color: #fef3c7;
+}
+
+.siot-mk--light.is-alarm .siot-mk__st {
+  color: #dc2626;
+}
+
+.siot-mk--light.is-offline .siot-mk__st {
+  color: #64748b;
+}
+
+.siot-mk--light.is-sel .siot-mk__lbl {
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+/* 告警 / 选中的地面光圈 */
+.siot-mk__ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--mk-al);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: siot-ring 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.siot-mk__ring.is-gold {
+  border-color: var(--mk-sel);
+  width: 60px;
+  height: 26px;
+}
+
+.siot-mk__ring.is-late {
+  animation-delay: 0.9s;
+}
+
+@keyframes siot-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.35);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .siot-mk__ring {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* 园区方牌 */
+.siot-site__card {
+  position: absolute;
+  left: 0;
+  top: -66px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 5px;
+  border-radius: 8px;
+  border: 2px solid #22d3ee;
+  background: #0b2236;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
+  white-space: nowrap;
+}
+
+.siot-site__ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #22d3ee;
+  color: #04101c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.siot-site__txt {
+  display: flex;
+  flex-direction: column;
+}
+
+.siot-site__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.siot-site__sub {
+  font-size: 12px;
+  color: #a5f3fc;
+}
+
+.siot-site__sub b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.siot-site__sub em {
+  font-style: normal;
+  color: #fca5a5;
+}
+
+.siot-site__tip {
+  position: absolute;
+  left: -8px;
+  top: -20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #22d3ee;
+}
+
+.siot-site.is-under_construction .siot-site__card {
+  border-color: #f59e0b;
+  background: repeating-linear-gradient(135deg, #2a1e0b 0 8px, #22190b 8px 16px);
+}
+
+.siot-site.is-under_construction .siot-site__ico {
+  background: #f59e0b;
+  color: #1f1300;
+}
+
+.siot-site.is-under_construction .siot-site__sub {
+  color: #fde68a;
+}
+
+.siot-site.is-under_construction .siot-site__tip {
+  border-top-color: #f59e0b;
+}
+
+.siot-site.is-inactive .siot-site__card {
+  border-color: #64748b;
+  background: #1e293b;
+  opacity: 0.88;
+}
+
+.siot-site.is-inactive .siot-site__ico {
+  background: #64748b;
+  color: #fff;
+}
+
+.siot-site.is-inactive .siot-site__name {
+  color: #cbd5e1;
+}
+
+.siot-site.is-inactive .siot-site__sub {
+  color: #94a3b8;
+}
+
+.siot-site.is-inactive .siot-site__tip {
+  border-top-color: #64748b;
+}
+
+/* 聚合 (leaflet.css 把标点设为 display:block，这里提高优先级) */
+.leaflet-marker-icon.siot-clu {
+  border-radius: 50%;
+  background: #0891b2;
+  border: 3px solid #fff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    0 0 0 8px rgb(8 145 178 / 0.3),
+    0 4px 10px rgb(0 0 0 / 0.45);
+}
+
+.leaflet-marker-icon.siot-clu.is-al {
+  box-shadow:
+    0 0 0 4px #ef4444,
+    0 0 0 10px rgb(239 68 68 / 0.28),
+    0 4px 10px rgb(0 0 0 / 0.45);
+}
+
+/* 图例 */
+.siot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.siot-legend--light {
+  background: rgb(255 255 255 / 0.92);
+  color: #334155;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+}
+
+.siot-legend--dark {
+  background: rgb(5 19 33 / 0.88);
+  border: 1px solid rgb(34 211 238 / 0.2);
+  color: #cbd5e1;
+}
+
+.siot-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.siot-legend__pin {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.siot-legend__clu {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  background: #0891b2;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.siot-legend__site {
+  width: 14px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1.5px solid #22d3ee;
+  background: #0b2236;
+}

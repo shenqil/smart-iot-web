@@ -132,7 +132,12 @@ export function SiteOverview({ siteId }: { siteId: number }) {
           <Card variant="borderless" title="设备分布">
             <DeviceMap
               height={340}
-              devices={list.map((d) => ({ ...d, alarms: alarmsOf.get(d.id) ?? 0 }))}
+              devices={list.map((d) => ({
+                ...d,
+                alarms: alarmsOf.get(d.id) ?? 0,
+                typeName: types.nameOf(d.deviceTypeId),
+                iconUrl: d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.icon || undefined : undefined,
+              }))}
               onSelect={(id) => select({ siteId, deviceId: id })}
             />
           </Card>
