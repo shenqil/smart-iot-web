@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { notify } from '@/app/notify'
 import { handleGlobalError } from '@/app/queryClient'
 import type { AppDevice } from '@/features/device/api'
+import { useStandardRelays } from '@/features/dict/api'
+import { relayKind } from '@/features/telemetry/lib/channelKind'
 import {
   type AppRelay,
   byChannel,
@@ -13,6 +15,7 @@ import {
   relayBlockedReason,
 } from '@/features/telemetry/lib/realtime'
 import { realtimeKey } from '@/features/telemetry/realtime/api'
+import { RelayGlyph } from '@/features/telemetry/realtime/ChannelGlyph'
 import { useCompanyId } from '@/hooks/session'
 import { type ControlOutcome, controlRelay, interpretControl } from './api'
 
@@ -37,6 +40,9 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
   const blocked = relayBlockedReason(device, online)
   const relays = byChannel(device.relays)
   const key = realtimeKey(companyId, device.id)
+  const stdRelays = useStandardRelays().byId
+  // 通道配置的图标 › 标准继电器字典的图标 › 按名称匹配的内置图标
+  const iconOf = (r: AppRelay) => r.url || (r.standardId != null ? stdRelays.get(r.standardId)?.url : undefined)
 
   const apply = (ch: number, o: ControlOutcome) => {
     if (o.actualState != null) {
@@ -107,6 +113,8 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
         const on = state === 1
         const loading = busy.has(r.channelNum)
         const reason = blocked ?? (realtime && !known ? '暂无状态数据' : null)
+        const icon = iconOf(r)
+        const kind = relayKind(r)
         return (
           <div
             key={r.channelNum}
@@ -115,18 +123,23 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
             }`}
           >
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-md ${
-                on ? 'bg-primary text-white' : 'bg-layout text-fg-tertiary'
+              className={`flex size-10 shrink-0 items-center justify-center rounded-[10px] transition-colors ${
+                on
+                  ? 'bg-primary text-white shadow-[0_2px_8px_color-mix(in_srgb,var(--ant-color-primary)_35%,transparent)]'
+                  : 'bg-layout text-fg-tertiary'
               }`}
             >
-              {r.url ? (
+              {icon ? (
                 <img
-                  src={r.url}
+                  src={icon}
                   alt=""
-                  className={`size-5 object-contain ${on ? 'brightness-0 invert' : 'opacity-60'}`}
+                  className={`size-6 object-contain ${on ? 'brightness-0 invert' : 'opacity-60 grayscale'}`}
                 />
               ) : (
-                <PoweroffOutlined />
+                <RelayGlyph
+                  kind={kind}
+                  className={`size-[22px] ${on && kind === 'fan' ? 'motion-safe:animate-[spin_2.4s_linear_infinite]' : ''}`}
+                />
               )}
             </span>
             <div className="min-w-0 flex-1">

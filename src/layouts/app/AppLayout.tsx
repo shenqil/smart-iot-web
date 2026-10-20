@@ -13,6 +13,15 @@ import { UserMenu } from '../UserMenu'
 import { ScopeTree } from './ScopeTree'
 import { useScope } from './useScope'
 
+/**
+ * 按企业 ID 重新挂载外壳：切换企业时设备树的展开项、搜索词、筛选与工作区内的状态全部清空，
+ * 不会用上一个企业的园区 ID 去请求新企业 (FRONTEND_DESIGN §5.0)
+ */
+export function AppPortal() {
+  const companyId = useCompanyId()
+  return <AppLayout key={companyId} />
+}
+
 /** 数据端外壳：顶部导航 + 园区设备树 + 工作区 (FRONTEND_DESIGN §5.0) */
 export function AppLayout() {
   const companyId = useCompanyId()
@@ -101,7 +110,8 @@ export function AppLayout() {
             <ScopeTree />
           </Layout.Sider>
         )}
-        <Layout.Content className="page-content relative overflow-auto py-4 pr-4 pl-10">
+        {/* 收起按钮放在不滚动的外层，页面滚动时停在原位 */}
+        <div className="relative flex min-w-0 flex-1 flex-col">
           <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
             <Button
               size="small"
@@ -110,13 +120,15 @@ export function AppLayout() {
               onClick={() => setCollapsed(!collapsed)}
             />
           </Tooltip>
-          <Suspense fallback={<FullPageSpinner />}>
-            <Outlet />
-          </Suspense>
-        </Layout.Content>
+          <Layout.Content className="page-content min-h-0 flex-1 overflow-auto py-4 pr-4 pl-10">
+            <Suspense fallback={<FullPageSpinner />}>
+              <Outlet />
+            </Suspense>
+          </Layout.Content>
+        </div>
       </Layout>
     </Layout>
   )
 }
 
-export default AppLayout
+export default AppPortal

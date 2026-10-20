@@ -22,6 +22,21 @@ export function expireSession(message = '登录已过期，请重新登录') {
   setTimeout(() => queryClient.clear(), 0)
 }
 
+/**
+ * 切换企业后清理缓存：只保留登录态 (['auth'])、全局字典 (['dict']) 与目标企业在该端的数据，
+ * 其余查询 (上一个企业的园区 / 设备 / 实时 / 告警 / 记录、天气、平台端数据等) 全部取消并移除；
+ * "我的企业" 重新获取，保证企业状态与过期时间是最新的
+ */
+export function resetCompanyCache(portal: 'tenant' | 'app', companyId: number) {
+  const keep = (key: readonly unknown[]) =>
+    key[0] === 'auth' || key[0] === 'dict' || (key[0] === portal && key[1] === companyId)
+  const predicate = ({ queryKey }: { queryKey: readonly unknown[] }) => !keep(queryKey)
+  queryClient.cancelQueries({ predicate })
+  queryClient.removeQueries({ predicate })
+  queryClient.getMutationCache().clear()
+  queryClient.invalidateQueries({ queryKey: authKeys.companies })
+}
+
 let companyDeniedOpen = false
 
 /** 全局错误处理 (FRONTEND_DESIGN §2.5) */

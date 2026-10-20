@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Card, Empty, Result, Skeleton, Tabs } from 'antd'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { RowsScroller } from '@/components/RowsScroller'
 import { AlarmTable } from '@/features/alarm/AlarmTable'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { type DeviceType, useDeviceTypes } from '@/features/dict/api'
@@ -82,6 +83,8 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
     )
   // 历史曲线与环比共用的通道选择 (默认前两个通道)
   const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channelNum))
+  // 实时数据最多显示三行卡片，继电器列表与之等高，超出部分各自在内部滚动
+  const [sensorAreaHeight, setSensorAreaHeight] = useState<number>()
   const trail = useReadingTrail(realtime?.sensors, realtime?.sensorsAt)
   const readings = sensors.map((c) => readSensor(c, realtime?.sensors))
   const outOfRange = readings.filter((r) => r.state === 'over' || r.state === 'under').length
@@ -114,16 +117,18 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
       {rt.isError && !realtime ? (
         <Alert type="error" showIcon title="实时数据获取失败，正在重试" />
       ) : (
-        <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))]">
-          {readings.map((r) => (
-            <SensorCard
-              key={r.config.channelNum}
-              reading={r}
-              trail={trail[r.config.channelNum] ?? []}
-              offline={!online}
-            />
-          ))}
-        </div>
+        <RowsScroller rows={3} onHeight={setSensorAreaHeight}>
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
+            {readings.map((r) => (
+              <SensorCard
+                key={r.config.channelNum}
+                reading={r}
+                trail={trail[r.config.channelNum] ?? []}
+                offline={!online}
+              />
+            ))}
+          </div>
+        </RowsScroller>
       )}
     </Card>
   )
@@ -145,7 +150,9 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
         )
       }
     >
-      <RelayPanel device={device} realtime={realtime} layout={sensors.length ? 'list' : 'grid'} />
+      <RowsScroller rows={3} height={sensors.length ? sensorAreaHeight : undefined}>
+        <RelayPanel device={device} realtime={realtime} layout={sensors.length ? 'list' : 'grid'} />
+      </RowsScroller>
     </Card>
   )
 

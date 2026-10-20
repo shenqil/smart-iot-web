@@ -1,12 +1,22 @@
-/** 迷你折线 (无坐标轴)，宽度随容器；少于 2 个点时显示一条基线 */
-export function Sparkline({ values, tone = 'primary' }: { values: number[]; tone?: 'primary' | 'warning' | 'muted' }) {
+const TONES = {
+  primary: 'var(--ant-color-primary)',
+  warning: 'var(--ant-color-warning)',
+  muted: 'var(--ant-color-text-quaternary)',
+}
+
+/** 迷你折线 (无坐标轴)，宽度随容器；少于 2 个点时显示一条基线。color 为任意 CSS 颜色，优先于 tone */
+export function Sparkline({
+  values,
+  tone = 'primary',
+  color,
+}: {
+  values: number[]
+  tone?: keyof typeof TONES
+  color?: string
+}) {
   const W = 120
   const H = 32
-  const color = {
-    primary: 'var(--ant-color-primary)',
-    warning: 'var(--ant-color-warning)',
-    muted: 'var(--ant-color-text-quaternary)',
-  }[tone]
+  const stroke = color ?? TONES[tone]
   if (values.length < 2)
     return (
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-8 w-full" aria-hidden>
@@ -21,16 +31,16 @@ export function Sparkline({ values, tone = 'primary' }: { values: number[]; tone
   const [lx, ly] = pts[pts.length - 1]
   return (
     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-8 w-full overflow-visible" aria-hidden>
-      <polygon points={`0,${H} ${line} ${W},${H}`} fill={color} opacity={0.08} />
+      <polygon points={`0,${H} ${line} ${W},${H}`} fill={stroke} opacity={0.1} />
       <polyline
         points={line}
         fill="none"
-        stroke={color}
+        stroke={stroke}
         strokeWidth={1.5}
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
-      <circle cx={lx} cy={ly} r={2.5} fill={color} vectorEffect="non-scaling-stroke" />
+      <circle cx={lx} cy={ly} r={2.5} fill={stroke} vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
