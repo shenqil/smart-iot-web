@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from 'react-router'
 import { isApiError } from '@/api/errors'
 import { meQuery, myCompaniesQuery } from '@/features/auth/api'
+import { loadFrontendConfig } from '@/features/sysconfig/api'
 import { canEnter, landingPath, type Portal } from '@/lib/portal'
 import { usePref } from '@/stores/pref'
 import { hasValidSession, useSession } from '@/stores/session'
@@ -13,7 +14,7 @@ const pathOf = (request: Request) => {
   return `${u.pathname}${u.search}`
 }
 
-/** 取当前登录态 (me + 我的企业)；未登录或令牌失效时跳登录页 */
+/** 取当前登录态 (me + 我的企业)，并加载前端系统配置 (失败不阻塞)；未登录或令牌失效时跳登录页 */
 export async function loadSession(request: Request) {
   if (!hasValidSession()) {
     useSession.getState().clear()
@@ -23,6 +24,7 @@ export async function loadSession(request: Request) {
     const [me, companies] = await Promise.all([
       queryClient.ensureQueryData(meQuery),
       queryClient.ensureQueryData(myCompaniesQuery),
+      loadFrontendConfig(),
     ])
     return { me, companies }
   } catch (e) {

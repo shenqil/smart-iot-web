@@ -65,4 +65,15 @@ export const adminRoutes: RouteObject[] = [
       },
     ],
   },
+  {
+    path: 'settings',
+    handle: { crumb: '系统设置' },
+    children: [
+      {
+        path: 'sys-configs',
+        handle: { crumb: '系统配置' },
+        lazy: async () => ({ Component: (await import('@/features/sysconfig/SysConfigPage')).default }),
+      },
+    ],
+  },
 ]

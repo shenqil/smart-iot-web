@@ -1,17 +1,16 @@
 /**
  * 天地图 (FRONTEND_DESIGN §6)
- * - 瓦片：浏览器端 Key (VITE_TDT_BROWSER_KEY，绑定域名)
+ * - 瓦片：浏览器端 Key (绑定域名)，来自前端系统配置 frontend.tianditu.browserKey (useTdtBrowserKey，登录后加载)
  * - 搜索 / 逆地理编码：经 /tdt-api 代理，由 Nginx / Vite 追加服务端 Key，不暴露给浏览器
  * - 坐标：CGCS2000 ≈ WGS84，后端存 WGS84，不做纠偏
  */
-export const TDT_BROWSER_KEY = import.meta.env.VITE_TDT_BROWSER_KEY || ''
-export const hasTdtKey = Boolean(TDT_BROWSER_KEY)
+export { useTdtBrowserKey } from '@/stores/sysConfig'
 
 export type TdtLayer = 'vec' | 'cva' | 'img' | 'cia'
 
-export const tdtTileUrl = (layer: TdtLayer) =>
+export const tdtTileUrl = (layer: TdtLayer, key: string) =>
   `https://t{s}.tianditu.gov.cn/${layer}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}` +
-  `&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TDT_BROWSER_KEY}`
+  `&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${encodeURIComponent(key)}`
 
 export const TDT_SUBDOMAINS = ['0', '1', '2', '3', '4', '5', '6', '7']
 

@@ -477,6 +477,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/sys-configs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 系统配置列表 (分页)
+         * @description 关键字匹配：配置键、描述；可排序字段：createdAt, id, key, updatedAt。
+         */
+        get: operations["admin-list-sys-configs"];
+        put?: never;
+        /**
+         * 创建系统配置
+         * @description 配置键重复返回 409 DUPLICATE。value 为 JSON 字符串，后端不校验，原样存储；任意登录用户都可以按 key 读取，不得存放服务端密钥。
+         */
+        post: operations["admin-create-sys-config"];
+        /** 批量删除系统配置 */
+        delete: operations["admin-delete-sys-configs"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sys-configs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 系统配置详情 */
+        get: operations["admin-get-sys-config"];
+        /**
+         * 修改系统配置
+         * @description 部分更新：未传的字段不修改；配置键不可修改。
+         */
+        put: operations["admin-update-sys-config"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -968,6 +1014,26 @@ export interface paths {
          * @description 关键字匹配：名称、单位；可排序字段：createdAt, id, name, sort。
          */
         get: operations["common-list-standard-sensors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/common/sys-configs/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 获取系统配置
+         * @description 按配置键获取系统配置 (任意登录用户)。value 为 JSON 字符串，原样返回，由前端解析；配置键不存在返回 404。
+         */
+        get: operations["common-get-sys-config"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2347,6 +2413,25 @@ export interface components {
              */
             totalCount: number;
         };
+        PageSysConfigView: {
+            /**
+             * Format: int64
+             * @description 页码
+             */
+            page: number;
+            /**
+             * Format: int64
+             * @description 每页条数
+             */
+            pageSize: number;
+            /** @description 当前页数据 */
+            records: components["schemas"]["SysConfigView"][];
+            /**
+             * Format: int64
+             * @description 符合条件的总条数
+             */
+            totalCount: number;
+        };
         PageUserMemberView: {
             /**
              * Format: int64
@@ -2867,6 +2952,37 @@ export interface components {
             updatedAt: string;
             /** @description 图标 URL */
             url: string;
+        };
+        SysConfigBody: {
+            description?: string;
+            /** @description 配置键 (唯一，创建后不可修改)，如 frontend */
+            key: string;
+            /** @description 配置值 (JSON 字符串，后端不校验，原样存储) */
+            value: string;
+        };
+        SysConfigPatch: {
+            description?: string;
+            /** @description 配置值 (JSON 字符串，后端不校验，原样存储) */
+            value?: string;
+        };
+        SysConfigValueView: {
+            /** @description 配置键 */
+            key: string;
+            /** @description 配置值 (JSON 字符串，原样返回，由前端解析) */
+            value: string;
+        };
+        SysConfigView: {
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: int64 */
+            id: number;
+            /** @description 配置键 (唯一，创建后不可修改) */
+            key: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description 配置值 (JSON 字符串，原样返回，由前端解析) */
+            value: string;
         };
         TelemetryDailyView: {
             /** @description 按时间升序，最多 24 行；缺失的小时没有行 */
@@ -4555,6 +4671,178 @@ export interface operations {
             };
         };
     };
+    "admin-list-sys-configs": {
+        parameters: {
+            query?: {
+                /** @description 页码，从 1 开始 */
+                page?: number;
+                /** @description 每页条数 (1~200) */
+                pageSize?: number;
+                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
+                keyword?: string;
+                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageSysConfigView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-create-sys-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SysConfigBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysConfigView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-delete-sys-configs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IDsBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AffectedBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-get-sys-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysConfigView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-update-sys-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SysConfigPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysConfigView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-list-users": {
         parameters: {
             query?: {
@@ -5660,6 +5948,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageStandardSensorView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "common-get-sys-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 配置键，如 frontend */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysConfigValueView"];
                 };
             };
             /** @description Error */

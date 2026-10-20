@@ -3,7 +3,7 @@ import { Button, InputNumber, Modal, Select, Space, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { CircleMarker, useMap } from 'react-leaflet'
 import { TdtMap } from './TdtMap'
-import { hasTdtKey, isValidLngLat, type PlaceResult, searchPlace } from './tianditu'
+import { isValidLngLat, type PlaceResult, searchPlace, useTdtBrowserKey } from './tianditu'
 
 /** 表单值：[经度, 纬度]，未定位为 null */
 export type LngLat = [number, number] | null
@@ -27,6 +27,7 @@ function PickerModal({
   onOk: (v: LngLat) => void
   onCancel: () => void
 }) {
+  const hasTdtKey = Boolean(useTdtBrowserKey())
   const [point, setPoint] = useState<LngLat>(value)
   const [results, setResults] = useState<PlaceResult[]>([])
   const [searching, setSearching] = useState(false)

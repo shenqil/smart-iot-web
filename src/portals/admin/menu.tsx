@@ -1,4 +1,11 @@
-import { AppstoreOutlined, BankOutlined, BookOutlined, DashboardOutlined, TeamOutlined } from '@ant-design/icons'
+import {
+  AppstoreOutlined,
+  BankOutlined,
+  BookOutlined,
+  DashboardOutlined,
+  SettingOutlined,
+  TeamOutlined,
+} from '@ant-design/icons'
 import type { PortalMenuItem } from '@/layouts/menu'
 
 export const adminMenu: PortalMenuItem[] = [
@@ -15,5 +22,11 @@ export const adminMenu: PortalMenuItem[] = [
       { path: 'dicts/standard-sensors', label: '标准传感器' },
       { path: 'dicts/standard-relays', label: '标准继电器' },
     ],
+  },
+  {
+    path: 'settings',
+    label: '系统设置',
+    icon: <SettingOutlined />,
+    children: [{ path: 'settings/sys-configs', label: '系统配置' }],
   },
 ]
