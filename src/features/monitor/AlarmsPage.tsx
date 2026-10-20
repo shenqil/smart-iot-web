@@ -1,16 +1,27 @@
-import { PagePlaceholder } from '@/components/PagePlaceholder'
-import { ScopeHeader, useScopeLabel } from '@/layouts/app/ScopeHeader'
+import { Card } from 'antd'
+import { AlarmTable } from '@/features/alarm/AlarmTable'
+import { ScopeHeader } from '@/layouts/app/ScopeHeader'
+import { useScope } from '@/layouts/app/useScope'
 
+/** 告警 (FRONTEND_DESIGN §5.4)：范围取自设备树，默认只看未处理 */
 export default function AlarmsPage() {
-  const scope = useScopeLabel()
+  const { siteId, deviceId } = useScope()
   return (
     <>
       <ScopeHeader />
-      <PagePlaceholder
-        title={`告警 (${scope}范围)`}
-        milestone="M4"
-        items={['按级别 / 类型 / 处理状态 / 时间 / 关键字筛选，可按次数与最后告警时间排序', '批量处理并填写备注']}
-      />
+      <Card
+        variant="borderless"
+        className="layout-fill"
+        title="告警"
+        extra={<span className="text-fg-tertiary text-xs">告警只保留当月与上月</span>}
+      >
+        <AlarmTable
+          key={`${siteId}:${deviceId}`}
+          siteId={siteId ?? undefined}
+          deviceId={deviceId ?? undefined}
+          defaultProcessed="false"
+        />
+      </Card>
     </>
   )
 }

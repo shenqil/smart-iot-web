@@ -29,7 +29,7 @@ type Located = SiteMapPoint & { longitude: number; latitude: number }
 const isLocated = (s: SiteMapPoint): s is Located => s.longitude != null && s.latitude != null
 
 /** 视野自动包含全部标点 (只在标点集合变化时调整，用户拖动缩放后不打扰) */
-function FitBounds({ points }: { points: Located[] }) {
+export function FitBounds({ points }: { points: { id: number; latitude: number; longitude: number }[] }) {
   const map = useMap()
   const sig = points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')
   // biome-ignore lint/correctness/useExhaustiveDependencies: 只在标点集合 (sig) 变化时调整视野

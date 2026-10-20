@@ -141,3 +141,16 @@ body {
     }
   }
 }
+
+/* 设备树：未关注的星标只在悬停 / 键盘聚焦时显示 (触屏设备始终显示) */
+@layer components {
+  @media (hover: hover) {
+    .scope-tree .star-btn[data-on="false"] {
+      opacity: 0;
+    }
+    .scope-tree .ant-tree-treenode:hover .star-btn,
+    .scope-tree .star-btn:focus-visible {
+      opacity: 1;
+    }
+  }
+}

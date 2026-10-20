@@ -1,7 +1,7 @@
 import { FullscreenOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Badge, Button, Layout, Tooltip } from 'antd'
-import { Suspense } from 'react'
+import { Badge, Button, Drawer, Grid, Layout, Tooltip } from 'antd'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { BrandMark } from '@/components/Brand'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
@@ -18,9 +18,16 @@ export function AppLayout() {
   const companyId = useCompanyId()
   const company = useCurrentCompany()
   const me = useMe()
-  const { siteId, scopeSearch } = useScope()
-  const collapsed = usePref((s) => s.scopeTreeCollapsed)
-  const setCollapsed = usePref((s) => s.setScopeTreeCollapsed)
+  const { siteId, deviceId, scopeSearch } = useScope()
+  const treeCollapsed = usePref((s) => s.scopeTreeCollapsed)
+  const setTreeCollapsed = usePref((s) => s.setScopeTreeCollapsed)
+  // 窄屏 (< 992px，平板现场巡检)：设备树改为抽屉，选中后自动收起 (FRONTEND_DESIGN §5.2.1)
+  const narrow = Grid.useBreakpoint().lg === false
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 范围变化时收起抽屉
+  useEffect(() => setDrawerOpen(false), [siteId, deviceId])
+  const collapsed = narrow ? !drawerOpen : treeCollapsed
+  const setCollapsed = (v: boolean) => (narrow ? setDrawerOpen(!v) : setTreeCollapsed(v))
   const { data: alarmCount } = useQuery(unprocessedAlarmCountQuery(companyId))
 
   const base = `/app/${companyId}`
@@ -72,15 +79,28 @@ export function AppLayout() {
         </div>
       </Layout.Header>
       <Layout>
-        <Layout.Sider
-          width={260}
-          collapsedWidth={0}
-          collapsed={collapsed}
-          trigger={null}
-          className="border-line border-r border-solid"
-        >
-          <ScopeTree />
-        </Layout.Sider>
+        {narrow ? (
+          <Drawer
+            open={drawerOpen}
+            placement="left"
+            size={300}
+            title="园区设备"
+            onClose={() => setDrawerOpen(false)}
+            styles={{ body: { padding: 0 } }}
+          >
+            <ScopeTree />
+          </Drawer>
+        ) : (
+          <Layout.Sider
+            width={260}
+            collapsedWidth={0}
+            collapsed={collapsed}
+            trigger={null}
+            className="border-line border-r border-solid"
+          >
+            <ScopeTree />
+          </Layout.Sider>
+        )}
         <Layout.Content className="page-content relative overflow-auto py-4 pr-4 pl-10">
           <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
             <Button

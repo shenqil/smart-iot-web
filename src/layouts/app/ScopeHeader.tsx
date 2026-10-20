@@ -7,7 +7,7 @@ import { useCompanyId, useCurrentCompany } from '@/hooks/session'
 import { useScope } from './useScope'
 
 /** 工作区顶部：企业 › 园区 › 设备 (可点回上一级) */
-export function ScopeHeader() {
+export function ScopeHeader({ showStatus = true }: { showStatus?: boolean }) {
   const companyId = useCompanyId()
   const company = useCurrentCompany()
   const { siteId, deviceId } = useScope()
@@ -24,7 +24,9 @@ export function ScopeHeader() {
   return (
     <div className="mb-4 flex items-center gap-3">
       <Breadcrumb items={items} />
-      {device && <Tag color={device.online ? 'success' : 'default'}>{device.online ? '● 在线' : '○ 离线'}</Tag>}
+      {showStatus && device && (
+        <Tag color={device.online ? 'success' : 'default'}>{device.online ? '● 在线' : '○ 离线'}</Tag>
+      )}
     </div>
   )
 }
