@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Tooltip } from 'antd'
-import { CircleMarker, Tooltip as MapTooltip } from 'react-leaflet'
 import { fetchAllPages } from '@/api/page'
-import { TdtMap } from '@/components/map/TdtMap'
+import { SiteMap } from '@/components/map/SiteMap'
 import { EnumTag, enumOptions, SITE_STATUS } from '@/components/StatusTag'
 import { type PageColumn, PageTable } from '@/components/table/PageTable'
+import { joinAddress } from '@/lib/address'
 import { fmtDateTime } from '@/lib/time'
 import { companyApi, companyKeys, type SiteRow } from './api'
-
-const fullAddress = (s: SiteRow) => [s.province, s.city, s.district, s.address].filter(Boolean).join(' ')
 
 /** 企业详情 · 园区 (平台只读，园区由企业管理员维护) */
 export function CompanySitesTab({ companyId }: { companyId: number }) {
@@ -16,13 +14,6 @@ export function CompanySitesTab({ companyId }: { companyId: number }) {
     queryKey: [...companyKeys.sites(companyId), 'all'],
     queryFn: () => fetchAllPages((page, pageSize) => companyApi.sites(companyId, { page, pageSize, sort: 'name' })),
   })
-  const located = (all.data ?? []).filter((s) => s.longitude != null && s.latitude != null)
-  const center: [number, number] | undefined = located.length
-    ? [
-        located.reduce((a, s) => a + (s.latitude ?? 0), 0) / located.length,
-        located.reduce((a, s) => a + (s.longitude ?? 0), 0) / located.length,
-      ]
-    : undefined
 
   const columns: PageColumn<SiteRow>[] = [
     { title: '园区', dataIndex: 'name', sortField: 'name' },
@@ -33,7 +24,7 @@ export function CompanySitesTab({ companyId }: { companyId: number }) {
       sortField: 'status',
       render: (v) => <EnumTag value={v} defs={SITE_STATUS} />,
     },
-    { title: '地址', render: (_, r) => fullAddress(r) || '—' },
+    { title: '地址', render: (_, r) => joinAddress(r) || '—' },
     {
       title: '坐标',
       render: (_, r) =>
@@ -52,18 +43,7 @@ export function CompanySitesTab({ companyId }: { companyId: number }) {
 
   return (
     <div className="space-y-4">
-      <TdtMap height={280} center={center} zoom={center ? 9 : 4}>
-        {located.map((s) => (
-          <CircleMarker
-            key={s.id}
-            center={[s.latitude as number, s.longitude as number]}
-            radius={8}
-            pathOptions={{ color: s.status === 'active' ? '#0f766e' : '#94a3b8', fillOpacity: 0.85 }}
-          >
-            <MapTooltip>{s.name}</MapTooltip>
-          </CircleMarker>
-        ))}
-      </TdtMap>
+      <SiteMap height={280} sites={all.data ?? []} />
       <PageTable<SiteRow>
         bare
         prefix="s_"

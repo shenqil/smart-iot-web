@@ -150,10 +150,12 @@ function LngLatInputs({ value, onChange }: { value: LngLat; onChange: (v: LngLat
 export interface LocationPickerProps {
   value?: LngLat
   onChange?: (v: LngLat) => void
+  /** 在地图选点弹窗中确定位置后回调 (手输经纬度不触发)，用于逆地理编码回填地址 */
+  onPicked?: (v: [number, number]) => void
 }
 
 /** 位置表单控件：手输经纬度 + 地图选点 (搜索 / 点击落点)；坐标为 WGS84，请勿粘贴高德 / 百度坐标 */
-export function LocationPicker({ value = null, onChange }: LocationPickerProps) {
+export function LocationPicker({ value = null, onChange, onPicked }: LocationPickerProps) {
   const [open, setOpen] = useState(false)
   return (
     <div>
@@ -173,6 +175,7 @@ export function LocationPicker({ value = null, onChange }: LocationPickerProps) 
         onOk={(v) => {
           onChange?.(v)
           setOpen(false)
+          if (v) onPicked?.(v)
         }}
       />
     </div>

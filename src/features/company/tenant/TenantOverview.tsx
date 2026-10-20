@@ -1,50 +1,79 @@
+import {
+  AppstoreOutlined,
+  DashboardOutlined,
+  EnvironmentOutlined,
+  FundProjectionScreenOutlined,
+  PlusOutlined,
+  TeamOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Card, Col, Row, Space, Statistic } from 'antd'
-import { Link } from 'react-router'
-import { api, companyHeader, unwrap } from '@/api/client'
+import { Button, Card, Statistic } from 'antd'
+import type { ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { SiteMap } from '@/components/map/SiteMap'
+import { tenantSitesAllQuery } from '@/features/site/tenant/api'
 import { useCompanyId } from '@/hooks/session'
+import { tenantCompanyQuery } from './api'
 
-/** 企业概览 (M0：本企业汇总；M3 补充园区分布地图) */
+/** 企业概览 (FRONTEND_DESIGN §4.1)：三个数 + 园区分布地图 + 快捷入口 */
 export default function TenantOverview() {
-  const companyId = useCompanyId()
-  const { data, isPending } = useQuery({
-    queryKey: ['tenant', companyId, 'company'],
-    queryFn: () => unwrap(api.GET('/api/v1/tenant/company', { params: { header: companyHeader(companyId) } })),
-  })
+  const cid = useCompanyId()
+  const navigate = useNavigate()
+  const base = `/tenant/${cid}`
+  const company = useQuery(tenantCompanyQuery(cid))
+  const sites = useQuery(tenantSitesAllQuery(cid))
+  const c = company.data
+
+  const stats: { title: string; value?: number; icon: ReactNode; to: string }[] = [
+    { title: '园区', value: c?.siteCount, icon: <EnvironmentOutlined />, to: 'sites' },
+    { title: '设备', value: c?.deviceCount, icon: <AppstoreOutlined />, to: 'devices' },
+    { title: '成员', value: c?.memberCount, icon: <TeamOutlined />, to: 'users' },
+  ]
+
   return (
-    <Space orientation="vertical" size={16} className="w-full">
-      <Row gutter={[16, 16]}>
-        {[
-          ['园区', data?.siteCount],
-          ['设备', data?.deviceCount],
-          ['成员', data?.memberCount],
-        ].map(([title, value]) => (
-          <Col key={String(title)} xs={24} sm={8}>
-            <Card>
-              <Statistic title={title} value={value ?? '—'} loading={isPending} />
-            </Card>
-          </Col>
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {stats.map((s) => (
+          <Card key={s.title} variant="borderless" hoverable onClick={() => navigate(`${base}/${s.to}`)}>
+            <Statistic
+              title={s.title}
+              value={s.value ?? '—'}
+              loading={company.isPending}
+              prefix={<span className="mr-1 text-primary">{s.icon}</span>}
+            />
+          </Card>
         ))}
-      </Row>
-      <Card title="快捷入口">
-        <Space wrap>
-          <Link to="sites">
-            <Button>园区管理</Button>
+      </div>
+      <Card variant="borderless" title="快捷入口">
+        <div className="flex flex-wrap gap-2">
+          <Link to={`${base}/sites?create=1`}>
+            <Button icon={<PlusOutlined />}>新建园区</Button>
           </Link>
-          <Link to="devices">
-            <Button>设备管理</Button>
+          <Link to={`${base}/devices?create=1`}>
+            <Button icon={<PlusOutlined />}>登记设备</Button>
           </Link>
-          <Link to="users">
-            <Button>成员管理</Button>
+          <Link to={`${base}/users?create=1`}>
+            <Button icon={<UserAddOutlined />}>添加成员</Button>
           </Link>
-          <Link to={`/app/${companyId}/monitor`}>
-            <Button type="primary">进入数据使用端</Button>
+          <Link to={`/app/${cid}/monitor`}>
+            <Button type="primary" icon={<DashboardOutlined />}>
+              进入数据使用端
+            </Button>
           </Link>
-          <Link to={`/screen/${companyId}`} target="_blank">
-            <Button>打开大屏</Button>
+          <Link to={`/screen/${cid}`} target="_blank">
+            <Button icon={<FundProjectionScreenOutlined />}>打开大屏</Button>
           </Link>
-        </Space>
+        </div>
       </Card>
-    </Space>
+      <Card
+        variant="borderless"
+        title="园区分布"
+        extra={<Link to={`${base}/sites`}>全部园区 ›</Link>}
+        loading={sites.isPending}
+      >
+        <SiteMap height={420} sites={sites.data ?? []} detailPath={(id) => `${base}/sites/${id}`} />
+      </Card>
+    </div>
   )
 }

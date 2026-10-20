@@ -33,12 +33,15 @@ export function DeviceConfigPage({
   backTo,
   extraTabs = [],
   headerExtra,
+  notice,
 }: {
   cfg: DeviceConfigApi
   id: number
   backTo: string
   extraTabs?: ExtraTab[]
   headerExtra?: (d: DeviceDetail) => ReactNode
+  /** 页头与页签之间的提示 (企业端：未挂载园区、配置共享) */
+  notice?: ReactNode
 }) {
   const qc = useQueryClient()
   const types = useDeviceTypes()
@@ -159,6 +162,7 @@ export function DeviceConfigPage({
           )
         }
       />
+      {notice}
       {/* 表格类页签 (传感器 / 继电器 / 扩展页签) 撑满剩余高度，表格内滚动；表单页签保持自然高度 */}
       <Card variant="borderless" className={FORM_TABS.has(tab) ? undefined : 'layout-fill'}>
         {d && (
