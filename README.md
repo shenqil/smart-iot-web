@@ -10,7 +10,7 @@ Smart IoT 前端：平台管理端、企业管理端、数据使用端与数据�
 ```bash
 corepack enable            # 启用 pnpm (版本见 package.json packageManager)
 pnpm install
-pnpm dev                   # http://localhost:5173，/api 代理到 DEV_API_TARGET (默认 127.0.0.1:10088)
+pnpm dev                   # http://localhost:5173，/api 代理到 DEV_API_TARGET (默认 127.0.0.1:10888)
 ```
 
 所有环境变量都有默认值 (见 `.env.example`)。需要覆盖时 (如后端地址、天地图 Key) 复制为 `.env.development.local` (不入库) 再修改。
