@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import type { SiteView } from '@/features/site/api'
 import { bizNow } from '@/lib/time'
-import { DESIGN_W, HEADER_H } from './layout'
+import { HEADER_H } from './layout'
 
 const WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 
@@ -46,7 +46,10 @@ export function ScreenHeader({
   onSiteChange,
   title,
   backTo,
+  width,
 }: {
+  /** 画布逻辑宽度 */
+  width: number
   companyName: string
   sites: SiteView[]
   siteId: number | null
@@ -58,7 +61,7 @@ export function ScreenHeader({
   return (
     <header
       className="absolute top-0 left-0 flex items-center px-6"
-      style={{ width: DESIGN_W, height: HEADER_H, boxSizing: 'border-box' }}
+      style={{ width, height: HEADER_H, boxSizing: 'border-box' }}
     >
       <div className="flex w-[620px] items-center gap-3">
         <Link to={backTo} className="screen-btn is-quiet no-underline" style={{ height: 34, fontSize: 14 }}>

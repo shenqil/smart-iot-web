@@ -6,7 +6,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.DEV_API_TARGET || 'http://127.0.0.1:10888'
+  const apiTarget = env.DEV_API_TARGET || 'http://8.136.207.87:10888'
   const tdtKey = env.DEV_TDT_SERVER_KEY || ''
 
   return {

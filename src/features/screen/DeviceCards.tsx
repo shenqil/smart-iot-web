@@ -24,7 +24,7 @@ import { type ECOption, useECharts } from '@/hooks/useECharts'
 import { useNow } from '@/hooks/useNow'
 import { decimalsOf } from '@/lib/resolution'
 import { bizNow, dayjs } from '@/lib/time'
-import { FIXED, type Rect } from './layout'
+import type { Rect } from './layout'
 import { Panel, PanelEmpty, PanelError } from './Panel'
 
 const DEVICE_STATUS: Record<string, string> = { active: '启用', inactive: '停用', fault: '损坏' }
@@ -39,7 +39,9 @@ export function DeviceInfoCard({
   siteName,
   realtime,
   alarms,
+  rect,
 }: {
+  rect: Rect
   device: AppDevice | undefined
   candidates: AppDevice[]
   onChange: (id: number) => void
@@ -64,7 +66,7 @@ export function DeviceInfoCard({
   return (
     <Panel
       title="设备信息"
-      rect={FIXED.deviceInfo}
+      rect={rect}
       extra={
         candidates.length > 0 && (
           <>

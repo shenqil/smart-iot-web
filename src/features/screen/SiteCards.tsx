@@ -8,7 +8,7 @@ import { agoText } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { joinAddress } from '@/lib/address'
 import { dayjs } from '@/lib/time'
-import { FIXED } from './layout'
+import type { Rect } from './layout'
 import { Panel, PanelEmpty } from './Panel'
 
 const SITE_STATUS: Record<string, { label: string; color: string }> = {
@@ -24,7 +24,17 @@ const propertyEntries = (p: SiteView['properties'] | null | undefined) =>
     .slice(0, 3) as [string, string | number][]
 
 /** ① 天气 · 园区信息 (固定) */
-export function WeatherSiteCard({ site, devices, cameras }: { site: SiteView; devices: number; cameras: number }) {
+export function WeatherSiteCard({
+  site,
+  devices,
+  cameras,
+  rect,
+}: {
+  site: SiteView
+  devices: number
+  cameras: number
+  rect: Rect
+}) {
   const located = site.latitude != null && site.longitude != null
   const weather = useQuery({
     ...weatherQuery(site.latitude ?? 0, site.longitude ?? 0),
@@ -37,7 +47,7 @@ export function WeatherSiteCard({ site, devices, cameras }: { site: SiteView; de
   return (
     <Panel
       title="天气 · 园区信息"
-      rect={FIXED.weather}
+      rect={rect}
       extra={
         weather && (
           <span className="text-[12px] text-[var(--sc-text-3)]">
@@ -119,7 +129,15 @@ export function WeatherSiteCard({ site, devices, cameras }: { site: SiteView; de
 const TYPE_COLORS = ['#22d3ee', '#3b82f6', '#f59e0b', '#a78bfa', '#34d399', '#f472b6', '#fb923c', '#94a3b8']
 
 /** ② 设备类型分布 (固定)：按设备类型统计当前园区设备 */
-export function DeviceTypeCard({ devices, typeName }: { devices: AppDevice[]; typeName: (d: AppDevice) => string }) {
+export function DeviceTypeCard({
+  devices,
+  typeName,
+  rect,
+}: {
+  devices: AppDevice[]
+  typeName: (d: AppDevice) => string
+  rect: Rect
+}) {
   const counts = new Map<string, number>()
   for (const d of devices) counts.set(typeName(d), (counts.get(typeName(d)) ?? 0) + 1)
   const rows = [...counts.entries()].sort((a, b) => b[1] - a[1])
@@ -144,7 +162,7 @@ export function DeviceTypeCard({ devices, typeName }: { devices: AppDevice[]; ty
   return (
     <Panel
       title="设备类型分布"
-      rect={FIXED.deviceTypes}
+      rect={rect}
       extra={<span className="text-[12px] text-[var(--sc-text-3)]">共 {rows.length} 类</span>}
     >
       {total === 0 ? (
@@ -222,7 +240,9 @@ export function AlarmCard({
   total,
   alarms,
   onPick,
+  rect,
 }: {
+  rect: Rect
   siteId: number
   total: { count: number; capped: boolean } | undefined
   alarms: AlarmView[] | undefined
@@ -232,7 +252,7 @@ export function AlarmCard({
   return (
     <Panel
       title="设备告警"
-      rect={FIXED.alarms}
+      rect={rect}
       extra={<span className="text-[12px] text-[var(--sc-text-3)]">未处理 {countText(total)} 条</span>}
     >
       <div className="mb-2.5 grid grid-cols-4 gap-2">

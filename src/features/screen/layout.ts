@@ -1,6 +1,12 @@
 /**
  * 大屏卡片编排 (FRONTEND_DESIGN §5.7)
- * 设计稿 1920 × 1080；左栏 3 张、右上「设备信息」固定，其余按当前设备的通道配置与园区有无摄像头出现：
+ *
+ * 设计基准 1920 × 1080。按宽、高中较小的比例等比缩放后，画布的逻辑尺寸随屏幕比例变化
+ * (16:10 屏更高、带鱼屏更宽)，卡片始终贴住左、右、下边：
+ * - 左栏、右栏固定宽度，分别贴左、右边；高度铺满顶栏以下，各卡片按设计稿比例等比伸缩
+ * - 底部卡片贴下边，宽度占满两栏之间，高度同比例伸缩
+ *
+ * 左栏 3 张、右上「设备信息」固定，其余按当前设备的通道配置与园区有无摄像头出现：
  * - 右侧 2 个槽位，按 实时数据 → 实时监控 → 操作记录 依次填入，填满后其余省略；没填满时空着 (露出地图)
  * - 底部按 今日曲线 → 继电器控制 排列；只有一张时占满宽度；都没有时隐藏底部
  */
@@ -16,85 +22,109 @@ export interface Rect {
   height: number
 }
 
-const COL_W = 440
+/** 外边距、卡片间距、栏宽 (逻辑像素，随整体缩放) */
+const EDGE = 20
 const GAP = 12
-const LEFT_X = 20
-const RIGHT_X = DESIGN_W - 20 - COL_W
-const COL_TOP = HEADER_H + 12
-const COL_BOTTOM = DESIGN_H - 20
-/** 左栏三张：300 / 300 / 340 */
+const COL_W = 440
+const COL_TOP = HEADER_H + GAP
+/** 设计稿 (1080 高) 中各卡片的高度：左栏 300 / 300 / 340，底部 280；屏幕更高时按比例放大 */
 const LEFT_H = [300, 300, 340] as const
-const SLOT_H = 320
 const BOTTOM_H = 280
-const BOTTOM_X = LEFT_X + COL_W + 16
-const BOTTOM_W = RIGHT_X - 16 - BOTTOM_X
-/** 底部两张并排时：曲线约 3/5，继电器约 2/5 */
-const TREND_W = 588
-
-export const FIXED = {
-  weather: { left: LEFT_X, top: COL_TOP, width: COL_W, height: LEFT_H[0] },
-  deviceTypes: { left: LEFT_X, top: COL_TOP + LEFT_H[0] + GAP, width: COL_W, height: LEFT_H[1] },
-  alarms: {
-    left: LEFT_X,
-    top: COL_TOP + LEFT_H[0] + LEFT_H[1] + GAP * 2,
-    width: COL_W,
-    height: COL_BOTTOM - (COL_TOP + LEFT_H[0] + LEFT_H[1] + GAP * 2),
-  },
-  deviceInfo: { left: RIGHT_X, top: COL_TOP, width: COL_W, height: LEFT_H[0] },
-} satisfies Record<string, Rect>
-
-/** 地图上可见区域 (两侧面板之间) 的左右边界，用于让视野、图例避开面板 */
-export const MAP_SAFE = { left: LEFT_X + COL_W + 16, right: RIGHT_X - 16, top: HEADER_H + 96 } as const
+const DESIGN_COL_H = LEFT_H[0] + LEFT_H[1] + LEFT_H[2]
+/** 底部两张并排时 曲线 : 继电器 = 588 : 368 */
+const TREND_RATIO = 588 / (588 + 368)
 
 export type RightCard = 'realtime' | 'camera' | 'operations'
 export type BottomCard = 'trend' | 'relay'
 
-export interface ScreenPlan {
+export interface ScreenLayout {
+  /** 画布逻辑尺寸 (≥ 1920 × 1080 中的一边) */
+  width: number
+  height: number
+  fixed: { weather: Rect; deviceTypes: Rect; alarms: Rect; deviceInfo: Rect }
   right: { card: RightCard; rect: Rect }[]
   bottom: { card: BottomCard; rect: Rect }[]
   /** 因槽位已满而省略的卡片 (操作记录省略时继电器卡片给入口) */
   omitted: RightCard[]
   /** 底部区域的顶边 (隐藏时为 null)；图例、地图视野据此避让 */
   bottomTop: number | null
+  /** 两栏之间的地图可见区域 (左右边界与顶边) */
+  mapSafe: { left: number; right: number; top: number }
 }
 
-export function planScreen(f: { sensors: boolean; relays: boolean; cameras: boolean }): ScreenPlan {
+export interface ScreenFeatures {
+  sensors: boolean
+  relays: boolean
+  cameras: boolean
+}
+
+export function computeLayout(width: number, height: number, f: ScreenFeatures): ScreenLayout {
+  const colBottom = height - EDGE
+  // 栏内可用高度 (扣除两道间距) 相对设计稿的伸缩比例
+  const k = (colBottom - COL_TOP - GAP * 2) / DESIGN_COL_H
+  const h0 = Math.round(LEFT_H[0] * k)
+  const h1 = Math.round(LEFT_H[1] * k)
+  const leftX = EDGE
+  const rightX = width - EDGE - COL_W
+  const col = (top: number, h: number, x: number): Rect => ({ left: x, top, width: COL_W, height: h })
+
+  const top1 = COL_TOP + h0 + GAP
+  const top2 = top1 + h1 + GAP
+  const fixed = {
+    weather: col(COL_TOP, h0, leftX),
+    deviceTypes: col(top1, h1, leftX),
+    alarms: col(top2, colBottom - top2, leftX),
+    deviceInfo: col(COL_TOP, h0, rightX),
+  }
+
   const queue: RightCard[] = []
   if (f.sensors) queue.push('realtime')
   if (f.cameras) queue.push('camera')
   if (f.relays) queue.push('operations')
+  // 右侧两个槽位平分设备信息以下的高度
+  const slotTop = COL_TOP + h0 + GAP
+  const slotH = Math.floor((colBottom - slotTop - GAP) / 2)
   const right = queue.slice(0, 2).map((card, i) => ({
     card,
-    rect: {
-      left: RIGHT_X,
-      top: FIXED.deviceInfo.top + FIXED.deviceInfo.height + GAP + i * (SLOT_H + GAP),
-      width: COL_W,
-      height: SLOT_H,
-    },
+    rect: col(i === 0 ? slotTop : colBottom - slotH, slotH, rightX),
   }))
 
   const cards: BottomCard[] = []
   if (f.sensors) cards.push('trend')
   if (f.relays) cards.push('relay')
-  const top = COL_BOTTOM - BOTTOM_H
+  const bottomX = leftX + COL_W + 16
+  const bottomW = rightX - 16 - bottomX
+  const bottomH = Math.round(BOTTOM_H * k)
+  const bottomTop = colBottom - bottomH
+  const trendW = Math.round((bottomW - GAP) * TREND_RATIO)
   const bottom =
     cards.length === 2
       ? [
-          { card: cards[0], rect: { left: BOTTOM_X, top, width: TREND_W, height: BOTTOM_H } },
+          { card: cards[0], rect: { left: bottomX, top: bottomTop, width: trendW, height: bottomH } },
           {
             card: cards[1],
-            rect: { left: BOTTOM_X + TREND_W + GAP, top, width: BOTTOM_W - TREND_W - GAP, height: BOTTOM_H },
+            rect: { left: bottomX + trendW + GAP, top: bottomTop, width: bottomW - trendW - GAP, height: bottomH },
           },
         ]
-      : cards.map((card) => ({ card, rect: { left: BOTTOM_X, top, width: BOTTOM_W, height: BOTTOM_H } }))
+      : cards.map((card) => ({ card, rect: { left: bottomX, top: bottomTop, width: bottomW, height: bottomH } }))
 
-  return { right, bottom, omitted: queue.slice(2), bottomTop: cards.length ? top : null }
+  return {
+    width,
+    height,
+    fixed,
+    right,
+    bottom,
+    omitted: queue.slice(2),
+    bottomTop: cards.length ? bottomTop : null,
+    mapSafe: { left: bottomX, right: rightX - 16, top: HEADER_H + 96 },
+  }
 }
 
 /**
- * 设计稿 → 视口：按宽高中较小的比例等比缩放，水平居中、顶端对齐 (更高的屏幕多出的高度留给地图)
+ * 视口 → 画布：按宽高中较小的比例等比缩放 (文字不变形)，画布逻辑尺寸 = 视口 / 比例，
+ * 因此画布总是正好铺满视口，卡片贴边
  */
 export function fitScreen(viewW: number, viewH: number) {
   const scale = Math.min(viewW / DESIGN_W, viewH / DESIGN_H)
-  return { scale, offsetX: (viewW - DESIGN_W * scale) / 2, offsetY: 0 }
+  return { scale, width: viewW / scale, height: viewH / scale }
 }

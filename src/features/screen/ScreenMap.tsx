@@ -1,9 +1,8 @@
 import { type Map as LeafletMap, latLngBounds, type PointExpression } from 'leaflet'
 import { type ReactNode, type RefObject, useEffect } from 'react'
-import { Marker, Popup, useMap } from 'react-leaflet'
+import { Popup, useMap } from 'react-leaflet'
 import { ClusterLayer } from '@/components/map/ClusterLayer'
 import { type DeviceMapPoint, deviceClusterItem } from '@/components/map/DeviceMap'
-import { siteMarkerIcon, siteMarkerTitle } from '@/components/map/markers'
 import { type TdtLayerName, TdtMap } from '@/components/map/TdtMap'
 import type { SiteView } from '@/features/site/api'
 
@@ -17,12 +16,13 @@ export interface FitPadding {
   paddingBottomRight: PointExpression
 }
 
-/** 让视野包含园区与全部设备，避开两侧面板与底部卡片 */
+/** 让视野包含全部设备，避开两侧面板与底部卡片；园区没有已定位的设备时以园区坐标为中心 */
 export function fitSite(map: LeafletMap, site: SiteView, points: ScreenMapPoint[], padding: FitPadding) {
-  const coords: [number, number][] = points.map((p) => [p.latitude, p.longitude])
-  if (site.latitude != null && site.longitude != null) coords.push([site.latitude, site.longitude])
-  if (!coords.length) return
-  map.fitBounds(latLngBounds(coords), { ...padding, maxZoom: 17 })
+  if (points.length) {
+    map.fitBounds(latLngBounds(points.map((p) => [p.latitude, p.longitude])), { ...padding, maxZoom: 17 })
+  } else if (site.latitude != null && site.longitude != null) {
+    map.setView([site.latitude, site.longitude], 15)
+  }
 }
 
 /** 园区或设备集合变化时自动适配视野 (之后用户拖动缩放不打扰) */
@@ -47,38 +47,36 @@ function KeepVisible({ point, padding }: { point: ScreenMapPoint | undefined; pa
 }
 
 /**
- * 大屏地图：天地图影像 (可切矢量)，铺满视口；园区方牌 + 设备定位针 (聚合) + 选中设备的实时值气泡
- * 点击设备 → onPick；摄像头 → onPickCamera
+ * 大屏地图：天地图影像 (可切矢量)，铺满视口；只显示设备定位针 (聚合) + 选中设备的实时值气泡，不显示园区标点
+ * 点击设备 → onPick；摄像头 → onPickCamera；点击后在该标点上方显示气泡 (默认不显示，点地图空白处关闭)
  */
 export function ScreenMap({
   mapRef,
   layer,
   site,
   points,
-  total,
-  online,
-  alarms,
   selectedId,
   isCamera,
   onPick,
   onPickCamera,
   padding,
-  bubble,
+  bubbleId,
+  onBubbleClose,
+  renderBubble,
 }: {
   mapRef: RefObject<LeafletMap | null>
   layer: TdtLayerName
   site: SiteView
   points: ScreenMapPoint[]
-  /** 园区设备数 / 在线数 / 未处理告警数 (园区方牌显示) */
-  total: number
-  online: number
-  alarms: number
   selectedId: number | null
   isCamera: (id: number) => boolean
   onPick: (id: number) => void
   onPickCamera: (id: number) => void
   padding: FitPadding
-  bubble: ReactNode
+  /** 显示气泡的标点 (null 不显示) */
+  bubbleId: number | null
+  onBubbleClose: () => void
+  renderBubble: (p: ScreenMapPoint) => ReactNode
 }) {
   const items = points.map((p) =>
     deviceClusterItem(p, {
@@ -88,6 +86,7 @@ export function ScreenMap({
     }),
   )
   const selected = points.find((p) => p.id === selectedId)
+  const bubbleAt = points.find((p) => p.id === bubbleId)
   const siteLocated = site.latitude != null && site.longitude != null
   return (
     <TdtMap
@@ -99,31 +98,21 @@ export function ScreenMap({
       center={siteLocated ? [site.latitude as number, site.longitude as number] : undefined}
       zoom={siteLocated ? 15 : 5}
     >
-      {siteLocated && (
-        <Marker
-          position={[site.latitude as number, site.longitude as number]}
-          icon={siteMarkerIcon({ name: site.name, status: site.status, online, total, alarms, theme: 'dark' })}
-          title={siteMarkerTitle(site)}
-          alt={siteMarkerTitle(site)}
-          zIndexOffset={-500}
-          keyboard={false}
-        />
-      )}
       <ClusterLayer items={items} maxClusterRadius={40} />
       <AutoFit site={site} points={points} padding={padding} />
       <KeepVisible point={selected} padding={padding} />
-      {selected && bubble && (
+      {bubbleAt && (
         <Popup
-          key={selected.id}
-          position={[selected.latitude, selected.longitude]}
-          offset={[0, -62]}
+          key={bubbleAt.id}
+          position={[bubbleAt.latitude, bubbleAt.longitude]}
+          offset={[0, bubbleAt.id === selectedId ? -76 : -64]}
           closeButton={false}
-          autoClose={false}
-          closeOnClick={false}
+          closeOnClick
           autoPan={false}
           className="screen-bubble"
+          eventHandlers={{ remove: onBubbleClose }}
         >
-          {bubble}
+          {renderBubble(bubbleAt)}
         </Popup>
       )}
     </TdtMap>

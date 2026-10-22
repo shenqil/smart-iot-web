@@ -11,12 +11,12 @@ import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery, type SiteView } from '@/features/site/api'
-import { byChannel, channelName, isVideoDeviceType, type Realtime, readSensor } from '@/features/telemetry/lib/realtime'
+import { isVideoDeviceType, type Realtime } from '@/features/telemetry/lib/realtime'
 import { realtimeQuery } from '@/features/telemetry/realtime/api'
 import { useCompanyId, useCurrentCompany } from '@/hooks/session'
 import { CameraCard } from './CameraCard'
 import { DeviceInfoCard, OperationsCard, RealtimeCard, RelayCard, TrendCard, useRelayUnlock } from './DeviceCards'
-import { DESIGN_H, DESIGN_W, fitScreen, HEADER_H, MAP_SAFE, planScreen } from './layout'
+import { computeLayout, fitScreen, HEADER_H, type ScreenLayout } from './layout'
 import { ScreenHeader } from './ScreenHeader'
 import { type FitPadding, fitSite, ScreenMap, type ScreenMapPoint } from './ScreenMap'
 import { AlarmCard, DeviceTypeCard, KpiBar, WeatherSiteCard } from './SiteCards'
@@ -37,7 +37,7 @@ function useViewport() {
 
 /**
  * 数据大屏 (FRONTEND_DESIGN §5.7) `/screen/:companyId?siteId&deviceId`
- * - 地图铺满视口；面板按 1920 × 1080 设计稿等比缩放后叠在地图上
+ * - 地图铺满视口；面板按 1920 × 1080 设计稿等比缩放后叠在地图上，画布随屏幕比例伸缩，卡片贴住左、右、下边
  * - 左栏 (园区) 与「设备信息」固定；其余卡片按当前设备的通道配置与园区有无摄像头编排 (layout.ts)
  */
 export default function ScreenPage() {
@@ -56,8 +56,11 @@ function ScreenBody() {
   const [params, setParams] = useSearchParams()
   const vp = useViewport()
   const mapRef = useRef<LeafletMap | null>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
   const [layer, setLayer] = useState<TdtLayerName>('img')
   const [cameraId, setCameraId] = useState<number | null>(null)
+  // 地图气泡：默认不显示，点击地图上的设备后显示
+  const [bubbleId, setBubbleId] = useState<number | null>(null)
   const unlock = useRelayUnlock()
 
   useEffect(() => {
@@ -108,7 +111,11 @@ function ScreenBody() {
   })
   const realtime = rtQ.data
 
-  const plan = planScreen({ sensors: hasSensors, relays: hasRelays, cameras: cameras.length > 0 })
+  const plan = computeLayout(vp.width, vp.height, {
+    sensors: hasSensors,
+    relays: hasRelays,
+    cameras: cameras.length > 0,
+  })
 
   const select = (next: { siteId?: number; deviceId?: number }) =>
     setParams(
@@ -130,10 +137,10 @@ function ScreenBody() {
   // 地图视野避开面板 (视口像素)
   const s = vp.scale
   const padding: FitPadding = {
-    paddingTopLeft: [vp.offsetX + MAP_SAFE.left * s + 24, (MAP_SAFE.top + 70) * s],
+    paddingTopLeft: [(plan.mapSafe.left + 24) * s, (plan.mapSafe.top + 70) * s],
     paddingBottomRight: [
-      vp.w - (vp.offsetX + MAP_SAFE.right * s) + 24,
-      plan.bottomTop != null ? vp.h - plan.bottomTop * s + 32 : 90 * s,
+      (plan.width - plan.mapSafe.right + 24) * s,
+      plan.bottomTop != null ? (plan.height - plan.bottomTop + 32) * s : 90 * s,
     ],
   }
   const points: ScreenMapPoint[] = devices.flatMap((d) =>
@@ -153,7 +160,7 @@ function ScreenBody() {
   const online = devices.filter((d) => d.online).length
   const backTo = `/app/${companyId}/monitor${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
   const recordsLink = `/app/${companyId}/operations${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
-  const ctlTop = plan.bottomTop != null ? plan.bottomTop - 50 : DESIGN_H - 20 - 40
+  const ctlTop = plan.bottomTop != null ? plan.bottomTop - 50 : plan.height - 20 - 40
 
   return (
     <div className="screen-root">
@@ -164,138 +171,150 @@ function ScreenBody() {
             layer={layer}
             site={site}
             points={points}
-            total={devices.length}
-            online={online}
-            alarms={siteAlarms?.count ?? 0}
             selectedId={device?.id ?? null}
             isCamera={(id) => cameras.some((c) => c.id === id)}
-            onPick={(id) => select({ deviceId: id })}
-            onPickCamera={setCameraId}
+            onPick={(id) => {
+              select({ deviceId: id })
+              setBubbleId(id)
+            }}
+            onPickCamera={(id) => {
+              setCameraId(id)
+              setBubbleId(id)
+            }}
             padding={padding}
-            bubble={device && <Bubble device={device} realtime={realtime} alarms={alarmsOf.get(device.id) ?? 0} />}
+            bubbleId={bubbleId}
+            onBubbleClose={() => setBubbleId(null)}
+            renderBubble={(p) => <Bubble point={p} />}
           />
         </div>
       )}
       <div className="screen-header-bg" style={{ height: HEADER_H * s }} />
       <div
+        ref={stageRef}
         className="screen-stage"
-        style={{
-          width: DESIGN_W,
-          height: DESIGN_H,
-          transform: `translate(${vp.offsetX}px, ${vp.offsetY}px) scale(${s})`,
-        }}
+        style={{ width: plan.width, height: plan.height, transform: `scale(${s})` }}
       >
-        <ScreenHeader
-          companyName={company?.name ?? ''}
-          sites={sites}
-          siteId={site?.id ?? null}
-          onSiteChange={(id) => select({ siteId: id })}
-          title={title}
-          backTo={backTo}
-        />
-        {sitesQ.isPending ? (
-          <Center>
-            <Spin size="large" />
-            <span>正在加载大屏数据…</span>
-          </Center>
-        ) : !site ? (
-          <Center>
-            <span className="text-[18px] text-white">该企业还没有园区</span>
-            <Link to={`/app/${companyId}/monitor`}>返回数据端</Link>
-          </Center>
-        ) : (
-          <SiteStage
-            key={site.id}
-            site={site}
-            devices={devices}
-            cameras={cameras}
-            candidates={candidates}
-            device={device}
-            realtime={realtime}
-            realtimeFailed={rtQ.isError}
-            plan={plan}
-            alarms={alarmsQ.data?.records}
-            alarmsOf={alarmsOf}
-            siteAlarms={siteAlarms}
-            online={online}
-            typeName={typeName}
-            typeIcon={typeIcon}
-            cameraId={cameraId}
-            onCamera={setCameraId}
-            onDevice={(id) => select({ deviceId: id })}
-            onAlarmPick={(id) => {
-              if (candidates.some((d) => d.id === id)) select({ deviceId: id })
-              else if (cameras.some((c) => c.id === id)) setCameraId(id)
+        {/* 下拉、提示等弹层挂在画布里，与卡片一起缩放 */}
+        <ConfigProvider getPopupContainer={() => stageRef.current ?? document.body}>
+          <ScreenHeader
+            companyName={company?.name ?? ''}
+            sites={sites}
+            siteId={site?.id ?? null}
+            onSiteChange={(id) => {
+              setBubbleId(null)
+              select({ siteId: id })
             }}
-            unlock={unlock}
-            recordsLink={recordsLink}
+            title={title}
+            backTo={backTo}
+            width={plan.width}
           />
-        )}
-        {site && (
-          <>
-            <MapLegend
-              theme="dark"
-              items={['online', 'offline', 'alarm', 'selected', 'cluster', 'site']}
-              className="absolute"
-              style={{ left: MAP_SAFE.left + 12, top: ctlTop, padding: '8px 14px' }}
+          {sitesQ.isPending ? (
+            <Center plan={plan}>
+              <Spin size="large" />
+              <span>正在加载大屏数据…</span>
+            </Center>
+          ) : !site ? (
+            <Center plan={plan}>
+              <span className="text-[18px] text-white">该企业还没有园区</span>
+              <Link to={`/app/${companyId}/monitor`}>返回数据端</Link>
+            </Center>
+          ) : (
+            <SiteStage
+              key={site.id}
+              site={site}
+              devices={devices}
+              cameras={cameras}
+              candidates={candidates}
+              device={device}
+              realtime={realtime}
+              realtimeFailed={rtQ.isError}
+              plan={plan}
+              alarms={alarmsQ.data?.records}
+              alarmsOf={alarmsOf}
+              siteAlarms={siteAlarms}
+              online={online}
+              typeName={typeName}
+              typeIcon={typeIcon}
+              cameraId={cameraId}
+              onCamera={setCameraId}
+              onDevice={(id) => {
+                setBubbleId(null)
+                select({ deviceId: id })
+              }}
+              onAlarmPick={(id) => {
+                if (candidates.some((d) => d.id === id)) select({ deviceId: id })
+                else if (cameras.some((c) => c.id === id)) setCameraId(id)
+              }}
+              unlock={unlock}
+              recordsLink={recordsLink}
             />
-            <div
-              className="absolute flex gap-1.5"
-              style={{ left: MAP_SAFE.right - 12, top: ctlTop, transform: 'translateX(-100%)' }}
-            >
-              {(['img', 'vec'] as const).map((l) => (
+          )}
+          {site && (
+            <>
+              <MapLegend
+                theme="dark"
+                items={['online', 'offline', 'alarm', 'selected', 'cluster']}
+                className="absolute"
+                style={{ left: plan.mapSafe.left + 12, top: ctlTop, padding: '8px 14px' }}
+              />
+              <div
+                className="absolute flex gap-1.5"
+                style={{ left: plan.mapSafe.right - 12, top: ctlTop, transform: 'translateX(-100%)' }}
+              >
+                {(['img', 'vec'] as const).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={`screen-btn ${layer === l ? 'is-active' : 'is-quiet'}`}
+                    style={{ height: 32, fontSize: 12, background: layer === l ? undefined : 'var(--sc-panel)' }}
+                    onClick={() => setLayer(l)}
+                    aria-pressed={layer === l}
+                  >
+                    {l === 'img' ? '影像' : '矢量'}
+                  </button>
+                ))}
                 <button
-                  key={l}
                   type="button"
-                  className={`screen-btn ${layer === l ? 'is-active' : 'is-quiet'}`}
-                  style={{ height: 32, fontSize: 12, background: layer === l ? undefined : 'var(--sc-panel)' }}
-                  onClick={() => setLayer(l)}
-                  aria-pressed={layer === l}
+                  className="screen-btn is-quiet"
+                  style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
+                  aria-label="放大"
+                  onClick={() => mapRef.current?.zoomIn()}
                 >
-                  {l === 'img' ? '影像' : '矢量'}
+                  <PlusOutlined />
                 </button>
-              ))}
-              <button
-                type="button"
-                className="screen-btn is-quiet"
-                style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
-                aria-label="放大"
-                onClick={() => mapRef.current?.zoomIn()}
-              >
-                <PlusOutlined />
-              </button>
-              <button
-                type="button"
-                className="screen-btn is-quiet"
-                style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
-                aria-label="缩小"
-                onClick={() => mapRef.current?.zoomOut()}
-              >
-                <MinusOutlined />
-              </button>
-              <button
-                type="button"
-                className="screen-btn is-quiet"
-                style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
-                aria-label="复位视野"
-                title="复位视野"
-                onClick={() => mapRef.current && fitSite(mapRef.current, site, points, padding)}
-              >
-                <AimOutlined />
-              </button>
-            </div>
-          </>
-        )}
+                <button
+                  type="button"
+                  className="screen-btn is-quiet"
+                  style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
+                  aria-label="缩小"
+                  onClick={() => mapRef.current?.zoomOut()}
+                >
+                  <MinusOutlined />
+                </button>
+                <button
+                  type="button"
+                  className="screen-btn is-quiet"
+                  style={{ width: 32, height: 32, padding: 0, background: 'var(--sc-panel)' }}
+                  aria-label="复位视野"
+                  title="复位视野"
+                  onClick={() => mapRef.current && fitSite(mapRef.current, site, points, padding)}
+                >
+                  <AimOutlined />
+                </button>
+              </div>
+            </>
+          )}
+        </ConfigProvider>
       </div>
     </div>
   )
 }
 
-function Center({ children }: { children: React.ReactNode }) {
+function Center({ plan, children }: { plan: ScreenLayout; children: React.ReactNode }) {
   return (
     <div
       className="absolute flex flex-col items-center justify-center gap-3 text-[14px] text-[var(--sc-text-2)]"
-      style={{ left: 0, top: HEADER_H, width: DESIGN_W, height: DESIGN_H - HEADER_H }}
+      style={{ left: 0, top: HEADER_H, width: plan.width, height: plan.height - HEADER_H }}
     >
       {children}
     </div>
@@ -332,7 +351,7 @@ function SiteStage({
   device: AppDevice | undefined
   realtime: Realtime | undefined
   realtimeFailed: boolean
-  plan: ReturnType<typeof planScreen>
+  plan: ScreenLayout
   alarms: Parameters<typeof AlarmCard>[0]['alarms']
   alarmsOf: Map<number, number>
   siteAlarms: { count: number; capped: boolean } | undefined
@@ -348,11 +367,12 @@ function SiteStage({
 }) {
   return (
     <>
-      <WeatherSiteCard site={site} devices={devices.length} cameras={cameras.length} />
-      <DeviceTypeCard devices={devices} typeName={typeName} />
-      <AlarmCard siteId={site.id} total={siteAlarms} alarms={alarms} onPick={onAlarmPick} />
-      <KpiBar total={devices.length} online={online} alarms={siteAlarms} left={DESIGN_W / 2} top={HEADER_H + 16} />
+      <WeatherSiteCard site={site} devices={devices.length} cameras={cameras.length} rect={plan.fixed.weather} />
+      <DeviceTypeCard devices={devices} typeName={typeName} rect={plan.fixed.deviceTypes} />
+      <AlarmCard siteId={site.id} total={siteAlarms} alarms={alarms} onPick={onAlarmPick} rect={plan.fixed.alarms} />
+      <KpiBar total={devices.length} online={online} alarms={siteAlarms} left={plan.width / 2} top={HEADER_H + 16} />
       <DeviceInfoCard
+        rect={plan.fixed.deviceInfo}
         device={device}
         candidates={candidates}
         onChange={onDevice}
@@ -362,29 +382,20 @@ function SiteStage({
         realtime={realtime}
         alarms={device ? (alarmsOf.get(device.id) ?? 0) : 0}
       />
-      {device &&
-        plan.right.map(({ card, rect }) =>
-          card === 'realtime' ? (
-            <RealtimeCard
-              key={`rt-${device.id}`}
-              device={device}
-              realtime={realtime}
-              failed={realtimeFailed}
-              rect={rect}
-            />
-          ) : card === 'camera' ? (
-            <CameraCard key="camera" cameras={cameras} cameraId={cameraId} onChange={onCamera} rect={rect} />
-          ) : (
-            <OperationsCard key={`ops-${device.id}`} device={device} rect={rect} />
-          ),
-        )}
-      {!device && cameras.length > 0 && (
-        <CameraCard
-          cameras={cameras}
-          cameraId={cameraId}
-          onChange={onCamera}
-          rect={planScreen({ sensors: false, relays: false, cameras: true }).right[0].rect}
-        />
+      {plan.right.map(({ card, rect }) =>
+        card === 'camera' ? (
+          <CameraCard key="camera" cameras={cameras} cameraId={cameraId} onChange={onCamera} rect={rect} />
+        ) : !device ? null : card === 'realtime' ? (
+          <RealtimeCard
+            key={`rt-${device.id}`}
+            device={device}
+            realtime={realtime}
+            failed={realtimeFailed}
+            rect={rect}
+          />
+        ) : (
+          <OperationsCard key={`ops-${device.id}`} device={device} rect={rect} />
+        ),
       )}
       {device &&
         plan.bottom.map(({ card, rect }) =>
@@ -405,50 +416,21 @@ function SiteStage({
   )
 }
 
-/** 地图上选中设备的气泡：传感器前 4 个当前值 / 继电器运行情况 / 未配置提示 */
-function Bubble({ device, realtime, alarms }: { device: AppDevice; realtime: Realtime | undefined; alarms: number }) {
-  const online = realtime?.online ?? device.online
-  const sensors = byChannel(device.sensors).slice(0, 4)
-  const relays = byChannel(device.relays)
-  const onCount = relays.filter((r) => realtime?.relays?.[r.channelNum] === 1).length
+/** 地图气泡 (点击设备后显示)：名称、是否在线、未处理告警数 */
+function Bubble({ point }: { point: ScreenMapPoint }) {
   return (
-    <div className="w-[244px]">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="truncate font-bold text-[14px]">{device.name}</span>
-        <span className={online ? 'text-[#67e8f9]' : 'text-[#cbd5e1]'}>{online ? '● 在线' : '○ 离线'}</span>
-        {alarms > 0 && <span className="ml-auto whitespace-nowrap text-[#fca5a5]">⚠ {alarms} 条告警</span>}
+    <div className="min-w-[160px] max-w-[260px]">
+      <div className="truncate font-bold text-[14px]" title={point.name}>
+        {point.name}
       </div>
-      {sensors.length > 0 ? (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          {sensors.map((c) => {
-            const r = readSensor(c, realtime?.sensors)
-            return (
-              <div key={c.channelNum} className="truncate text-[var(--sc-text-2)]">
-                {r.name}{' '}
-                <span className="screen-num font-semibold text-[17px] text-white">{realtime ? r.text : '…'}</span>
-                {r.value != null && c.unit ? ` ${c.unit}` : ''}
-              </div>
-            )
-          })}
-        </div>
-      ) : relays.length > 0 ? (
-        <div className="text-[var(--sc-text-2)]">
-          继电器 {relays.length} 路 · 运行{' '}
-          <span className="screen-num text-[16px] text-[#67e8f9]">{realtime ? onCount : '…'}</span> 路
-          <div className="mt-1 grid grid-cols-2 gap-x-3">
-            {relays.slice(0, 4).map((r) => (
-              <span key={r.channelNum} className="truncate text-[#cbd5e1]">
-                {channelName(r)}{' '}
-                <span className={realtime?.relays?.[r.channelNum] === 1 ? 'text-[#67e8f9]' : 'text-[var(--sc-text-3)]'}>
-                  {realtime?.relays?.[r.channelNum] === 1 ? '运行' : '停止'}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="text-[#fcd34d]">未配置传感器和继电器通道</div>
-      )}
+      <div className="mt-1.5 flex items-center gap-3 whitespace-nowrap text-[13px]">
+        <span className={point.online ? 'text-[#67e8f9]' : 'text-[#cbd5e1]'}>{point.online ? '● 在线' : '○ 离线'}</span>
+        {point.alarms > 0 ? (
+          <span className="text-[#fca5a5]">⚠ {point.alarms} 条告警</span>
+        ) : (
+          <span className="text-[var(--sc-text-3)]">无告警</span>
+        )}
+      </div>
     </div>
   )
 }
