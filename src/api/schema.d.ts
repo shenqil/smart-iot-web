@@ -1487,7 +1487,7 @@ export interface components {
         AlarmView: {
             /**
              * Format: int64
-             * @description 告警次数：同一告警 3 分钟内只记一条，计入推送次数 (首次告警后约 3~4 分钟更新)
+             * @description 告警次数：同一告警持续推送期间只记一条 (5 分钟没有推送才结束)，计入推送次数 (每分钟更新)
              */
             alarmCount: number;
             /**

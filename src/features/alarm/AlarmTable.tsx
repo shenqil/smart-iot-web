@@ -136,7 +136,7 @@ export function AlarmTable({
     },
     {
       title: (
-        <Tooltip title="同一告警 3 分钟内合并计次，次数约 3~4 分钟后更新">
+        <Tooltip title="同一告警持续发生期间只有一条记录 (5 分钟没有新告警才结束)，次数每分钟更新">
           次数 <InfoCircleOutlined className="text-fg-tertiary" />
         </Tooltip>
       ),
