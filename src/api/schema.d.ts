@@ -354,6 +354,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/devices/{id}/relay-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 设备的定时规则
+         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)。relayConfigured 为 false 表示继电器通道已删除或不在规格内，规则不执行；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用或通道未配置时为 null)。
+         */
+        get: operations["admin-list-relay-schedules"];
+        put?: never;
+        /**
+         * 新增定时规则
+         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效 (不需要设备重连)。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
+         */
+        post: operations["admin-create-relay-schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/devices/{id}/relays": {
         parameters: {
             query?: never;
@@ -406,6 +430,30 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/relay-schedules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 修改定时规则
+         * @description 整体替换 (设备不可修改)；保存后立即生效，已在等待中的重试被取消。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
+         */
+        put: operations["admin-update-relay-schedule"];
+        post?: never;
+        /**
+         * 删除定时规则
+         * @description 删除后立即生效，已在等待中的重试被取消；不改变继电器当前状态。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
+         */
+        delete: operations["admin-delete-relay-schedule"];
         options?: never;
         head?: never;
         patch?: never;
@@ -861,8 +909,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 继电器联动与接管状态
-         * @description 本设备每路继电器被哪些告警规则联动控制 (含其他设备的规则) 以及手动接管状态；只返回有联动或已接管的通道。打开页面时查询一次。
+         * 继电器联动、定时与接管状态
+         * @description 本设备每路继电器被哪些告警规则联动控制 (含其他设备的规则)、启用的定时规则与下一次定时动作，以及手动接管状态；只返回有联动、定时或已接管的通道。打开页面时查询一次。手动接管期间定时动作同样跳过并记为失败「手动接管中」。
          */
         get: operations["app-device-relay-links"];
         put?: never;
@@ -1272,6 +1320,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenant/devices/{id}/relay-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 设备的定时规则
+         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)。relayConfigured 为 false 表示继电器通道已删除或不在规格内，规则不执行；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用或通道未配置时为 null)。
+         */
+        get: operations["tenant-list-relay-schedules"];
+        put?: never;
+        /**
+         * 新增定时规则
+         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效 (不需要设备重连)。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
+         */
+        post: operations["tenant-create-relay-schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenant/devices/{id}/relays": {
         parameters: {
             query?: never;
@@ -1365,6 +1437,30 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/relay-schedules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 修改定时规则
+         * @description 整体替换 (设备不可修改)；保存后立即生效，已在等待中的重试被取消。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
+         */
+        put: operations["tenant-update-relay-schedule"];
+        post?: never;
+        /**
+         * 删除定时规则
+         * @description 删除后立即生效，已在等待中的重试被取消；不改变继电器当前状态。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
+         */
+        delete: operations["tenant-delete-relay-schedule"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1578,7 +1674,7 @@ export interface components {
             /** @description greater / less / equal / range */
             alarmSubType: string;
             /** @enum {string} */
-            alarmType: "threshold_breach" | "device_offline" | "device_online" | "device_fault";
+            alarmType: "threshold_breach" | "device_offline" | "device_online" | "device_fault" | "relay_control_failed";
             /** @description 告警编码：传感器告警为规则编码 (UUID)，离线为 offline，上线为 online */
             alertCode: string;
             /**
@@ -2686,11 +2782,15 @@ export interface components {
             hold: components["schemas"]["RelayHoldView"];
             /** @description 控制这一路继电器的联动动作 (含其他设备的规则) */
             linkages: components["schemas"]["RelayLinkageView"][];
+            /** @description 下一次定时动作 (没有定时规则时为 null) */
+            next: components["schemas"]["RelayNextAction"];
             /**
              * Format: int64
              * @description 继电器通道号
              */
             relayIndex: number;
+            /** @description 控制这一路继电器的定时规则 (只含启用的) */
+            schedules: components["schemas"]["RelayScheduleView"][];
         };
         RelayLinkageView: {
             /** @description 告警规则编码 */
@@ -2765,9 +2865,120 @@ export interface components {
             /** @description 传感器单位 */
             unit: string;
         };
+        RelayNextAction: {
+            /**
+             * Format: date-time
+             * @description 时刻
+             */
+            at: string;
+            /**
+             * Format: int32
+             * @description 动作：0 关 / 1 开
+             * @enum {integer}
+             */
+            state: 0 | 1;
+        };
         RelayReleaseView: {
             /** @description 是否解除了接管 (该通道未接管时为 false) */
             released: boolean;
+        };
+        RelayScheduleBody: {
+            /** @description 是否启用 */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description 继电器通道号 (必须已配置)
+             */
+            relayIndex: number;
+            /** @description 备注 */
+            remark?: string;
+            /**
+             * Format: int32
+             * @description 失败重试次数 (0 表示不重试；全部失败后产生告警)
+             */
+            retryCount: number;
+            /**
+             * Format: int32
+             * @description 重试间隔 (秒)
+             */
+            retryIntervalSec: number;
+            /**
+             * @description 开启时刻 HH:MM:SS (业务时区)
+             * @example 07:00:00
+             */
+            start: string;
+            /**
+             * @description 关闭时刻 HH:MM:SS；早于开启时刻表示次日关闭 (跨零点)，不能与开启时刻相同
+             * @example 19:00:00
+             */
+            stop: string;
+            /** @description 开启日 (1 = 周一 … 7 = 周日)；跨零点时关闭属于开启日 */
+            weekdays: number[] | null;
+        };
+        RelayScheduleView: {
+            /**
+             * Format: date-time
+             * @description 创建时间
+             */
+            createdAt: string;
+            /** @description 次日关闭 (关闭时刻早于开启时刻) */
+            crossesMidnight: boolean;
+            /**
+             * Format: int64
+             * @description 设备主键
+             */
+            deviceId: number;
+            /** @description 是否启用 */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description 主键
+             */
+            id: number;
+            /**
+             * Format: date-time
+             * @description 下一次关闭时刻 (停用或通道未配置时为 null)
+             */
+            nextOff: string | null;
+            /**
+             * Format: date-time
+             * @description 下一次开启时刻 (停用或通道未配置时为 null)
+             */
+            nextOn: string | null;
+            /** @description 继电器通道已配置 (为 false 时规则不执行) */
+            relayConfigured: boolean;
+            /**
+             * Format: int64
+             * @description 继电器通道号
+             */
+            relayIndex: number;
+            /** @description 继电器通道名称 (未配置时为空) */
+            relayName: string;
+            /** @description 备注 */
+            remark: string;
+            /**
+             * Format: int32
+             * @description 失败重试次数
+             */
+            retryCount: number;
+            /**
+             * Format: int32
+             * @description 重试间隔 (秒)
+             */
+            retryIntervalSec: number;
+            /** @description 开启时刻 HH:MM:SS */
+            start: string;
+            /** @description 关闭时刻 HH:MM:SS */
+            stop: string;
+            /**
+             * Format: date-time
+             * @description 修改时间
+             */
+            updatedAt: string;
+            /** @description 开启日说明：每天 / 周一、周三 */
+            weekdayText: string;
+            /** @description 开启日 (1 = 周一 … 7 = 周日) */
+            weekdays: number[];
         };
         RelayView: {
             /**
@@ -4519,6 +4730,74 @@ export interface operations {
             };
         };
     };
+    "admin-list-relay-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-create-relay-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelayScheduleBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-update-device-relays": {
         parameters: {
             query?: never;
@@ -4610,6 +4889,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelayLinkageView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-update-relay-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelayScheduleBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-delete-relay-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AffectedBody"];
                 };
             };
             /** @description Error */
@@ -5480,8 +5827,8 @@ export interface operations {
                 deviceId?: number;
                 /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
                 level?: number;
-                /** @description 告警类型 */
-                type?: "threshold_breach" | "device_offline" | "device_online" | "device_fault";
+                /** @description 告警类型 (relay_control_failed：定时开关执行失败) */
+                type?: "threshold_breach" | "device_offline" | "device_online" | "device_fault" | "relay_control_failed";
                 /** @description 是否已处理 */
                 processed?: "true" | "false";
                 /** @description 告警时间起 (含，RFC3339) */
@@ -6802,6 +7149,80 @@ export interface operations {
             };
         };
     };
+    "tenant-list-relay-schedules": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-create-relay-schedule": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelayScheduleBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "tenant-update-device-relays": {
         parameters: {
             query?: never;
@@ -7031,6 +7452,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelayLinkageView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-update-relay-schedule": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelayScheduleBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayScheduleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-delete-relay-schedule": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AffectedBody"];
                 };
             };
             /** @description Error */
