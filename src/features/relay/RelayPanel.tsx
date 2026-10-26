@@ -1,4 +1,4 @@
-import { LockOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, LockOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button, Empty, Switch, Tag, Tooltip } from 'antd'
 import type { AppDevice } from '@/features/device/api'
 import { useStandardRelays } from '@/features/dict/api'
@@ -8,12 +8,14 @@ import { RelayGlyph } from '@/features/telemetry/realtime/ChannelGlyph'
 import { fmtDateTime } from '@/lib/time'
 import type { RelayLink } from './api'
 import { linkageActionText, linkageTriggerText } from './linkage'
+import { nextActionText, scheduleText } from './schedule'
 import { useRelayControl } from './useRelayControl'
 
-/** 联动与接管角标：联动 N (悬停看规则)；手动接管中 + 恢复自动 */
+/** 联动、定时与接管角标：联动 N / 定时 N (悬停看规则)；手动接管中 + 恢复自动 */
 function LinkBadges({ link, onRelease }: { link: RelayLink | undefined; onRelease: () => void }) {
   if (!link) return null
   const n = link.linkages.length
+  const schedules = link.schedules
   return (
     <div className="mt-1 flex flex-wrap items-center gap-1">
       {n > 0 && (
@@ -35,10 +37,30 @@ function LinkBadges({ link, onRelease }: { link: RelayLink | undefined; onReleas
           </Tag>
         </Tooltip>
       )}
+      {schedules.length > 0 && (
+        <Tooltip
+          title={
+            <div className="space-y-1">
+              <div>定时开关：</div>
+              {schedules.map((s) => (
+                <div key={s.id}>
+                  · {scheduleText(s)}
+                  {s.remark ? ` (${s.remark})` : ''}
+                </div>
+              ))}
+              {link.next && <div>下一次：{nextActionText(link.next)}</div>}
+            </div>
+          }
+        >
+          <Tag color="cyan" icon={<ClockCircleOutlined />} className="m-0 cursor-help">
+            定时 {schedules.length}
+          </Tag>
+        </Tooltip>
+      )}
       {link.hold && (
         <>
           <Tooltip
-            title={`${link.hold.operator || '—'} 于 ${fmtDateTime(new Date(link.hold.atMs).toISOString())} 接管，联动暂停`}
+            title={`${link.hold.operator || '—'} 于 ${fmtDateTime(new Date(link.hold.atMs).toISOString())} 接管，联动与定时暂停`}
           >
             <Tag color="purple" icon={<LockOutlined />} className="m-0 cursor-help">
               手动接管中

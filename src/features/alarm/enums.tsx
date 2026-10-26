@@ -13,6 +13,7 @@ export const ALARM_TYPE: Record<string, { label: string; color?: string }> = {
   device_offline: { label: '离线' },
   device_online: { label: '上线', color: 'green' },
   device_fault: { label: '损坏', color: 'red' },
+  relay_control_failed: { label: '继电器控制失败', color: 'magenta' },
 }
 
 export const alarmLevelOptions = Object.entries(ALARM_LEVEL).map(([v, d]) => ({ value: Number(v), label: d.label }))

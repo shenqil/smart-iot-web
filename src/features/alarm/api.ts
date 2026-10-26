@@ -40,7 +40,7 @@ export interface AlarmQuery {
   siteId?: number
   deviceId?: number
   level?: number
-  type?: 'threshold_breach' | 'device_offline' | 'device_online' | 'device_fault'
+  type?: 'threshold_breach' | 'device_offline' | 'device_online' | 'device_fault' | 'relay_control_failed'
   processed?: 'true' | 'false'
   start?: string
   end?: string

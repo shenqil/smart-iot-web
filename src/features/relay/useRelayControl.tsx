@@ -16,13 +16,15 @@ import {
   relayLinksQuery,
   releaseRelayHold,
 } from './api'
+import { autoControlText } from './schedule'
 
 /**
  * 继电器控制 (RELAY_CONTROL §4.1)，数据端继电器面板与大屏共用
  * - 开关状态只来自实时数据，不做乐观更新；设备回报的 actualState 直接写入实时数据
  * - 点击后该通道 loading、禁止再次点击，其他通道不受影响；不自动重发
  * - 开启操作二次确认；提示与确认框取最近的 antd <App> (大屏为暗色)
- * - 被联动控制且未接管的通道：手动操作前确认"接管自动控制"，请求带 takeover，联动暂停直到恢复自动 (AUTOMATION_CONTROL §8)
+ * - 被联动或定时控制且未接管的通道：手动操作前确认"接管自动控制"，请求带 takeover，联动与定时暂停直到恢复自动
+ *   (AUTOMATION_CONTROL §8、RELAY_SCHEDULE §5)
  */
 export function useRelayControl(device: AppDevice, realtime: Realtime | undefined) {
   const companyId = useCompanyId()
@@ -77,13 +79,13 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
     apply(ch, outcome)
   }
 
-  /** 切换开关：被联动控制且未接管时先确认接管；否则关闭直接下发，开启先确认 */
+  /** 切换开关：被联动或定时控制且未接管时先确认接管；否则关闭直接下发，开启先确认 */
   const toggle = (relay: AppRelay, next: boolean) => {
     const link = links.get(relay.channelNum)
-    if (link && link.linkages.length > 0 && !link.hold) {
+    if (link && autoControlText(link) && !link.hold) {
       modal.confirm({
         title: `手动${next ? '开启' : '关闭'}「${channelName(relay)}」？`,
-        content: `该继电器受 ${link.linkages.length} 条告警规则联动控制。手动操作后将接管自动控制 (联动暂停)，直到点击"恢复自动"。`,
+        content: `该继电器受${autoControlText(link)}自动控制。手动操作后将接管自动控制 (联动与定时暂停，期间定时执行记为失败)，直到点击"恢复自动"。`,
         okText: `接管并${next ? '开启' : '关闭'}`,
         cancelText: '取消',
         icon: <LockOutlined className="text-primary" />,

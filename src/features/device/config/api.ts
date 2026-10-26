@@ -16,6 +16,10 @@ export type RelayLinkage = Schemas['RelayLinkageView']
 export type DeviceOption = Schemas['DeviceView']
 /** 修改摄像头配置 (部分更新) */
 export type CameraBody = Schemas['DeviceCameraBody']
+/** 定时开关规则 */
+export type RelaySchedule = Schemas['RelayScheduleView']
+/** 新增 / 修改定时规则 (整体替换) */
+export type RelayScheduleBody = Schemas['RelayScheduleBody']
 
 /**
  * 设备配置页的接口：平台端与企业端路径不同，页面只依赖这个接口 (FRONTEND_DESIGN §3.4，企业端 §4.3 复用)
@@ -35,6 +39,11 @@ export interface DeviceConfigApi {
   linkages: (sn: string) => Promise<RelayLinkage[]>
   /** 设备详情页链接 (联动总览跳转到触发设备的规则配置) */
   deviceHref: (id: number) => string
+  /** 定时开关：设备的全部规则 / 新增 / 修改 / 删除 */
+  schedules: (id: number) => Promise<RelaySchedule[]>
+  createSchedule: (id: number, body: RelayScheduleBody) => Promise<RelaySchedule>
+  updateSchedule: (scheduleId: number, body: RelayScheduleBody) => Promise<RelaySchedule>
+  deleteSchedule: (scheduleId: number) => Promise<unknown>
 }
 
 const p = (id: number) => ({ params: { path: { id } } })
@@ -54,6 +63,10 @@ export const adminDeviceConfigApi: DeviceConfigApi = {
     ).then((r) => r.records ?? []),
   linkages: (sn) => unwrap(api.GET('/api/v1/admin/relay-linkages', { params: { query: { sn } } })).then((r) => r ?? []),
   deviceHref: (id) => `/admin/devices/${id}`,
+  schedules: (id) => unwrap(api.GET('/api/v1/admin/devices/{id}/relay-schedules', p(id))).then((r) => r ?? []),
+  createSchedule: (id, body) => unwrap(api.POST('/api/v1/admin/devices/{id}/relay-schedules', { ...p(id), body })),
+  updateSchedule: (sid, body) => unwrap(api.PUT('/api/v1/admin/relay-schedules/{id}', { ...p(sid), body })),
+  deleteSchedule: (sid) => unwrap(api.DELETE('/api/v1/admin/relay-schedules/{id}', p(sid))),
 }
 
 /** 企业管理端 (M3 使用) */
@@ -79,9 +92,15 @@ export const tenantDeviceConfigApi = (companyId: number): DeviceConfigApi => {
         api.GET('/api/v1/tenant/relay-linkages', { params: { header: companyHeader(companyId), query: { sn } } }),
       ).then((r) => r ?? []),
     deviceHref: (id) => `/tenant/${companyId}/devices/${id}`,
+    schedules: (id) => unwrap(api.GET('/api/v1/tenant/devices/{id}/relay-schedules', h(id))).then((r) => r ?? []),
+    createSchedule: (id, body) => unwrap(api.POST('/api/v1/tenant/devices/{id}/relay-schedules', { ...h(id), body })),
+    updateSchedule: (sid, body) => unwrap(api.PUT('/api/v1/tenant/relay-schedules/{id}', { ...h(sid), body })),
+    deleteSchedule: (sid) => unwrap(api.DELETE('/api/v1/tenant/relay-schedules/{id}', h(sid))),
   }
 }
 
 export const deviceDetailKey = (cfg: DeviceConfigApi, id: number) => [...cfg.keyPrefix, 'detail', id] as const
 
 export const linkagesKey = (cfg: DeviceConfigApi, sn: string) => [...cfg.keyPrefix, 'linkages', sn] as const
+
+export const schedulesKey = (cfg: DeviceConfigApi, id: number) => [...cfg.keyPrefix, 'schedules', id] as const

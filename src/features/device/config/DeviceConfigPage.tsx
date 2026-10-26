@@ -8,10 +8,11 @@ import { DetailHeader } from '@/components/DetailHeader'
 import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import { useDeviceTypes } from '@/features/dict/api'
 import { confirmDisconnect, showConfigNotice } from './actions'
-import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey } from './api'
+import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey, schedulesKey } from './api'
 import { BasicForm } from './BasicForm'
 import { CameraForm } from './CameraForm'
 import { RelaysEditor } from './RelaysEditor'
+import { SchedulesEditor } from './SchedulesEditor'
 import { SensorsEditor } from './SensorsEditor'
 
 export interface ExtraTab {
@@ -24,7 +25,7 @@ export interface ExtraTab {
 const FORM_TABS = new Set(['basic', 'camera'])
 
 /**
- * 设备配置页 (FRONTEND_DESIGN §3.4)：基本信息 / 传感器 / 继电器 / 摄像头 + 端特有页签 (平台：授权企业；企业：挂载园区)
+ * 设备配置页 (FRONTEND_DESIGN §3.4)：基本信息 / 传感器 / 继电器 / 定时开关 / 摄像头 + 端特有页签 (平台：授权企业；企业：挂载园区)
  * 有未保存修改时，切换页签或离开页面都会确认
  */
 export function DeviceConfigPage({
@@ -78,6 +79,7 @@ export function DeviceConfigPage({
     onSuccess: (r) => {
       saved(r)
       qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'linkages'] })
+      qc.invalidateQueries({ queryKey: schedulesKey(cfg, id) })
       notify.success('继电器配置已保存')
     },
   })
@@ -207,6 +209,11 @@ export function DeviceConfigPage({
                     onDirtyChange={markDirty}
                   />
                 ),
+              },
+              {
+                key: 'schedules',
+                label: '定时开关',
+                children: <SchedulesEditor cfg={cfg} device={d} />,
               },
               {
                 key: 'camera',

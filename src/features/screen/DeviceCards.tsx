@@ -514,9 +514,10 @@ export function RelayCard({
                   通道 {r.channelNum} · {loading ? '执行中' : on ? '运行' : st === 'off' ? '停止' : '状态未知'}
                   {links.get(r.channelNum)?.hold
                     ? ' · 手动接管'
-                    : links.get(r.channelNum)?.linkages.length
-                      ? ' · 联动'
-                      : ''}
+                    : [
+                        links.get(r.channelNum)?.linkages.length ? ' · 联动' : '',
+                        links.get(r.channelNum)?.schedules.length ? ' · 定时' : '',
+                      ].join('')}
                 </div>
               </div>
               <button
