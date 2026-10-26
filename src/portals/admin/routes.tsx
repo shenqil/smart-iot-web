@@ -45,6 +45,11 @@ export const adminRoutes: RouteObject[] = [
     ],
   },
   {
+    path: 'linkages',
+    handle: { crumb: '联动总览' },
+    lazy: async () => ({ Component: (await import('@/features/linkage/AdminLinkagePage')).default }),
+  },
+  {
     path: 'dicts',
     handle: { crumb: '字典管理' },
     children: [

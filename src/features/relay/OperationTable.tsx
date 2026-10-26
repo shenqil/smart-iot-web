@@ -11,7 +11,7 @@ import { channelName } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { fmtDateTime } from '@/lib/time'
 import { type OperationQuery, operationsQuery, type RelayOp } from './api'
-import { OpStatusTag, opStatusOptions, relayStateText } from './enums'
+import { isHoldRecord, OpStatusTag, opStatusOptions, relayStateText } from './enums'
 
 export interface OperationTableProps {
   siteId?: number
@@ -101,7 +101,14 @@ export function OperationTable({
       title: '操作',
       dataIndex: 'targetState',
       width: 72,
-      render: (v) => <span className={v ? 'font-medium text-primary' : 'text-fg-secondary'}>{relayStateText(v)}</span>,
+      render: (v, r) =>
+        isHoldRecord(r.status) ? (
+          <Tooltip title={`当时状态：${relayStateText(v)}`}>
+            <span className="text-fg-secondary">{r.status === 'hold' ? '接管' : '恢复'}</span>
+          </Tooltip>
+        ) : (
+          <span className={v ? 'font-medium text-primary' : 'text-fg-secondary'}>{relayStateText(v)}</span>
+        ),
     },
     { title: '结果', key: 'status', width: 96, render: (_, r) => <OpStatusTag op={r} /> },
     { title: '实际状态', dataIndex: 'actualState', width: 84, render: relayStateText },
@@ -112,7 +119,20 @@ export function OperationTable({
       align: 'right',
       render: (v: number, r) => (r.finishedAt && v ? `${(v / 1000).toFixed(v < 10_000 ? 2 : 1)} s` : '—'),
     },
-    { title: '操作人', dataIndex: 'operatorName', render: (v) => v || '—' },
+    {
+      title: <Tooltip title="联动自动控制显示触发的告警规则">操作人 / 触发规则</Tooltip>,
+      dataIndex: 'operatorName',
+      width: 220,
+      ellipsis: { showTitle: false },
+      render: (v: string) =>
+        v ? (
+          <Tooltip title={v} placement="topLeft">
+            {v}
+          </Tooltip>
+        ) : (
+          '—'
+        ),
+    },
     {
       title: '错误信息',
       dataIndex: 'errorMessage',

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { UUID_RE } from '@/utils/uuid'
-import type { SensorConfig } from './api'
-import { copyChannel, correctionSummary, newRule, prepareSensors, ruleSummary, validateSensors } from './sensorRules'
+import type { SensorAlertConfig, SensorConfig } from './api'
+import {
+  cloneRule,
+  copyChannel,
+  correctionSummary,
+  newRule,
+  prepareSensors,
+  ruleSummary,
+  validateSensors,
+} from './sensorRules'
 
 const temp: SensorConfig = {
   channelNum: 0,
@@ -72,5 +80,21 @@ describe('传感器配置', () => {
       '×1.02',
     )
     expect(correctionSummary({ channelNum: 0 })).toBe('—')
+  })
+})
+
+describe('cloneRule with relay actions', () => {
+  it('copies actions with a new code', () => {
+    const r = {
+      code: '0f8fad5b-d9cb-469f-a165-70867728950e',
+      enabled: true,
+      alertType: 'less',
+      repeatInterval: 60,
+      actions: [{ targetSn: 'SN2', relayIndex: 0, state: 1 }],
+    } as SensorAlertConfig
+    const c = cloneRule(r)
+    expect(c.code).not.toBe(r.code)
+    expect(c.actions).toEqual(r.actions)
+    expect(c.actions).not.toBe(r.actions)
   })
 })

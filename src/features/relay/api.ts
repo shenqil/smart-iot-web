@@ -3,11 +3,15 @@ import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import { COMPANY_DENIED_CODES, errorText, isApiError, NETWORK_ERROR } from '@/api/errors'
 
 export type RelayOp = Schemas['RelayView']
+/** 一个联动动作 (触发设备的一条告警规则 -> 被控设备的一路继电器) */
+export type RelayLinkage = Schemas['RelayLinkageView']
+/** 继电器面板中一路继电器的联动与手动接管状态 */
+export type RelayLink = Schemas['RelayLink']
 
 export interface OperationQuery {
   siteId?: number
   deviceId?: number
-  status?: 'pending' | 'success' | 'timeout' | 'failed'
+  status?: 'pending' | 'success' | 'timeout' | 'failed' | 'hold' | 'release'
   start?: string
   end?: string
   keyword?: string
@@ -28,12 +32,39 @@ export const operationsQuery = (companyId: number, q: OperationQuery) =>
 /** 前端超时 10s；任何情况都不自动重发 (RELAY_CONTROL §4.1) */
 export const RELAY_TIMEOUT_MS = 10_000
 
-export function controlRelay(companyId: number, deviceId: number, channel: number, state: 0 | 1) {
+/** 控制继电器；takeover 为 true 时同时进入手动接管 (联动自动控制暂停，直到恢复自动) */
+export function controlRelay(companyId: number, deviceId: number, channel: number, state: 0 | 1, takeover = false) {
   return unwrap(
     api.POST('/api/v1/app/devices/{id}/relays/{channel}', {
       params: { path: { id: deviceId, channel }, header: companyHeader(companyId) },
-      body: { state },
+      body: takeover ? { state, takeover } : { state },
       signal: AbortSignal.timeout(RELAY_TIMEOUT_MS),
+    }),
+  )
+}
+
+/** 继电器联动与手动接管状态 (打开页面时查询，不随实时数据轮询) */
+export const relayLinksKey = (companyId: number, deviceId: number) =>
+  ['app', companyId, 'relay-links', deviceId] as const
+
+export const relayLinksQuery = (companyId: number, deviceId: number) =>
+  queryOptions({
+    queryKey: relayLinksKey(companyId, deviceId),
+    queryFn: ({ signal }) =>
+      unwrap(
+        api.GET('/api/v1/app/devices/{id}/relay-links', {
+          params: { path: { id: deviceId }, header: companyHeader(companyId) },
+          signal,
+        }),
+      ).then((r) => r ?? []),
+    staleTime: 60_000,
+  })
+
+/** 恢复自动控制 (解除手动接管) */
+export function releaseRelayHold(companyId: number, deviceId: number, channel: number) {
+  return unwrap(
+    api.DELETE('/api/v1/app/devices/{id}/relays/{channel}/hold', {
+      params: { path: { id: deviceId, channel }, header: companyHeader(companyId) },
     }),
   )
 }

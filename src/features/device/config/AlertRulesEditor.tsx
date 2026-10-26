@@ -1,20 +1,40 @@
-import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, InputNumber, Select, Space, Switch, Table, Tooltip } from 'antd'
+import { CopyOutlined, DeleteOutlined, PlusOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { App, Button, InputNumber, Select, Space, Switch, Table, Tag, Tooltip } from 'antd'
+import { useState } from 'react'
 import type { SensorAlertConfig } from './api'
+import { type LinkageContext, RelayActionsModal, useLinkageInfo } from './RelayActionsModal'
 import { ALERT_LEVELS, ALERT_TYPES, cloneRule, newRule } from './sensorRules'
 
-/** 某通道的告警规则子表：启用、类型、级别、阈值 / 区间、推送间隔 */
+/** 某通道的告警规则子表：启用、类型、级别、阈值 / 区间、推送间隔、联动动作 (提供 linkage 时) */
 export function AlertRulesEditor({
   rules,
   unit,
   onChange,
+  linkage,
 }: {
   rules: SensorAlertConfig[]
   unit?: string
   onChange: (rules: SensorAlertConfig[]) => void
+  linkage?: LinkageContext
 }) {
+  const { modal } = App.useApp()
+  const info = useLinkageInfo(linkage)
+  const [editing, setEditing] = useState<number | null>(null)
   const patch = (i: number, p: Partial<SensorAlertConfig>) =>
     onChange(rules.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  /** 删除规则：有联动动作时确认 (动作随规则一起删除) */
+  const remove = (i: number) => {
+    const n = rules[i].actions?.length ?? 0
+    if (!n) return onChange(rules.filter((_, j) => j !== i))
+    modal.confirm({
+      title: '删除告警规则？',
+      content: `该规则有 ${n} 个联动动作，将随规则一起删除 (保存传感器配置后生效)。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => onChange(rules.filter((_, j) => j !== i)),
+    })
+  }
   const u = unit ? <span className="text-fg-tertiary text-xs">{unit}</span> : null
 
   return (
@@ -106,6 +126,38 @@ export function AlertRulesEditor({
               />
             ),
           },
+          ...(linkage
+            ? [
+                {
+                  title: <Tooltip title="规则推送告警时自动开 / 关继电器 (本设备或其他设备)">联动</Tooltip>,
+                  width: 110,
+                  render: (_: unknown, r: SensorAlertConfig, i: number) => {
+                    const acts = r.actions ?? []
+                    const broken = acts.filter((a) => info(r.code, a)?.relayConfigured === false).length
+                    return (
+                      <Space size={4}>
+                        <Button
+                          type="link"
+                          size="small"
+                          className="px-0"
+                          icon={<ThunderboltOutlined />}
+                          onClick={() => setEditing(i)}
+                        >
+                          {acts.length ? `${acts.length} 个` : '添加'}
+                        </Button>
+                        {broken > 0 && (
+                          <Tooltip title="被控设备已删除或继电器通道未配置，执行时会失败">
+                            <Tag color="error" className="m-0">
+                              失效 {broken}
+                            </Tag>
+                          </Tooltip>
+                        )}
+                      </Space>
+                    )
+                  },
+                },
+              ]
+            : []),
           {
             title: '',
             width: 80,
@@ -120,13 +172,7 @@ export function AlertRulesEditor({
                   />
                 </Tooltip>
                 <Tooltip title="删除规则">
-                  <Button
-                    type="text"
-                    size="small"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => onChange(rules.filter((_, j) => j !== i))}
-                  />
+                  <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => remove(i)} />
                 </Tooltip>
               </Space>
             ),
@@ -142,6 +188,18 @@ export function AlertRulesEditor({
       >
         添加规则
       </Button>
+      {linkage && editing != null && rules[editing] && (
+        <RelayActionsModal
+          ctx={linkage}
+          rule={rules[editing]}
+          open
+          onCancel={() => setEditing(null)}
+          onOk={(actions) => {
+            patch(editing, { actions })
+            setEditing(null)
+          }}
+        />
+      )}
     </div>
   )
 }

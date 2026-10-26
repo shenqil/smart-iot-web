@@ -15,6 +15,7 @@ import { uuid } from '@/utils/uuid'
 import { AlertRulesEditor } from './AlertRulesEditor'
 import type { SensorConfig } from './api'
 import { CorrectionModal } from './CorrectionModal'
+import type { LinkageContext } from './RelayActionsModal'
 import { copyChannel, correctionSummary, prepareSensors, validateSensors } from './sensorRules'
 
 type Row = { channelNum: number; cfg?: SensorConfig }
@@ -33,7 +34,9 @@ export function SensorsEditor({
   saving,
   onSave,
   onDirtyChange,
+  linkage,
 }: {
+  linkage?: LinkageContext
   sensors: SensorConfig[]
   maxChannels: number
   saving: boolean
@@ -314,6 +317,7 @@ export function SensorsEditor({
                 rules={r.cfg.alertConfigs ?? []}
                 unit={r.cfg.unit}
                 onChange={(alertConfigs) => patch(r.channelNum, { alertConfigs })}
+                linkage={linkage}
               />
             ),
         }}

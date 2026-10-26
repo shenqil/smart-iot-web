@@ -5,6 +5,7 @@ import {
   DashboardOutlined,
   SettingOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import type { PortalMenuItem } from '@/layouts/menu'
 
@@ -13,6 +14,7 @@ export const adminMenu: PortalMenuItem[] = [
   { path: 'companies', label: '企业管理', icon: <BankOutlined /> },
   { path: 'users', label: '用户管理', icon: <TeamOutlined /> },
   { path: 'devices', label: '设备管理', icon: <AppstoreOutlined /> },
+  { path: 'linkages', label: '联动总览', icon: <ThunderboltOutlined /> },
   {
     path: 'dicts',
     label: '字典管理',

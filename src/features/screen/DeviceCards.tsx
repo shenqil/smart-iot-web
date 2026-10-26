@@ -437,7 +437,7 @@ export function RelayCard({
   recordsLink?: string
 }) {
   const now = useNow(1_000)
-  const { busy, blocked, toggle, stateOf } = useRelayControl(device, realtime)
+  const { busy, blocked, toggle, stateOf, links } = useRelayControl(device, realtime)
   const relays = byChannel(device.relays)
   const locked = unlock.until == null || unlock.until <= now
   const left = locked ? 0 : Math.ceil(((unlock.until ?? 0) - now) / 1000)
@@ -512,6 +512,11 @@ export function RelayCard({
                   className={`text-[11px] ${loading ? 'text-[#fcd34d]' : on ? 'text-[#67e8f9]' : 'text-[var(--sc-text-3)]'}`}
                 >
                   通道 {r.channelNum} · {loading ? '执行中' : on ? '运行' : st === 'off' ? '停止' : '状态未知'}
+                  {links.get(r.channelNum)?.hold
+                    ? ' · 手动接管'
+                    : links.get(r.channelNum)?.linkages.length
+                      ? ' · 联动'
+                      : ''}
                 </div>
               </div>
               <button

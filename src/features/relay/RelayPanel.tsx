@@ -1,10 +1,57 @@
-import { Empty, Switch, Tooltip } from 'antd'
+import { LockOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { Button, Empty, Switch, Tag, Tooltip } from 'antd'
 import type { AppDevice } from '@/features/device/api'
 import { useStandardRelays } from '@/features/dict/api'
 import { relayKind } from '@/features/telemetry/lib/channelKind'
 import { type AppRelay, byChannel, channelName, type Realtime } from '@/features/telemetry/lib/realtime'
 import { RelayGlyph } from '@/features/telemetry/realtime/ChannelGlyph'
+import { fmtDateTime } from '@/lib/time'
+import type { RelayLink } from './api'
+import { linkageActionText, linkageTriggerText } from './linkage'
 import { useRelayControl } from './useRelayControl'
+
+/** 联动与接管角标：联动 N (悬停看规则)；手动接管中 + 恢复自动 */
+function LinkBadges({ link, onRelease }: { link: RelayLink | undefined; onRelease: () => void }) {
+  if (!link) return null
+  const n = link.linkages.length
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1">
+      {n > 0 && (
+        <Tooltip
+          title={
+            <div className="space-y-1">
+              <div>受以下告警规则联动控制 (告警时自动执行)：</div>
+              {link.linkages.map((l) => (
+                <div key={`${l.sourceDeviceSn}-${l.alertCode}`}>
+                  · {linkageTriggerText(l)} → {linkageActionText(l.state)}
+                  {!l.enabled && ' (规则已停用)'}
+                </div>
+              ))}
+            </div>
+          }
+        >
+          <Tag color="blue" icon={<ThunderboltOutlined />} className="m-0 cursor-help">
+            联动 {n}
+          </Tag>
+        </Tooltip>
+      )}
+      {link.hold && (
+        <>
+          <Tooltip
+            title={`${link.hold.operator || '—'} 于 ${fmtDateTime(new Date(link.hold.atMs).toISOString())} 接管，联动暂停`}
+          >
+            <Tag color="purple" icon={<LockOutlined />} className="m-0 cursor-help">
+              手动接管中
+            </Tag>
+          </Tooltip>
+          <Button type="link" size="small" className="h-auto p-0 text-xs" onClick={onRelease}>
+            恢复自动
+          </Button>
+        </>
+      )}
+    </div>
+  )
+}
 
 export interface RelayPanelProps {
   device: AppDevice
@@ -15,7 +62,7 @@ export interface RelayPanelProps {
 
 /** 继电器控制面板 (数据端)；控制逻辑见 useRelayControl */
 export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
-  const { busy, blocked, toggle } = useRelayControl(device, realtime)
+  const { busy, blocked, toggle, links, release } = useRelayControl(device, realtime)
   const relays = byChannel(device.relays)
   const stdRelays = useStandardRelays().byId
   // 通道配置的图标 › 标准继电器字典的图标 › 按名称匹配的内置图标
@@ -86,6 +133,7 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
                   )}
                 </span>
               </div>
+              <LinkBadges link={links.get(r.channelNum)} onRelease={() => release(r)} />
             </div>
             <Tooltip title={reason}>
               <Switch

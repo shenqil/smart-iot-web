@@ -69,6 +69,7 @@ export function DeviceConfigPage({
     mutationFn: (s: Parameters<DeviceConfigApi['updateSensors']>[1]) => cfg.updateSensors(id, s),
     onSuccess: (r) => {
       saved(r)
+      qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'linkages'] })
       showConfigNotice(r.notice, cfg, id)
     },
   })
@@ -76,6 +77,7 @@ export function DeviceConfigPage({
     mutationFn: (s: Parameters<DeviceConfigApi['updateRelays']>[1]) => cfg.updateRelays(id, s),
     onSuccess: (r) => {
       saved(r)
+      qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'linkages'] })
       notify.success('继电器配置已保存')
     },
   })
@@ -189,6 +191,7 @@ export function DeviceConfigPage({
                     saving={sensors.isPending}
                     onSave={sensors.mutateAsync}
                     onDirtyChange={markDirty}
+                    linkage={{ cfg, deviceSn: d.deviceSn }}
                   />
                 ),
               },

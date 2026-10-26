@@ -1,4 +1,11 @@
-import { CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, QuestionCircleFilled } from '@ant-design/icons'
+import {
+  CheckCircleFilled,
+  ClockCircleFilled,
+  CloseCircleFilled,
+  LockFilled,
+  QuestionCircleFilled,
+  UnlockFilled,
+} from '@ant-design/icons'
 import { Tag } from 'antd'
 import { opDisplayStatus } from '@/features/telemetry/lib/realtime'
 
@@ -7,7 +14,12 @@ export const OP_STATUS: Record<string, { label: string; color: string; icon: Rea
   success: { label: '成功', color: 'success', icon: <CheckCircleFilled /> },
   failed: { label: '失败', color: 'error', icon: <CloseCircleFilled /> },
   timeout: { label: '未应答', color: 'warning', icon: <QuestionCircleFilled /> },
+  hold: { label: '手动接管', color: 'purple', icon: <LockFilled /> },
+  release: { label: '恢复自动', color: 'cyan', icon: <UnlockFilled /> },
 }
+
+/** 手动接管 / 恢复自动记录：不是开关命令 (targetState 为当时的继电器状态) */
+export const isHoldRecord = (status: string) => status === 'hold' || status === 'release'
 
 export const opStatusOptions = Object.entries(OP_STATUS).map(([value, d]) => ({ value, label: d.label }))
 

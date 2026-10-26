@@ -25,8 +25,12 @@ export const newRule = (): SensorAlertConfig => ({
   repeatInterval: 300,
 })
 
-/** 复制规则 / 通道：必须生成新编码 (编码全局唯一) */
-export const cloneRule = (r: SensorAlertConfig): SensorAlertConfig => ({ ...r, code: uuid() })
+/** 复制规则 / 通道：必须生成新编码 (编码全局唯一)；联动动作一起复制 (保存时按新增动作校验) */
+export const cloneRule = (r: SensorAlertConfig): SensorAlertConfig => ({
+  ...r,
+  code: uuid(),
+  actions: r.actions?.map((a) => ({ ...a })),
+})
 
 export const copyChannel = (src: SensorConfig, target: number): SensorConfig => ({
   ...structuredClone(src),

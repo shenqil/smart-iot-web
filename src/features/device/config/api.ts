@@ -8,6 +8,12 @@ export type SensorAlertConfig = Schemas['SensorAlertConfig']
 export type SensorCorrection = Schemas['SensorCorrection']
 export type RelayConfig = Schemas['RelayConfig']
 export type CameraConfig = Schemas['CameraConfig']
+/** 告警规则的联动动作 */
+export type RelayAction = Schemas['RelayAction']
+/** 联动总览的一行 */
+export type RelayLinkage = Schemas['RelayLinkageView']
+/** 可选的被控设备 (设备列表行) */
+export type DeviceOption = Schemas['DeviceView']
 /** 修改摄像头配置 (部分更新) */
 export type CameraBody = Schemas['DeviceCameraBody']
 
@@ -23,6 +29,12 @@ export interface DeviceConfigApi {
   updateRelays: (id: number, relays: RelayConfig[]) => Promise<DeviceDetail>
   updateCamera: (id: number, camera: CameraBody) => Promise<DeviceDetail>
   disconnect: (id: number) => Promise<{ notice: string }>
+  /** 联动动作：搜索可选的被控设备 (范围内，最多 20 个) */
+  searchDevices: (keyword: string) => Promise<DeviceOption[]>
+  /** 联动总览：该 SN 作为触发设备与被控设备的全部联动动作 */
+  linkages: (sn: string) => Promise<RelayLinkage[]>
+  /** 设备详情页链接 (联动总览跳转到触发设备的规则配置) */
+  deviceHref: (id: number) => string
 }
 
 const p = (id: number) => ({ params: { path: { id } } })
@@ -36,6 +48,12 @@ export const adminDeviceConfigApi: DeviceConfigApi = {
   updateRelays: (id, relays) => unwrap(api.PUT('/api/v1/admin/devices/{id}/relays', { ...p(id), body: { relays } })),
   updateCamera: (id, body) => unwrap(api.PUT('/api/v1/admin/devices/{id}/camera', { ...p(id), body })),
   disconnect: (id) => unwrap(api.POST('/api/v1/admin/devices/{id}/disconnect', p(id))),
+  searchDevices: (keyword) =>
+    unwrap(
+      api.GET('/api/v1/admin/devices', { params: { query: { keyword: keyword || undefined, pageSize: 20 } as never } }),
+    ).then((r) => r.records ?? []),
+  linkages: (sn) => unwrap(api.GET('/api/v1/admin/relay-linkages', { params: { query: { sn } } })).then((r) => r ?? []),
+  deviceHref: (id) => `/admin/devices/${id}`,
 }
 
 /** 企业管理端 (M3 使用) */
@@ -50,7 +68,20 @@ export const tenantDeviceConfigApi = (companyId: number): DeviceConfigApi => {
     updateRelays: (id, relays) => unwrap(api.PUT('/api/v1/tenant/devices/{id}/relays', { ...h(id), body: { relays } })),
     updateCamera: (id, body) => unwrap(api.PUT('/api/v1/tenant/devices/{id}/camera', { ...h(id), body })),
     disconnect: (id) => unwrap(api.POST('/api/v1/tenant/devices/{id}/disconnect', h(id))),
+    searchDevices: (keyword) =>
+      unwrap(
+        api.GET('/api/v1/tenant/devices', {
+          params: { header: companyHeader(companyId), query: { keyword: keyword || undefined, pageSize: 20 } as never },
+        }),
+      ).then((r) => r.records ?? []),
+    linkages: (sn) =>
+      unwrap(
+        api.GET('/api/v1/tenant/relay-linkages', { params: { header: companyHeader(companyId), query: { sn } } }),
+      ).then((r) => r ?? []),
+    deviceHref: (id) => `/tenant/${companyId}/devices/${id}`,
   }
 }
 
 export const deviceDetailKey = (cfg: DeviceConfigApi, id: number) => [...cfg.keyPrefix, 'detail', id] as const
+
+export const linkagesKey = (cfg: DeviceConfigApi, sn: string) => [...cfg.keyPrefix, 'linkages', sn] as const

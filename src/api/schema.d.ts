@@ -391,6 +391,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/relay-linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 联动总览
+         * @description 只读。按 SN 精确匹配：返回该设备作为触发设备 (它的告警规则控制了哪些继电器) 与作为被控设备 (哪些规则在控制它的继电器) 的全部联动动作，企业端只返回触发设备与被控设备都属于本企业的行。联动动作在设备配置的告警规则中维护 (PUT /devices/{id}/sensors)，与规则一样在设备重连后生效。relayConfigured 为 false 表示被控设备已删除或继电器通道未配置，动作执行时会记为 failed。
+         */
+        get: operations["admin-list-relay-linkages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/standard-relays": {
         parameters: {
             query?: never;
@@ -833,6 +853,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/devices/{id}/relay-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 继电器联动与接管状态
+         * @description 本设备每路继电器被哪些告警规则联动控制 (含其他设备的规则) 以及手动接管状态；只返回有联动或已接管的通道。打开页面时查询一次。
+         */
+        get: operations["app-device-relay-links"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/devices/{id}/relays/{channel}": {
         parameters: {
             query?: never;
@@ -844,10 +884,30 @@ export interface paths {
         put?: never;
         /**
          * 控制继电器
-         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、已被标记为损坏 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发 (见 docs/RELAY_CONTROL.md §4.1)。
+         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、已被标记为损坏 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发 (见 docs/RELAY_CONTROL.md §4.1)。takeover 为 true 时同时进入手动接管 (该通道的联动自动控制暂停，直到恢复)，接管写一条 status = hold 的记录。
          */
         post: operations["app-control-relay"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{id}/relays/{channel}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 恢复自动控制
+         * @description 解除该通道的手动接管，写一条 status = release 的记录；之后的联动命令照常执行 (不主动对齐，等下一次告警推送)。未接管时 released = false。
+         */
+        delete: operations["app-release-relay-hold"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1282,6 +1342,26 @@ export interface paths {
         };
         /** 设备尚未挂载的园区 (分页) */
         get: operations["tenant-list-device-available-sites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/relay-linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 联动总览
+         * @description 只读。按 SN 精确匹配：返回该设备作为触发设备 (它的告警规则控制了哪些继电器) 与作为被控设备 (哪些规则在控制它的继电器) 的全部联动动作，企业端只返回触发设备与被控设备都属于本企业的行。联动动作在设备配置的告警规则中维护 (PUT /devices/{id}/sensors)，与规则一样在设备重连后生效。relayConfigured 为 false 表示被控设备已删除或继电器通道未配置，动作执行时会记为 failed。
+         */
+        get: operations["tenant-list-relay-linkages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2566,6 +2646,13 @@ export interface components {
              */
             totalCount: number;
         };
+        RelayAction: {
+            /** Format: int64 */
+            relayIndex: number;
+            /** Format: int32 */
+            state: number;
+            targetSn: string;
+        };
         RelayConfig: {
             /** Format: int64 */
             channelNum: number;
@@ -2582,6 +2669,105 @@ export interface components {
              * @enum {integer}
              */
             state: 0 | 1;
+            /** @description 同时进入手动接管：该通道的联动自动控制暂停，直到恢复 (DELETE /devices/{id}/relays/{channel}/hold)；前置检查通过后先写接管记录再下发 */
+            takeover?: boolean;
+        };
+        RelayHoldView: {
+            /**
+             * Format: int64
+             * @description 接管时间 (Unix 毫秒)
+             */
+            atMs: number;
+            /** @description 接管人 */
+            operator: string;
+        };
+        RelayLink: {
+            /** @description 手动接管信息 (未接管为 null) */
+            hold: components["schemas"]["RelayHoldView"];
+            /** @description 控制这一路继电器的联动动作 (含其他设备的规则) */
+            linkages: components["schemas"]["RelayLinkageView"][];
+            /**
+             * Format: int64
+             * @description 继电器通道号
+             */
+            relayIndex: number;
+        };
+        RelayLinkageView: {
+            /** @description 告警规则编码 */
+            alertCode: string;
+            /**
+             * @description 规则类型
+             * @enum {string}
+             */
+            alertType: "greater" | "less" | "equal" | "range";
+            /** @description 传感器通道名称 (展示名称，没有时为标准名称) */
+            channelName: string;
+            /**
+             * Format: int64
+             * @description 传感器通道号
+             */
+            channelNum: number;
+            /** @description 规则是否启用 (停用的规则不会触发) */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description 告警级别
+             */
+            level: number;
+            /**
+             * Format: double
+             * @description 区间上限 (range)
+             */
+            maxValue: number;
+            /**
+             * Format: double
+             * @description 区间下限 (range)
+             */
+            minValue: number;
+            /** @description 被控设备存在且该继电器通道已配置 (为 false 时动作执行会失败) */
+            relayConfigured: boolean;
+            /**
+             * Format: int64
+             * @description 继电器通道号
+             */
+            relayIndex: number;
+            /** @description 继电器通道名称 */
+            relayName: string;
+            /**
+             * Format: int64
+             * @description 触发设备主键
+             */
+            sourceDeviceId: number;
+            /** @description 触发设备名称 */
+            sourceDeviceName: string;
+            /** @description 触发设备 SN */
+            sourceDeviceSn: string;
+            /**
+             * Format: int32
+             * @description 动作：0 关 / 1 开
+             * @enum {integer}
+             */
+            state: 0 | 1;
+            /**
+             * Format: int64
+             * @description 被控设备主键 (设备已删除时为 null)
+             */
+            targetDeviceId: number | null;
+            /** @description 被控设备名称 (设备已删除时为空) */
+            targetDeviceName: string;
+            /** @description 被控设备 SN */
+            targetDeviceSn: string;
+            /**
+             * Format: double
+             * @description 阈值 (greater / less / equal)
+             */
+            threshold: number;
+            /** @description 传感器单位 */
+            unit: string;
+        };
+        RelayReleaseView: {
+            /** @description 是否解除了接管 (该通道未接管时为 false) */
+            released: boolean;
         };
         RelayView: {
             /**
@@ -2607,7 +2793,7 @@ export interface components {
             finishedAt: string | null;
             /** Format: int64 */
             id: number;
-            /** @description 操作人名称 (操作时的快照) */
+            /** @description 操作人名称 (操作时的快照)；联动自动控制为触发规则描述 */
             operatorName: string;
             /**
              * Format: int32
@@ -2615,10 +2801,10 @@ export interface components {
              */
             relayIndex: number;
             /**
-             * @description pending 执行中 (超过 1 分钟仍为 pending 视为超时)；success 设备确认；failed 确定未达到目标；timeout 已下发、结果未知
+             * @description pending 执行中 (超过 1 分钟仍为 pending 视为超时)；success 设备确认；failed 确定未达到目标 (联动自动控制的未执行原因见 errorMessage)；timeout 已下发、结果未知；hold 手动接管 / release 恢复自动 (targetState 为当时的继电器状态)
              * @enum {string}
              */
-            status: "pending" | "success" | "timeout" | "failed";
+            status: "pending" | "success" | "timeout" | "failed" | "hold" | "release";
             /**
              * Format: int32
              * @description 目标状态 0 关闭 / 1 开启
@@ -2626,6 +2812,7 @@ export interface components {
             targetState: number;
         };
         SensorAlertConfig: {
+            actions?: components["schemas"]["RelayAction"][] | null;
             alertType?: string;
             code?: string;
             enabled: boolean;
@@ -4404,6 +4591,38 @@ export interface operations {
             };
         };
     };
+    "admin-list-relay-linkages": {
+        parameters: {
+            query: {
+                /** @description 设备 SN (精确匹配)：返回该设备作为触发设备与作为被控设备的全部联动动作 */
+                sn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayLinkageView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-list-standard-relays": {
         parameters: {
             query?: {
@@ -5644,6 +5863,41 @@ export interface operations {
             };
         };
     };
+    "app-device-relay-links": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayLink"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "app-control-relay": {
         parameters: {
             query?: never;
@@ -5685,6 +5939,43 @@ export interface operations {
             };
         };
     };
+    "app-release-relay-hold": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+                /** @description 继电器通道号 (从 0 开始) */
+                channel: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayReleaseView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "app-list-operations": {
         parameters: {
             query?: {
@@ -5700,8 +5991,8 @@ export interface operations {
                 siteId?: number;
                 /** @description 只看该设备的操作 */
                 deviceId?: number;
-                /** @description 操作状态 */
-                status?: "pending" | "success" | "timeout" | "failed";
+                /** @description 操作状态 (hold 手动接管 / release 恢复自动) */
+                status?: "pending" | "success" | "timeout" | "failed" | "hold" | "release";
                 /** @description 下发时间起 (含，RFC3339) */
                 start?: string;
                 /** @description 下发时间止 (不含，RFC3339) */
@@ -6705,6 +6996,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageSiteView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-list-relay-linkages": {
+        parameters: {
+            query: {
+                /** @description 设备 SN (精确匹配)：返回该设备作为触发设备与作为被控设备的全部联动动作 */
+                sn: string;
+            };
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelayLinkageView"][] | null;
                 };
             };
             /** @description Error */
