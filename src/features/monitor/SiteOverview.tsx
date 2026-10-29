@@ -72,7 +72,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
                 className="flex w-full cursor-pointer items-start gap-2 rounded-md border-0 bg-transparent px-2 py-1.5 text-left hover:bg-layout"
                 onClick={() => select({ siteId, deviceId: a.deviceId })}
               >
-                <AlarmLevelTag level={a.alarmLevel} />
+                <AlarmLevelTag level={a.level} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-fg">{a.description || '告警'}</span>
                   <span className="block truncate text-fg-tertiary text-xs">
@@ -136,7 +136,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
                 ...d,
                 alarms: alarmsOf.get(d.id) ?? 0,
                 typeName: types.nameOf(d.deviceTypeId),
-                iconUrl: d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.icon || undefined : undefined,
+                iconUrl: d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl || undefined : undefined,
               }))}
               onSelect={(id) => select({ siteId, deviceId: id })}
             />
@@ -159,7 +159,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
                   device={d}
                   alarms={alarmsOf.get(d.id) ?? 0}
                   typeName={types.nameOf(d.deviceTypeId)}
-                  icon={d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.icon : undefined}
+                  icon={d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl : undefined}
                   onClick={() => select({ siteId, deviceId: d.id })}
                 />
               ))}
@@ -254,7 +254,7 @@ function DeviceTile({
             const r = readSensor(s, rt?.sensors)
             const alert = r.state === 'over' || r.state === 'under'
             return (
-              <span key={s.channelNum} className="min-w-0">
+              <span key={s.channel} className="min-w-0">
                 <span className="block truncate text-fg-tertiary text-[11px]">{r.name}</span>
                 <span className={`block truncate font-medium tabular-nums ${alert ? 'text-warning' : 'text-fg'}`}>
                   {rt ? r.text : '…'}

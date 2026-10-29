@@ -37,7 +37,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
   const linksKey = relayLinksKey(companyId, device.id)
   const { data: linkList } = useQuery({ ...relayLinksQuery(companyId, device.id), enabled: device.relays.length > 0 })
   /** 通道号 -> 联动与接管状态 (只有被联动控制或已接管的通道) */
-  const links = useMemo(() => new Map<number, RelayLink>((linkList ?? []).map((l) => [l.relayIndex, l])), [linkList])
+  const links = useMemo(() => new Map<number, RelayLink>((linkList ?? []).map((l) => [l.channel, l])), [linkList])
 
   const apply = (ch: number, o: ControlOutcome) => {
     if (o.actualState != null) {
@@ -56,7 +56,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
   }
 
   const run = async (relay: AppRelay, state: 0 | 1, takeover = false) => {
-    const ch = relay.channelNum
+    const ch = relay.channel
     setBusy((s) => new Set(s).add(ch))
     let outcome: ControlOutcome
     try {
@@ -81,7 +81,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
 
   /** 切换开关：被联动或定时控制且未接管时先确认接管；否则关闭直接下发，开启先确认 */
   const toggle = (relay: AppRelay, next: boolean) => {
-    const link = links.get(relay.channelNum)
+    const link = links.get(relay.channel)
     if (link && autoControlText(link) && !link.hold) {
       modal.confirm({
         title: `手动${next ? '开启' : '关闭'}「${channelName(relay)}」？`,
@@ -110,7 +110,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
 
   /** 该通道当前状态：on / off / unknown (无状态数据) */
   const stateOf = (relay: AppRelay) => {
-    const s = realtime?.relays?.[relay.channelNum]
+    const s = realtime?.relays?.[relay.channel]
     return s === 1 ? 'on' : s === 0 ? 'off' : 'unknown'
   }
 
@@ -118,7 +118,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
   const release = async (relay: AppRelay) => {
     const name = channelName(relay)
     try {
-      const r = await releaseRelayHold(companyId, device.id, relay.channelNum)
+      const r = await releaseRelayHold(companyId, device.id, relay.channel)
       message.success(r.released ? `${name}已恢复自动控制` : `${name}未处于手动接管`)
     } catch (error) {
       const o = interpretControl({ ok: false, error })

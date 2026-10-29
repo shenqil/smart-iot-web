@@ -1,30 +1,25 @@
 import { CopyOutlined, DeleteOutlined, PlusOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { App, Button, InputNumber, Select, Space, Switch, Table, Tag, Tooltip } from 'antd'
-import { useState } from 'react'
-import type { SensorAlertConfig } from './api'
-import { type LinkageContext, RelayActionsModal, useLinkageInfo } from './RelayActionsModal'
-import { ALERT_LEVELS, ALERT_TYPES, cloneRule, newRule } from './sensorRules'
+import { ALERT_LEVELS, ALERT_TYPES, cloneRule, MAX_RULES, newRule, type RuleDraft } from './sensorRules'
 
-/** 某通道的告警规则子表：启用、类型、级别、阈值 / 区间、推送间隔、联动动作 (提供 linkage 时) */
+/**
+ * 某通道的告警规则子表：启用、条件、阈值 / 区间、级别、推送间隔、是否生成告警记录
+ * 联动动作在「告警联动」页签中配置 (规则保存后才有 id)；这里只显示数量
+ */
 export function AlertRulesEditor({
   rules,
   unit,
   onChange,
-  linkage,
 }: {
-  rules: SensorAlertConfig[]
+  rules: RuleDraft[]
   unit?: string
-  onChange: (rules: SensorAlertConfig[]) => void
-  linkage?: LinkageContext
+  onChange: (rules: RuleDraft[]) => void
 }) {
   const { modal } = App.useApp()
-  const info = useLinkageInfo(linkage)
-  const [editing, setEditing] = useState<number | null>(null)
-  const patch = (i: number, p: Partial<SensorAlertConfig>) =>
-    onChange(rules.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const patch = (i: number, p: Partial<RuleDraft>) => onChange(rules.map((r, j) => (j === i ? { ...r, ...p } : r)))
   /** 删除规则：有联动动作时确认 (动作随规则一起删除) */
   const remove = (i: number) => {
-    const n = rules[i].actions?.length ?? 0
+    const n = rules[i].actionCount ?? 0
     if (!n) return onChange(rules.filter((_, j) => j !== i))
     modal.confirm({
       title: '删除告警规则？',
@@ -39,10 +34,10 @@ export function AlertRulesEditor({
 
   return (
     <div className="rounded-md bg-layout p-3">
-      <Table<SensorAlertConfig>
+      <Table<RuleDraft>
         size="small"
         pagination={false}
-        rowKey={(r) => r.code as string}
+        rowKey="key"
         dataSource={rules}
         locale={{ emptyText: '暂无告警规则' }}
         columns={[
@@ -60,9 +55,9 @@ export function AlertRulesEditor({
               <Select
                 size="small"
                 className="w-24"
-                value={r.alertType}
+                value={r.condition}
                 options={[...ALERT_TYPES]}
-                onChange={(alertType) => patch(i, { alertType })}
+                onChange={(condition) => patch(i, { condition })}
               />
             ),
           },
@@ -70,20 +65,20 @@ export function AlertRulesEditor({
             title: '阈值',
             width: 260,
             render: (_, r, i) =>
-              r.alertType === 'range' ? (
+              r.condition === 'between' ? (
                 <Space size={4}>
                   <InputNumber
                     size="small"
                     className="w-24"
-                    value={r.minValue ?? 0}
-                    onChange={(v) => patch(i, { minValue: v ?? 0 })}
+                    value={r.lower ?? 0}
+                    onChange={(v) => patch(i, { lower: v ?? 0 })}
                   />
                   ~
                   <InputNumber
                     size="small"
                     className="w-24"
-                    value={r.maxValue ?? 0}
-                    onChange={(v) => patch(i, { maxValue: v ?? 0 })}
+                    value={r.upper ?? 0}
+                    onChange={(v) => patch(i, { upper: v ?? 0 })}
                   />
                   {u}
                 </Space>
@@ -113,61 +108,50 @@ export function AlertRulesEditor({
             ),
           },
           {
-            title: <Tooltip title="条件持续成立时，距上次推送满此间隔才再推送">推送间隔 (秒)</Tooltip>,
+            title: <Tooltip title="条件持续成立时的重复推送间隔；每次推送都执行联动">推送间隔 (秒)</Tooltip>,
             width: 130,
             render: (_, r, i) => (
               <InputNumber
                 size="small"
                 className="w-24"
                 min={1}
+                max={86_400}
                 precision={0}
-                value={r.repeatInterval}
-                onChange={(v) => patch(i, { repeatInterval: v ?? 0 })}
+                value={r.repeatSeconds}
+                onChange={(v) => patch(i, { repeatSeconds: v ?? 0 })}
               />
             ),
           },
-          ...(linkage
-            ? [
-                {
-                  title: <Tooltip title="规则推送告警时自动开 / 关继电器 (本设备或其他设备)">联动</Tooltip>,
-                  width: 110,
-                  render: (_: unknown, r: SensorAlertConfig, i: number) => {
-                    const acts = r.actions ?? []
-                    const broken = acts.filter((a) => info(r.code, a)?.relayConfigured === false).length
-                    return (
-                      <Space size={4}>
-                        <Button
-                          type="link"
-                          size="small"
-                          className="px-0"
-                          icon={<ThunderboltOutlined />}
-                          onClick={() => setEditing(i)}
-                        >
-                          {acts.length ? `${acts.length} 个` : '添加'}
-                        </Button>
-                        {broken > 0 && (
-                          <Tooltip title="被控设备已删除或继电器通道未配置，执行时会失败">
-                            <Tag color="error" className="m-0">
-                              失效 {broken}
-                            </Tag>
-                          </Tooltip>
-                        )}
-                      </Space>
-                    )
-                  },
-                },
-              ]
-            : []),
+          {
+            title: <Tooltip title="关闭后只执行联动、不生成告警记录 (例如 < 34 ℃ 关风机)">生成告警</Tooltip>,
+            width: 90,
+            render: (_, r, i) => (
+              <Switch size="small" checked={r.createAlarm} onChange={(createAlarm) => patch(i, { createAlarm })} />
+            ),
+          },
+          {
+            title: <Tooltip title="在「告警联动」页签中配置">联动</Tooltip>,
+            width: 80,
+            render: (_, r) =>
+              r.actionCount ? (
+                <Tag color="blue" icon={<ThunderboltOutlined />} className="m-0">
+                  {r.actionCount}
+                </Tag>
+              ) : (
+                <span className="text-fg-tertiary">—</span>
+              ),
+          },
           {
             title: '',
             width: 80,
             render: (_, r, i) => (
               <Space size={0}>
-                <Tooltip title="复制规则">
+                <Tooltip title="复制规则 (不复制联动)">
                   <Button
                     type="text"
                     size="small"
                     icon={<CopyOutlined />}
+                    disabled={rules.length >= MAX_RULES}
                     onClick={() => onChange([...rules.slice(0, i + 1), cloneRule(r), ...rules.slice(i + 1)])}
                   />
                 </Tooltip>
@@ -184,22 +168,11 @@ export function AlertRulesEditor({
         size="small"
         icon={<PlusOutlined />}
         className="mt-2"
+        disabled={rules.length >= MAX_RULES}
         onClick={() => onChange([...rules, newRule()])}
       >
-        添加规则
+        添加规则 ({rules.length}/{MAX_RULES})
       </Button>
-      {linkage && editing != null && rules[editing] && (
-        <RelayActionsModal
-          ctx={linkage}
-          rule={rules[editing]}
-          open
-          onCancel={() => setEditing(null)}
-          onOk={(actions) => {
-            patch(editing, { actions })
-            setEditing(null)
-          }}
-        />
-      )}
     </div>
   )
 }

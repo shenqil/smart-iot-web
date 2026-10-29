@@ -11,10 +11,10 @@ import {
 import { buildXlsx, columnLetter, escapeXml } from './xlsx'
 
 const sensors: SensorConfig[] = [
-  { channelNum: 0, displayName: '1号棚温度', standardName: '空气温度', unit: '℃', resolution: 0.1 },
-  { channelNum: 1, standardName: '空气湿度', unit: '%RH', resolution: 0.01 },
-  { channelNum: 2, displayName: '', standardName: '', unit: '' },
-  { channelNum: 5, standardName: '空气湿度', unit: '%RH', resolution: 1 },
+  { channel: 0, label: '1号棚温度', unit: '℃', resolution: 0.1 },
+  { channel: 1, label: '空气湿度', unit: '%RH', resolution: 0.01 },
+  { channel: 2, label: '', unit: '', resolution: 0 },
+  { channel: 5, label: '空气湿度', unit: '%RH', resolution: 1 },
 ]
 
 describe('exportChannels', () => {
@@ -41,7 +41,7 @@ describe('数值与时间', () => {
   })
   it('无读数与缺失通道为空单元格', () => {
     const cols = exportChannels(sensors, [0, 1, 5])
-    const row = recordRow({ time: 0, vals: [21.26, 2147483647] }, cols, 0)
+    const row = recordRow({ time: 0, vals: [21.26, null] }, cols, 0)
     expect(row).toEqual([25569, 21.3, null, null])
   })
   it('时区偏移按小时缓存', () => {

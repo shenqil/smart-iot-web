@@ -7,10 +7,11 @@ import { notify } from '@/app/notify'
 import { DetailHeader } from '@/components/DetailHeader'
 import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import { useDeviceTypes } from '@/features/dict/api'
-import { confirmDisconnect, showConfigNotice } from './actions'
-import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey, schedulesKey } from './api'
+import { confirmDisconnect } from './actions'
+import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey, linkageKeys, schedulesKey } from './api'
 import { BasicForm } from './BasicForm'
 import { CameraForm } from './CameraForm'
+import { LinkageEditor } from './LinkageEditor'
 import { RelaysEditor } from './RelaysEditor'
 import { SchedulesEditor } from './SchedulesEditor'
 import { SensorsEditor } from './SensorsEditor'
@@ -25,8 +26,8 @@ export interface ExtraTab {
 const FORM_TABS = new Set(['basic', 'camera'])
 
 /**
- * 设备配置页 (FRONTEND_DESIGN §3.4)：基本信息 / 传感器 / 继电器 / 定时开关 / 摄像头 + 端特有页签 (平台：授权企业；企业：挂载园区)
- * 有未保存修改时，切换页签或离开页面都会确认
+ * 设备配置页 (FRONTEND_DESIGN §3.4)：基本信息 / 传感器 / 继电器 / 告警联动 / 定时开关 / 摄像头 + 端特有页签 (平台：授权企业；企业：挂载园区)
+ * 保存后立即生效；有未保存修改时，切换页签或离开页面都会确认
  */
 export function DeviceConfigPage({
   cfg,
@@ -63,22 +64,22 @@ export function DeviceConfigPage({
     mutationFn: (b: Parameters<DeviceConfigApi['updateBasic']>[1]) => cfg.updateBasic(id, b),
     onSuccess: (r) => {
       saved(r)
-      showConfigNotice(r.notice, cfg, id)
+      notify.success('基本信息已保存')
     },
   })
   const sensors = useMutation({
     mutationFn: (s: Parameters<DeviceConfigApi['updateSensors']>[1]) => cfg.updateSensors(id, s),
     onSuccess: (r) => {
       saved(r)
-      qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'linkages'] })
-      showConfigNotice(r.notice, cfg, id)
+      qc.invalidateQueries({ queryKey: linkageKeys.all(cfg) })
+      notify.success('传感器配置已保存，立即生效')
     },
   })
   const relays = useMutation({
     mutationFn: (s: Parameters<DeviceConfigApi['updateRelays']>[1]) => cfg.updateRelays(id, s),
     onSuccess: (r) => {
       saved(r)
-      qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'linkages'] })
+      qc.invalidateQueries({ queryKey: linkageKeys.all(cfg) })
       qc.invalidateQueries({ queryKey: schedulesKey(cfg, id) })
       notify.success('继电器配置已保存')
     },
@@ -148,15 +149,15 @@ export function DeviceConfigPage({
         subtitle={
           d && (
             <span>
-              SN <span className="font-mono">{d.deviceSn}</span> · 传感器 {sensorCount}/{d.maxSensorChannels} · 继电器{' '}
-              {relayCount}/{d.maxRelayChannels} · 采集间隔 {d.readInterval}s
+              SN <span className="font-mono">{d.deviceSn}</span> · 传感器 {sensorCount}/{d.sensorChannels} · 继电器{' '}
+              {relayCount}/{d.relayChannels} · 采集间隔 {d.readInterval}s
             </span>
           )
         }
         extra={
           d && (
             <>
-              <Tooltip title={d.online ? '设备会自动重连并加载最新配置' : '设备当前离线'}>
+              <Tooltip title={d.online ? '断开后设备会自动重连' : '设备当前离线'}>
                 <Button icon={<DisconnectOutlined />} onClick={() => confirmDisconnect(cfg, id)}>
                   断开连接
                 </Button>
@@ -189,11 +190,10 @@ export function DeviceConfigPage({
                 children: (
                   <SensorsEditor
                     sensors={d.sensors}
-                    maxChannels={d.maxSensorChannels}
+                    maxChannels={d.sensorChannels}
                     saving={sensors.isPending}
                     onSave={sensors.mutateAsync}
                     onDirtyChange={markDirty}
-                    linkage={{ cfg, deviceSn: d.deviceSn }}
                   />
                 ),
               },
@@ -203,12 +203,17 @@ export function DeviceConfigPage({
                 children: (
                   <RelaysEditor
                     relays={d.relays}
-                    maxChannels={d.maxRelayChannels}
+                    maxChannels={d.relayChannels}
                     saving={relays.isPending}
                     onSave={relays.mutateAsync}
                     onDirtyChange={markDirty}
                   />
                 ),
+              },
+              {
+                key: 'linkage',
+                label: '告警联动',
+                children: <LinkageEditor cfg={cfg} deviceId={d.id} />,
               },
               {
                 key: 'schedules',
@@ -220,7 +225,7 @@ export function DeviceConfigPage({
                 label: '摄像头',
                 children: (
                   <CameraForm
-                    camera={d.cameraConfig}
+                    camera={d.camera}
                     saving={camera.isPending}
                     onSave={camera.mutateAsync}
                     onDirtyChange={markDirty}

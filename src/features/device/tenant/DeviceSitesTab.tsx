@@ -61,7 +61,7 @@ export function DeviceSitesTab({ deviceId }: { deviceId: number }) {
     },
     { title: '状态', dataIndex: 'status', width: 90, render: (v) => <EnumTag value={v} defs={SITE_STATUS} /> },
     { title: '地址', render: (_, r) => joinAddress(r) || '—' },
-    { title: '挂载时间', dataIndex: 'mountedAt', width: 160, sortField: 'mountedAt', render: fmtDateTime },
+    { title: '挂载时间', dataIndex: 'mountedAt', width: 160, render: fmtDateTime },
     {
       title: '操作',
       width: 100,
@@ -83,7 +83,6 @@ export function DeviceSitesTab({ deviceId }: { deviceId: number }) {
         columns={columns}
         rowKey="id"
         keywordPlaceholder="园区名称"
-        defaultSort="-mountedAt"
         toolbar={
           <Button type="primary" icon={<LinkOutlined />} onClick={() => setAdding(true)}>
             挂载到园区

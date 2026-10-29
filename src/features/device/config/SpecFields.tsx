@@ -10,16 +10,16 @@ export function SpecFields() {
         tooltip="硬件 SN，全局唯一，登记后不可修改"
         rules={[
           { required: true, message: '请输入 SN' },
-          { pattern: /^[A-Za-z0-9_.:-]{1,64}$/, message: '1~64 位字母、数字或 _ . : -' },
+          { pattern: /^[A-Za-z0-9_:-]{1,64}$/, message: '1~64 位字母、数字或 _ : -' },
         ]}
       >
         <Input className="font-mono" />
       </Form.Item>
       <div className="grid grid-cols-2 gap-x-4">
-        <Form.Item name="maxSensorChannels" label="传感器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
+        <Form.Item name="sensorChannels" label="传感器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
           <InputNumber className="w-full" min={1} max={4096} precision={0} />
         </Form.Item>
-        <Form.Item name="maxRelayChannels" label="继电器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
+        <Form.Item name="relayChannels" label="继电器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
           <InputNumber className="w-full" min={1} max={4096} precision={0} />
         </Form.Item>
       </div>
@@ -29,8 +29,8 @@ export function SpecFields() {
 
 /** 登记表单默认值 (与后端默认一致) */
 export const SPEC_DEFAULTS = {
-  maxSensorChannels: 16,
-  maxRelayChannels: 32,
+  sensorChannels: 16,
+  relayChannels: 32,
   readInterval: 60,
   status: 'active',
 } as const

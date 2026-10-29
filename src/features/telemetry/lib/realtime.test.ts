@@ -1,16 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { INVALID_READING } from '@/lib/resolution'
-import { agoText, channelName, isVideoDeviceType, opDisplayStatus, readSensor, relayBlockedReason } from './realtime'
+import {
+  type AppSensor,
+  agoText,
+  channelName,
+  isVideoDeviceType,
+  opDisplayStatus,
+  readSensor,
+  relayBlockedReason,
+} from './realtime'
 
-const cfg = {
-  channelNum: 1,
-  displayName: '',
-  standardName: '空气温度',
-  unit: '℃',
-  resolution: 0.1,
-  minValue: -40,
-  maxValue: 80,
-}
+const sensor = (p: Partial<AppSensor>): AppSensor => ({
+  channel: 0,
+  label: '',
+  standardName: '',
+  unit: '',
+  resolution: 0,
+  rangeMin: 0,
+  rangeMax: 0,
+  iconUrl: '',
+  ...p,
+})
+const cfg = sensor({ channel: 1, label: '空气温度', unit: '℃', resolution: 0.1, rangeMin: -40, rangeMax: 80 })
 
 describe('readSensor', () => {
   it('按下标取值并按分辨率格式化', () => {
@@ -23,22 +33,23 @@ describe('readSensor', () => {
     expect(readSensor(cfg, [0, -50])).toMatchObject({ state: 'under', position: 0 })
   })
   it('无读数与没有数据', () => {
-    expect(readSensor(cfg, [0, INVALID_READING])).toMatchObject({ state: 'invalid', text: '无读数', value: null })
+    expect(readSensor(cfg, [0, null])).toMatchObject({ state: 'invalid', text: '无读数', value: null })
     expect(readSensor(cfg, null)).toMatchObject({ state: 'empty', text: '—' })
     expect(readSensor(cfg, [0])).toMatchObject({ state: 'empty' })
   })
   it('负零显示为 0', () => {
-    expect(readSensor({ channelNum: 0, resolution: 1 }, [-0.4]).text).toBe('0')
+    expect(readSensor(sensor({ resolution: 1 }), [-0.4]).text).toBe('0')
   })
   it('量程未配置时没有位置', () => {
-    expect(readSensor({ channelNum: 0 }, [3]).position).toBeNull()
+    expect(readSensor(sensor({}), [3]).position).toBeNull()
   })
 })
 
 describe('辅助函数', () => {
   it('通道名称回落', () => {
-    expect(channelName({ channelNum: 2, displayName: ' 1号棚 ' })).toBe('1号棚')
-    expect(channelName({ channelNum: 2 })).toBe('通道 2')
+    expect(channelName({ channel: 2, label: ' 1号棚 ' })).toBe('1号棚')
+    expect(channelName({ channel: 2, name: '', standardName: '空气温度' })).toBe('空气温度')
+    expect(channelName({ channel: 2 })).toBe('通道 2')
   })
   it('视频监控类型', () => {
     expect(isVideoDeviceType('视频监控')).toBe(true)

@@ -30,7 +30,7 @@ export function DeviceHero({
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg bg-container px-5 py-4">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary-bg text-primary text-xl">
-        {type?.icon ? <img src={type.icon} alt="" className="size-7 object-contain" /> : <AppstoreOutlined />}
+        {type?.iconUrl ? <img src={type.iconUrl} alt="" className="size-7 object-contain" /> : <AppstoreOutlined />}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

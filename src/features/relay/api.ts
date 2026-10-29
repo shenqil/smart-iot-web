@@ -2,16 +2,45 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import { COMPANY_DENIED_CODES, errorText, isApiError, NETWORK_ERROR } from '@/api/errors'
 
-export type RelayOp = Schemas['RelayView']
-/** 一个联动动作 (触发设备的一条告警规则 -> 被控设备的一路继电器) */
-export type RelayLinkage = Schemas['RelayLinkageView']
-/** 继电器面板中一路继电器的联动与手动接管状态 */
-export type RelayLink = Schemas['RelayLink']
+export type RelayOp = Schemas['RelayRecordView']
+/** 控制某一路继电器的一条告警规则 (触发设备的规则 -> 本设备的一路继电器) */
+export type RelayLinkage = Schemas['LinkageView']
+/** 一路继电器的定时规则、下一次定时动作与手动接管状态 */
+export type RelayAutomation = Schemas['RelayAutomation']
+
+/** 继电器面板中一路继电器的自动控制：联动 (告警规则) + 定时 + 手动接管 */
+export interface RelayLink {
+  channel: number
+  linkages: RelayLinkage[]
+  schedules: RelayAutomation['schedules']
+  next: RelayAutomation['next'] | null
+  hold: RelayAutomation['hold'] | null
+}
+
+/** 联动与定时 / 接管按通道合并 (只保留有自动控制或已接管的通道) */
+export function mergeRelayLinks(automation: RelayAutomation[], linkages: RelayLinkage[]): RelayLink[] {
+  const out = new Map<number, RelayLink>()
+  const of = (channel: number) => {
+    let l = out.get(channel)
+    if (!l) {
+      l = { channel, linkages: [], schedules: [], next: null, hold: null }
+      out.set(channel, l)
+    }
+    return l
+  }
+  for (const a of automation) {
+    if (!a.schedules?.length && !a.hold) continue
+    Object.assign(of(a.channel), { schedules: a.schedules ?? [], next: a.next ?? null, hold: a.hold ?? null })
+  }
+  for (const v of linkages) of(v.channel).linkages.push(v)
+  return [...out.values()].sort((a, b) => a.channel - b.channel)
+}
 
 export interface OperationQuery {
   siteId?: number
   deviceId?: number
-  status?: 'pending' | 'success' | 'timeout' | 'failed' | 'hold' | 'release'
+  source?: 'manual' | 'linkage' | 'schedule' | 'hold' | 'release'
+  status?: 'pending' | 'success' | 'timeout' | 'failed'
   start?: string
   end?: string
   keyword?: string
@@ -32,7 +61,7 @@ export const operationsQuery = (companyId: number, q: OperationQuery) =>
 /** 前端超时 10s；任何情况都不自动重发 (RELAY_CONTROL §4.1) */
 export const RELAY_TIMEOUT_MS = 10_000
 
-/** 控制继电器；takeover 为 true 时同时进入手动接管 (联动自动控制暂停，直到恢复自动) */
+/** 控制继电器；takeover 为 true 时同时进入手动接管 (联动与定时暂停，直到恢复自动) */
 export function controlRelay(companyId: number, deviceId: number, channel: number, state: 0 | 1, takeover = false) {
   return unwrap(
     api.POST('/api/v1/app/devices/{id}/relays/{channel}', {
@@ -50,13 +79,14 @@ export const relayLinksKey = (companyId: number, deviceId: number) =>
 export const relayLinksQuery = (companyId: number, deviceId: number) =>
   queryOptions({
     queryKey: relayLinksKey(companyId, deviceId),
-    queryFn: ({ signal }) =>
-      unwrap(
-        api.GET('/api/v1/app/devices/{id}/relay-links', {
-          params: { path: { id: deviceId }, header: companyHeader(companyId) },
-          signal,
-        }),
-      ).then((r) => r ?? []),
+    queryFn: async ({ signal }) => {
+      const params = { path: { id: deviceId }, header: companyHeader(companyId) }
+      const [automation, linkages] = await Promise.all([
+        unwrap(api.GET('/api/v1/app/devices/{id}/relays/automation', { params, signal })),
+        unwrap(api.GET('/api/v1/app/devices/{id}/relays/linkages', { params, signal })),
+      ])
+      return mergeRelayLinks(automation ?? [], linkages ?? [])
+    },
     staleTime: 60_000,
   })
 
@@ -117,5 +147,5 @@ const unconfirmed: ControlOutcome = {
 const DEVICE_CODES: Record<string, string> = {
   DEVICE_OFFLINE: '设备已离线，无法操作',
   DEVICE_DISABLED: '设备已停用，无法操作',
-  DEVICE_FAULT: '设备已损坏，无法操作',
+  DEVICE_FAULT: '设备故障，无法操作',
 }

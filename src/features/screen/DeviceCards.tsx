@@ -182,7 +182,7 @@ export function RealtimeCard({
             const out = r.state === 'over' || r.state === 'under'
             return (
               <div
-                key={r.config.channelNum}
+                key={r.config.channel}
                 className={`flex h-[52px] items-center gap-2 rounded border border-solid px-2.5 ${
                   out
                     ? 'border-[rgb(245_158_11/0.4)] bg-[rgb(245_158_11/0.08)]'
@@ -206,7 +206,7 @@ export function RealtimeCard({
                   </div>
                 </div>
                 <div className="w-[60px] flex-none">
-                  <Sparkline values={trail[r.config.channelNum] ?? []} color={out ? '#f59e0b' : '#22d3ee'} />
+                  <Sparkline values={trail[r.config.channel] ?? []} color={out ? '#f59e0b' : '#22d3ee'} />
                 </div>
               </div>
             )
@@ -232,7 +232,7 @@ export function OperationsCard({ device, rect }: { device: AppDevice; rect: Rect
     refetchInterval: 30_000,
   })
   const relayName = (ch: number) => {
-    const r = device.relays?.find((x) => x.channelNum === ch)
+    const r = device.relays?.find((x) => x.channel === ch)
     return r ? channelName(r) : `通道 ${ch}`
   }
   const records = ops.data?.records ?? []
@@ -268,7 +268,7 @@ export function OperationsCard({ device, rect }: { device: AppDevice; rect: Rect
                   </span>
                   <span className="w-12 flex-none truncate text-[#cbd5e1]">{o.operatorName || '—'}</span>
                   <span className="min-w-0 flex-1 truncate">
-                    {o.targetState ? '开启' : '关闭'} <b className="font-medium">{relayName(o.relayIndex)}</b>
+                    {o.targetState ? '开启' : '关闭'} <b className="font-medium">{relayName(o.channel)}</b>
                   </span>
                   <span className="w-[76px] flex-none text-right" style={{ color: st.color }} title={o.errorMessage}>
                     {st.label}
@@ -289,15 +289,15 @@ const HOURS = Array.from({ length: 24 }, (_, h) => `${h}时`)
 export function TrendCard({ device, rect }: { device: AppDevice; rect: Rect }) {
   const companyId = useCompanyId()
   const sensors = byChannel(device.sensors)
-  const [channel, setChannel] = useState(sensors[0]?.channelNum ?? 0)
+  const [channel, setChannel] = useState(sensors[0]?.channel ?? 0)
   const today = bizNow().format('YYYY-MM-DD')
   const yesterday = bizNow().subtract(1, 'day').format('YYYY-MM-DD')
   const t = useQuery({ ...dailyComparisonQuery(companyId, device.id, today), refetchInterval: 5 * 60_000 })
   const y = useQuery(dailyComparisonQuery(companyId, device.id, yesterday))
-  const config: AppSensor | undefined = sensors.find((s) => s.channelNum === channel) ?? sensors[0]
+  const config: AppSensor | undefined = sensors.find((s) => s.channel === channel) ?? sensors[0]
   const digits = decimalsOf(config?.resolution)
-  const todayVals = hourlySeries(t.data?.records, config?.channelNum ?? 0)
-  const yesterdayVals = hourlySeries(y.data?.records, config?.channelNum ?? 0)
+  const todayVals = hourlySeries(t.data?.records, config?.channel ?? 0)
+  const yesterdayVals = hourlySeries(y.data?.records, config?.channel ?? 0)
   const empty = t.data && y.data && todayVals.every((v) => v == null) && yesterdayVals.every((v) => v == null)
 
   const option: ECOption = {
@@ -359,11 +359,11 @@ export function TrendCard({ device, rect }: { device: AppDevice; rect: Rect }) {
           {tabs ? (
             sensors.map((s) => (
               <button
-                key={s.channelNum}
+                key={s.channel}
                 type="button"
-                className={`screen-btn ${s.channelNum === config?.channelNum ? 'is-active' : 'is-quiet'}`}
+                className={`screen-btn ${s.channel === config?.channel ? 'is-active' : 'is-quiet'}`}
                 style={{ height: 26, fontSize: 12 }}
-                onClick={() => setChannel(s.channelNum)}
+                onClick={() => setChannel(s.channel)}
               >
                 {channelName(s)}
               </button>
@@ -371,11 +371,11 @@ export function TrendCard({ device, rect }: { device: AppDevice; rect: Rect }) {
           ) : (
             <Select
               size="small"
-              value={config?.channelNum}
+              value={config?.channel}
               onChange={setChannel}
               className="w-[140px]"
               popupMatchSelectWidth={false}
-              options={sensors.map((s) => ({ value: s.channelNum, label: channelName(s) }))}
+              options={sensors.map((s) => ({ value: s.channel, label: channelName(s) }))}
               aria-label="选择通道"
             />
           )}
@@ -392,7 +392,7 @@ export function TrendCard({ device, rect }: { device: AppDevice; rect: Rect }) {
           昨天
         </span>
         <span className="ml-auto">
-          {channelName(config ?? { channelNum: channel })}
+          {channelName(config ?? { channel: channel })}
           {config?.unit ? ` · 单位 ${config.unit}` : ''}
         </span>
       </div>
@@ -496,12 +496,12 @@ export function RelayCard({
       >
         {relays.map((r) => {
           const st = stateOf(r)
-          const loading = busy.has(r.channelNum)
+          const loading = busy.has(r.channel)
           const reason = locked ? '先点「解锁控制」' : (blocked ?? (st === 'unknown' ? '暂无状态数据' : null))
           const on = st === 'on'
           return (
             <div
-              key={r.channelNum}
+              key={r.channel}
               className="flex h-11 items-center gap-2 rounded border border-[rgb(148_163_184/0.14)] border-solid bg-[rgb(148_163_184/0.07)] pr-2 pl-2.5"
             >
               <div className="min-w-0 flex-1 leading-tight">
@@ -511,12 +511,12 @@ export function RelayCard({
                 <div
                   className={`text-[11px] ${loading ? 'text-[#fcd34d]' : on ? 'text-[#67e8f9]' : 'text-[var(--sc-text-3)]'}`}
                 >
-                  通道 {r.channelNum} · {loading ? '执行中' : on ? '运行' : st === 'off' ? '停止' : '状态未知'}
-                  {links.get(r.channelNum)?.hold
+                  通道 {r.channel} · {loading ? '执行中' : on ? '运行' : st === 'off' ? '停止' : '状态未知'}
+                  {links.get(r.channel)?.hold
                     ? ' · 手动接管'
                     : [
-                        links.get(r.channelNum)?.linkages.length ? ' · 联动' : '',
-                        links.get(r.channelNum)?.schedules.length ? ' · 定时' : '',
+                        links.get(r.channel)?.linkages.length ? ' · 联动' : '',
+                        links.get(r.channel)?.schedules.length ? ' · 定时' : '',
                       ].join('')}
                 </div>
               </div>

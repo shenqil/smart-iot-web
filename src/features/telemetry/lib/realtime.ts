@@ -1,23 +1,25 @@
 import type { Schemas } from '@/api/client'
-import { decimalsOf, INVALID_READING } from '@/lib/resolution'
+import { decimalsOf } from '@/lib/resolution'
 import { dayjs } from '@/lib/time'
 
 export type AppSensor = Schemas['DeviceAppSensor']
-export type AppRelay = Schemas['RelayConfig']
-export type Realtime = Schemas['TelemetryRealtimeView']
+export type AppRelay = Schemas['DeviceAppRelay']
+export type Realtime = Schemas['DataRealtimeView']
+/** 读数数组：下标即通道号，null 表示该通道无读数 */
+export type Readings = readonly (number | null)[]
 
-/** 通道显示名：显示名 > 标准名 > 通道 N (传感器、继电器通用) */
-export const channelName = (c: { displayName?: string; standardName?: string; channelNum: number }) =>
-  c.displayName?.trim() || c.standardName?.trim() || `通道 ${c.channelNum}`
+/** 通道显示名：服务端标签 > 展示名称 > 标准名 > 通道 N (传感器、继电器通用) */
+export const channelName = (c: { label?: string; name?: string; standardName?: string; channel: number }) =>
+  c.label?.trim() || c.name?.trim() || c.standardName?.trim() || `通道 ${c.channel}`
 
 /** 按通道号排序 (配置数组不保证有序) */
-export const byChannel = <T extends { channelNum: number }>(list: T[] | null | undefined): T[] =>
-  [...(list ?? [])].sort((a, b) => a.channelNum - b.channelNum)
+export const byChannel = <T extends { channel: number }>(list: T[] | null | undefined): T[] =>
+  [...(list ?? [])].sort((a, b) => a.channel - b.channel)
 
 /**
  * 读数状态
  * - ok 正常；over / under 超出量程 (数据端拿不到告警规则，只按量程判断)
- * - invalid 该通道无读数 (2147483647，无传感器)；empty 设备还没有上报数据
+ * - invalid 该通道无读数 (null，无传感器)；empty 设备还没有上报数据
  */
 export type ReadingState = 'ok' | 'over' | 'under' | 'invalid' | 'empty'
 
@@ -33,16 +35,19 @@ export interface SensorReading {
 }
 
 /** 实时数组 + 通道配置 → 卡片数据 (下标即通道号) */
-export function readSensor(config: AppSensor, sensors: readonly number[] | null | undefined): SensorReading {
+export function readSensor(config: AppSensor, sensors: Readings | null | undefined): SensorReading {
   const name = channelName(config)
-  const raw = sensors?.[config.channelNum]
-  if (raw == null || Number.isNaN(raw)) return { config, name, value: null, text: '—', state: 'empty', position: null }
-  if (raw === INVALID_READING) return { config, name, value: null, text: '无读数', state: 'invalid', position: null }
-  const { minValue: min, maxValue: max } = config
+  const raw = sensors?.[config.channel]
+  if (raw === undefined || (raw != null && Number.isNaN(raw)))
+    return { config, name, value: null, text: '—', state: 'empty', position: null }
+  if (raw === null) return { config, name, value: null, text: '无读数', state: 'invalid', position: null }
+  // 量程未配置时为 0 ~ 0
+  const ranged = config.rangeMax > config.rangeMin
+  const { rangeMin: min, rangeMax: max } = config
   let state: ReadingState = 'ok'
-  if (max != null && raw > max) state = 'over'
-  else if (min != null && raw < min) state = 'under'
-  const position = min != null && max != null && max > min ? Math.min(1, Math.max(0, (raw - min) / (max - min))) : null
+  if (ranged && raw > max) state = 'over'
+  else if (ranged && raw < min) state = 'under'
+  const position = ranged ? Math.min(1, Math.max(0, (raw - min) / (max - min))) : null
   // 避免 -0.4 → "-0"
   const text = raw.toFixed(decimalsOf(config.resolution)).replace(/^-(0(\.0+)?)$/, '$1')
   return { config, name, value: raw, text, state, position }

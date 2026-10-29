@@ -11,7 +11,14 @@ import { sortOrderOf, toSortParam } from '@/components/table/usePageQuery'
 import { useCompanyId } from '@/hooks/session'
 import { fmtDateTime } from '@/lib/time'
 import { type AlarmQuery, type AlarmView, alarmsQuery, processAlarms } from './api'
-import { ALARM_TYPE, AlarmLevelTag, alarmLevelOptions, alarmTypeOptions, thresholdText } from './enums'
+import {
+  ALARM_TYPE,
+  AlarmLevelTag,
+  AlarmStatusTag,
+  alarmLevelOptions,
+  alarmStatusOptions,
+  alarmTypeOptions,
+} from './enums'
 
 type Processed = 'all' | 'false' | 'true'
 
@@ -24,8 +31,6 @@ export interface AlarmTableProps {
   defaultProcessed?: Processed
   pageSize?: number
 }
-
-const extraOf = (a: AlarmView) => (a.extra ?? {}) as { unit?: string; display_name?: string }
 
 /** 告警列表 + 批量处理 (FRONTEND_DESIGN §5.4)：不返回总数，简单分页 */
 export function AlarmTable({
@@ -41,6 +46,7 @@ export function AlarmTable({
   const [processed, setProcessed] = useState<Processed>(defaultProcessed)
   const [level, setLevel] = useState<number>()
   const [type, setType] = useState<AlarmQuery['type']>()
+  const [status, setStatus] = useState<AlarmQuery['status']>()
   const [range, setRange] = useState<RangeValue>()
   const [kwInput, setKwInput] = useState('')
   const [keyword, setKeyword] = useState<string>()
@@ -54,6 +60,7 @@ export function AlarmTable({
     deviceId: deviceId ?? undefined,
     level,
     type,
+    status,
     processed: processed === 'all' ? undefined : processed,
     start: range?.start,
     end: range?.end,
@@ -76,28 +83,24 @@ export function AlarmTable({
   const columns: ColumnsType<AlarmView> = [
     {
       title: '级别',
-      dataIndex: 'alarmLevel',
-      key: 'alarmLevel',
+      dataIndex: 'level',
+      key: 'level',
       width: 84,
       sorter: true,
-      sortOrder: sortOrderOf(sort, 'alarmLevel'),
+      sortOrder: sortOrderOf(sort, 'level'),
       render: (v) => <AlarmLevelTag level={v} />,
     },
     {
       title: '告警',
       key: 'desc',
       render: (_, a) => {
-        const t = ALARM_TYPE[a.alarmType]
-        const ch = extraOf(a).display_name
+        const t = ALARM_TYPE[a.type]
         return (
-          <div className="min-w-48">
-            <div className="flex items-center gap-1.5">
-              <Tag color={t?.color} className="m-0" variant="filled">
-                {t?.label ?? a.alarmType}
-              </Tag>
-              <span className="font-medium">{a.description || (ch ? `${ch}告警` : '—')}</span>
-            </div>
-            {ch && <div className="mt-0.5 text-fg-tertiary text-xs">通道：{ch}</div>}
+          <div className="flex min-w-48 items-center gap-1.5">
+            <Tag color={t?.color} className="m-0" variant="filled">
+              {t?.label ?? a.type}
+            </Tag>
+            <span className="font-medium">{a.description || '—'}</span>
           </div>
         )
       },
@@ -117,26 +120,30 @@ export function AlarmTable({
           },
         ]),
     {
-      title: '实际值 / 阈值',
+      title: (
+        <Tooltip title="越限告警：触发时的读数 / 持续期间偏离阈值最远的读数">
+          触发值 / 峰值 <InfoCircleOutlined className="text-fg-tertiary" />
+        </Tooltip>
+      ),
       key: 'value',
       render: (_, a) => {
-        if (a.alarmType !== 'threshold_breach') return <span className="text-fg-tertiary">—</span>
-        const unit = extraOf(a).unit ?? ''
+        if (a.type !== 'threshold' || a.triggerValue == null) return <span className="text-fg-tertiary">—</span>
         return (
           <span className="whitespace-nowrap">
-            <b className="text-danger">
-              {a.value}
-              {unit && ` ${unit}`}
-            </b>
-            <span className="mx-1 text-fg-tertiary">/</span>
-            <span className="text-fg-secondary">{thresholdText(a.alarmSubType, a.threshold, unit)}</span>
+            <b className="text-danger">{a.triggerValue}</b>
+            {a.peakValue != null && a.peakValue !== a.triggerValue && (
+              <>
+                <span className="mx-1 text-fg-tertiary">/</span>
+                <span className="text-fg-secondary">{a.peakValue}</span>
+              </>
+            )}
           </span>
         )
       },
     },
     {
       title: (
-        <Tooltip title="同一告警持续发生期间只有一条记录 (5 分钟没有新告警才结束)，次数每分钟更新">
+        <Tooltip title="同一告警持续期间只有一条记录，次数为持续期间的推送次数">
           次数 <InfoCircleOutlined className="text-fg-tertiary" />
         </Tooltip>
       ),
@@ -161,7 +168,22 @@ export function AlarmTable({
       ),
     },
     {
-      title: '状态',
+      title: '告警状态',
+      dataIndex: 'status',
+      width: 96,
+      render: (v, a) =>
+        a.endedAt ? (
+          <Tooltip title={`${v === 'recovered' ? '解除' : '关闭'}时间 ${fmtDateTime(a.endedAt)}`}>
+            <span>
+              <AlarmStatusTag status={v} />
+            </span>
+          </Tooltip>
+        ) : (
+          <AlarmStatusTag status={v} />
+        ),
+    },
+    {
+      title: '处理',
       dataIndex: 'processed',
       width: 90,
       render: (v, a) =>
@@ -228,6 +250,14 @@ export function AlarmTable({
               value={type}
               options={alarmTypeOptions}
               onChange={filter(setType)}
+            />
+            <Select
+              allowClear
+              placeholder="告警状态"
+              style={{ width: 110 }}
+              value={status}
+              options={alarmStatusOptions}
+              onChange={filter(setStatus)}
             />
             <RetentionRangePicker value={range} onChange={filter(setRange)} />
             <Input

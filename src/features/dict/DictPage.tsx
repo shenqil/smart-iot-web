@@ -27,7 +27,7 @@ interface DictConfig {
   title: string
   keywordPlaceholder: string
   scene: 'device-type-icon' | 'sensor-icon' | 'relay-icon'
-  iconField: 'icon' | 'url'
+  iconField: 'iconUrl'
   columns: PageColumn<DictRow>[]
   fields: ReactNode
   defaults: Record<string, unknown>
@@ -56,10 +56,10 @@ const CONFIGS: Record<DictKind, DictConfig> = {
     title: '设备类型',
     keywordPlaceholder: '名称 / 描述',
     scene: 'device-type-icon',
-    iconField: 'icon',
+    iconField: 'iconUrl',
     defaults: { sort: 0 },
     columns: [
-      { title: '图标', dataIndex: 'icon', width: 64, render: (v) => <Icon src={v} /> },
+      { title: '图标', dataIndex: 'iconUrl', width: 64, render: (v) => <Icon src={v} /> },
       { title: '名称', dataIndex: 'name', sortField: 'name' },
       { title: '描述', dataIndex: 'description', ellipsis: true, render: (v) => v || '—' },
     ],
@@ -76,16 +76,16 @@ const CONFIGS: Record<DictKind, DictConfig> = {
     title: '标准传感器',
     keywordPlaceholder: '名称 / 单位',
     scene: 'sensor-icon',
-    iconField: 'url',
+    iconField: 'iconUrl',
     defaults: { sort: 0, resolution: 0.1 },
     columns: [
-      { title: '图标', dataIndex: 'url', width: 64, render: (v) => <Icon src={v} /> },
+      { title: '图标', dataIndex: 'iconUrl', width: 64, render: (v) => <Icon src={v} /> },
       { title: '名称', dataIndex: 'name', sortField: 'name' },
       { title: '单位', dataIndex: 'unit', render: (v) => v || '—' },
       {
         title: '量程',
         render: (_, r) =>
-          `${formatValue(r.minValue as number, r.resolution as number)} ~ ${formatValue(r.maxValue as number, r.resolution as number)}`,
+          `${formatValue(r.rangeMin as number, r.resolution as number)} ~ ${formatValue(r.rangeMax as number, r.resolution as number)}`,
       },
       { title: '分辨率', dataIndex: 'resolution', render: (v) => (v ? v : '未配置') },
     ],
@@ -93,18 +93,18 @@ const CONFIGS: Record<DictKind, DictConfig> = {
       <>
         {nameField(100)}
         <Space.Compact block>
-          <Form.Item name="minValue" label="量程下限" className="w-1/2">
+          <Form.Item name="rangeMin" label="量程下限" className="w-1/2">
             <InputNumber className="w-full" />
           </Form.Item>
           <Form.Item
-            name="maxValue"
+            name="rangeMax"
             label="量程上限"
             className="w-1/2"
-            dependencies={['minValue']}
+            dependencies={['rangeMin']}
             rules={[
               ({ getFieldValue }) => ({
                 validator: (_, v) =>
-                  v == null || getFieldValue('minValue') == null || v >= getFieldValue('minValue')
+                  v == null || getFieldValue('rangeMin') == null || v >= getFieldValue('rangeMin')
                     ? Promise.resolve()
                     : Promise.reject(new Error('上限不能小于下限')),
               }),
@@ -133,10 +133,10 @@ const CONFIGS: Record<DictKind, DictConfig> = {
     title: '标准继电器',
     keywordPlaceholder: '名称',
     scene: 'relay-icon',
-    iconField: 'url',
+    iconField: 'iconUrl',
     defaults: { sort: 0 },
     columns: [
-      { title: '图标', dataIndex: 'url', width: 64, render: (v) => <Icon src={v} /> },
+      { title: '图标', dataIndex: 'iconUrl', width: 64, render: (v) => <Icon src={v} /> },
       { title: '名称', dataIndex: 'name', sortField: 'name' },
     ],
     fields: nameField(100),

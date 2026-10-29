@@ -12,7 +12,7 @@ export function ChannelPicker({
   onChange: (v: number[]) => void
 }) {
   const toggle = (ch: number, checked: boolean) => {
-    if (checked) onChange(sensors.map((s) => s.channelNum).filter((c) => c === ch || value.includes(c)))
+    if (checked) onChange(sensors.map((s) => s.channel).filter((c) => c === ch || value.includes(c)))
     else if (value.length > 1) onChange(value.filter((c) => c !== ch))
   }
   return (
@@ -20,9 +20,9 @@ export function ChannelPicker({
       <span className="mr-2 text-fg-secondary text-sm">通道</span>
       {sensors.map((s) => (
         <Tag.CheckableTag
-          key={s.channelNum}
-          checked={value.includes(s.channelNum)}
-          onChange={(c) => toggle(s.channelNum, c)}
+          key={s.channel}
+          checked={value.includes(s.channel)}
+          onChange={(c) => toggle(s.channel, c)}
           className="border border-line border-solid"
         >
           {channelName(s)}

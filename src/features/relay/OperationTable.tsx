@@ -11,7 +11,7 @@ import { channelName } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { fmtDateTime } from '@/lib/time'
 import { type OperationQuery, operationsQuery, type RelayOp } from './api'
-import { isHoldRecord, OpStatusTag, opStatusOptions, relayStateText } from './enums'
+import { isHoldRecord, OpSourceTag, OpStatusTag, opSourceOptions, opStatusOptions, relayStateText } from './enums'
 
 export interface OperationTableProps {
   siteId?: number
@@ -33,6 +33,7 @@ export function OperationTable({
   const companyId = useCompanyId()
   const full = variant === 'full'
   const [status, setStatus] = useState<OperationQuery['status']>()
+  const [source, setSource] = useState<OperationQuery['source']>()
   const [range, setRange] = useState<RangeValue>()
   const [kwInput, setKwInput] = useState('')
   const [keyword, setKeyword] = useState<string>()
@@ -42,6 +43,7 @@ export function OperationTable({
   const q: OperationQuery = {
     siteId: siteId ?? undefined,
     deviceId: deviceId ?? undefined,
+    source,
     status,
     start: range?.start,
     end: range?.end,
@@ -86,25 +88,26 @@ export function OperationTable({
       title: '继电器',
       key: 'relay',
       render: (_, r) => {
-        const relay = deviceOf(r.deviceId)?.relays?.find((x) => x.channelNum === r.relayIndex)
+        const relay = deviceOf(r.deviceId)?.relays?.find((x) => x.channel === r.channel)
         return relay ? (
           <span className="whitespace-nowrap">
             {channelName(relay)}
-            <span className="ml-1 text-fg-tertiary text-xs">通道 {r.relayIndex}</span>
+            <span className="ml-1 text-fg-tertiary text-xs">通道 {r.channel}</span>
           </span>
         ) : (
-          <span className="whitespace-nowrap">通道 {r.relayIndex}</span>
+          <span className="whitespace-nowrap">通道 {r.channel}</span>
         )
       },
     },
+    { title: '来源', dataIndex: 'source', width: 88, render: (v) => <OpSourceTag source={v} /> },
     {
       title: '操作',
       dataIndex: 'targetState',
       width: 72,
       render: (v, r) =>
-        isHoldRecord(r.status) ? (
+        isHoldRecord(r.source) ? (
           <Tooltip title={`当时状态：${relayStateText(v)}`}>
-            <span className="text-fg-secondary">{r.status === 'hold' ? '接管' : '恢复'}</span>
+            <span className="text-fg-secondary">{r.source === 'hold' ? '接管' : '恢复'}</span>
           </Tooltip>
         ) : (
           <span className={v ? 'font-medium text-primary' : 'text-fg-secondary'}>{relayStateText(v)}</span>
@@ -120,7 +123,7 @@ export function OperationTable({
       render: (v: number, r) => (r.finishedAt && v ? `${(v / 1000).toFixed(v < 10_000 ? 2 : 1)} s` : '—'),
     },
     {
-      title: <Tooltip title="联动自动控制显示触发的告警规则">操作人 / 触发规则</Tooltip>,
+      title: <Tooltip title="手动操作为操作人；联动与定时为触发的规则">操作人 / 触发规则</Tooltip>,
       dataIndex: 'operatorName',
       width: 220,
       ellipsis: { showTitle: false },
@@ -144,6 +147,14 @@ export function OperationTable({
   return (
     <div className={full ? 'layout-fill' : ''}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Select
+          allowClear
+          placeholder="来源"
+          style={{ width: 110 }}
+          value={source}
+          options={opSourceOptions}
+          onChange={filter(setSource)}
+        />
         <Select
           allowClear
           placeholder="结果"

@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { INVALID_READING } from '@/lib/resolution'
 import { csvLines, toColumnar, wallTime } from './series'
 
 const records = [
-  { time: Date.parse('2026-10-20T00:00:00Z'), vals: [1.234, INVALID_READING] },
+  { time: Date.parse('2026-10-20T00:00:00Z'), vals: [1.234, null] },
   { time: Date.parse('2026-10-20T00:00:10Z'), vals: [2.5, 3] },
 ]
 
@@ -23,8 +22,8 @@ describe('series', () => {
       ...csvLines(
         h,
         [
-          { channelNum: 0, header: '温度 (℃)', decimals: 1 },
-          { channelNum: 1, header: 'a,b', decimals: 0 },
+          { channel: 0, header: '温度 (℃)', decimals: 1 },
+          { channel: 1, header: 'a,b', decimals: 0 },
         ],
         () => 480,
       ),

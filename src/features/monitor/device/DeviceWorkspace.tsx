@@ -82,7 +82,7 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
       { replace: true },
     )
   // 历史曲线与环比共用的通道选择 (默认前两个通道)
-  const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channelNum))
+  const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channel))
   // 实时数据最多显示三行卡片，继电器列表与之等高，超出部分各自在内部滚动
   const [sensorAreaHeight, setSensorAreaHeight] = useState<number>()
   const trail = useReadingTrail(realtime?.sensors, realtime?.sensorsAt)
@@ -120,12 +120,7 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
         <RowsScroller rows={3} onHeight={setSensorAreaHeight}>
           <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
             {readings.map((r) => (
-              <SensorCard
-                key={r.config.channelNum}
-                reading={r}
-                trail={trail[r.config.channelNum] ?? []}
-                offline={!online}
-              />
+              <SensorCard key={r.config.channel} reading={r} trail={trail[r.config.channel] ?? []} offline={!online} />
             ))}
           </div>
         </RowsScroller>

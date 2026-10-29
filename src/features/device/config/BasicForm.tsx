@@ -80,8 +80,8 @@ export function BasicForm({
         <Descriptions.Item label="设备 SN">
           <span className="font-mono">{device.deviceSn}</span>
         </Descriptions.Item>
-        <Descriptions.Item label="传感器通道数">{device.maxSensorChannels}</Descriptions.Item>
-        <Descriptions.Item label="继电器通道数">{device.maxRelayChannels}</Descriptions.Item>
+        <Descriptions.Item label="传感器通道数">{device.sensorChannels}</Descriptions.Item>
+        <Descriptions.Item label="继电器通道数">{device.relayChannels}</Descriptions.Item>
         <Descriptions.Item label="创建时间">{fmtDateTime(device.createdAt)}</Descriptions.Item>
         <Descriptions.Item label="更新时间">{fmtDateTime(device.updatedAt)}</Descriptions.Item>
       </Descriptions>

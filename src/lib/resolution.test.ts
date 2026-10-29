@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decimalsOf, formatValue, INVALID_READING, isValidReading } from './resolution'
+import { decimalsOf, formatValue, isValidReading } from './resolution'
 
 describe('分辨率', () => {
   it('小数位', () => {
@@ -11,8 +11,8 @@ describe('分辨率', () => {
     expect(formatValue(1234.5, 10)).toBe('1235')
   })
   it('无读数', () => {
-    expect(formatValue(INVALID_READING, 0.1)).toBe('无读数')
+    expect(formatValue(null, 0.1)).toBe('—')
     expect(formatValue(32767, 1)).toBe('32767')
-    expect([1, INVALID_READING, null, 0].map(isValidReading)).toEqual([true, false, false, true])
+    expect([1, Number.NaN, null, 0].map(isValidReading)).toEqual([true, false, false, true])
   })
 })

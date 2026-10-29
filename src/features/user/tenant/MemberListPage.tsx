@@ -74,7 +74,6 @@ export default function MemberListPage() {
       title: '企业角色',
       dataIndex: 'role',
       width: 120,
-      sortField: 'role',
       render: (v) => <EnumTag value={v} defs={COMPANY_ROLE} />,
     },
     {
@@ -88,7 +87,7 @@ export default function MemberListPage() {
         </>
       ),
     },
-    { title: '加入时间', dataIndex: 'joinedAt', width: 160, sortField: 'joinedAt', render: fmtDateTime },
+    { title: '加入时间', dataIndex: 'joinedAt', width: 160, render: fmtDateTime },
     {
       title: '操作',
       width: 80,
@@ -120,7 +119,6 @@ export default function MemberListPage() {
         columns={columns}
         rowKey="id"
         keywordPlaceholder="用户名 / 昵称 / 手机号"
-        defaultSort="-joinedAt"
         filters={[
           { name: 'role', placeholder: '企业角色', options: enumOptions(COMPANY_ROLE), width: 110 },
           { name: 'status', placeholder: '账号状态', options: enumOptions(ACTIVE_STATUS), width: 110 },

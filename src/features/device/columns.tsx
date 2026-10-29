@@ -29,7 +29,7 @@ export function deviceColumns(
       title: '通道 (传感器 / 继电器)',
       render: (_, r) => (
         <span className="text-fg-secondary">
-          {r.maxSensorChannels} / {r.maxRelayChannels}
+          {r.sensorChannels} / {r.relayChannels}
         </span>
       ),
     },

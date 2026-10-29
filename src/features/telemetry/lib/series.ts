@@ -37,7 +37,7 @@ export function wallTime(ms: number, offsetMinutes: number): string {
 export const csvField = (s: string) => (/[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s)
 
 export interface CsvColumn {
-  channelNum: number
+  channel: number
   header: string
   decimals: number
 }
@@ -49,7 +49,7 @@ export function* csvLines(
   offsetOf: (ms: number) => number,
 ): Generator<string> {
   yield ['时间', ...columns.map((c) => c.header)].map(csvField).join(',')
-  const cols = columns.map((c) => ({ ...c, data: h.channels.get(c.channelNum) }))
+  const cols = columns.map((c) => ({ ...c, data: h.channels.get(c.channel) }))
   for (let i = 0; i < h.times.length; i++) {
     const t = h.times[i]
     let line = wallTime(t, offsetOf(t))

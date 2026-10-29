@@ -18,7 +18,7 @@ export function ChannelOrderList({
 }) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
-  const byNum = new Map(sensors.map((s) => [s.channelNum, s]))
+  const byNum = new Map(sensors.map((s) => [s.channel, s]))
   const checked = new Set(value.checked)
   const allChecked = value.order.length > 0 && value.order.every((n) => checked.has(n))
 

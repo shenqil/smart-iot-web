@@ -1,71 +1,88 @@
 import { describe, expect, it } from 'vitest'
-import { UUID_RE } from '@/utils/uuid'
-import type { SensorAlertConfig, SensorConfig } from './api'
+import type { SensorView } from './api'
 import {
+  calibrationSummary,
   cloneRule,
   copyChannel,
-  correctionSummary,
   newRule,
   prepareSensors,
   ruleSummary,
+  type SensorDraft,
+  toDraft,
   validateSensors,
 } from './sensorRules'
 
-const temp: SensorConfig = {
-  channelNum: 0,
+const view: SensorView = {
+  channel: 0,
+  standardSensorId: 3,
   standardName: '空气温度',
+  label: '空气温度',
   unit: '℃',
-  minValue: -40,
-  maxValue: 80,
+  rangeMin: -40,
+  rangeMax: 80,
   resolution: 0.1,
-  alertConfigs: [
+  calibration: { scale: 1, offset: 0 },
+  simulation: null as never,
+  rules: [
     {
-      code: '6f1c2a10-0000-4000-8000-000000000001',
+      id: 7,
       enabled: true,
-      alertType: 'greater',
+      condition: 'greater',
       threshold: 35,
-      repeatInterval: 300,
+      level: 2,
+      repeatSeconds: 300,
+      createAlarm: true,
+      actionCount: 2,
     },
   ],
 }
+const temp: SensorDraft = toDraft(view)
 
 describe('传感器配置', () => {
-  it('新规则带小写 UUID 编码', () => {
-    expect(newRule().code).toMatch(UUID_RE)
+  it('详情 → 草稿：恒等校准不保留，规则以 id 作行键', () => {
+    expect(temp.calibration).toBeUndefined()
+    expect(temp.simulation).toBeUndefined()
+    expect(temp.rules[0]).toMatchObject({ id: 7, key: 'r7', actionCount: 2 })
   })
-  it('复制通道时规则换新编码', () => {
+  it('新规则没有 id', () => {
+    const r = newRule()
+    expect(r.id).toBeUndefined()
+    expect(r.key).toBeTruthy()
+  })
+  it('复制通道：规则作为新规则 (不带 id，联动不复制)', () => {
     const c = copyChannel(temp, 3)
-    expect(c.channelNum).toBe(3)
-    expect(c.alertConfigs?.[0].code).not.toBe(temp.alertConfigs?.[0].code)
-    expect(c.alertConfigs?.[0].code).toMatch(UUID_RE)
-    expect(temp.alertConfigs?.[0].threshold).toBe(35)
+    expect(c.channel).toBe(3)
+    expect(c.rules[0].id).toBeUndefined()
+    expect(c.rules[0].actionCount).toBeUndefined()
+    expect(c.rules[0].key).not.toBe(temp.rules[0].key)
+    expect(temp.rules[0].threshold).toBe(35)
+    expect(cloneRule(temp.rules[0]).threshold).toBe(35)
   })
-  it('保存前给启用但缺编码的规则补编码，并按通道排序', () => {
+  it('保存前：去掉显示字段与行键，空白文本不提交，按通道排序', () => {
     const out = prepareSensors([
-      { channelNum: 5, alertConfigs: [{ enabled: true, alertType: 'less', threshold: 1, repeatInterval: 60 }] },
-      { channelNum: 1, displayName: '  ' },
+      { channel: 5, rules: [{ ...newRule(), condition: 'less', threshold: 1 }] },
+      { channel: 1, name: '  ', standardName: 'x', rules: [], calibration: { scale: 1, offset: 0 } },
+      temp,
     ])
-    expect(out.map((s) => s.channelNum)).toEqual([1, 5])
-    expect(out[0].displayName).toBeUndefined()
-    expect(out[1].alertConfigs?.[0].code).toMatch(UUID_RE)
+    expect(out.map((s) => s.channel)).toEqual([0, 1, 5])
+    expect(out[1].name).toBeUndefined()
+    expect(out[1].calibration).toBeUndefined()
+    expect('standardName' in out[1]).toBe(false)
+    expect(out[0].rules?.[0]).toEqual({
+      id: 7,
+      enabled: true,
+      condition: 'greater',
+      threshold: 35,
+      level: 2,
+      repeatSeconds: 300,
+      createAlarm: true,
+    })
   })
-  it('校验：量程、区间、推送间隔、编码重复、通道越界', () => {
+  it('校验：量程、区间、推送间隔、校准系数、通道越界', () => {
     const errs = validateSensors(
       [
-        { ...temp, minValue: 100, maxValue: 0 },
-        {
-          channelNum: 16,
-          alertConfigs: [
-            {
-              code: temp.alertConfigs?.[0].code,
-              enabled: true,
-              alertType: 'range',
-              minValue: 5,
-              maxValue: 1,
-              repeatInterval: 0,
-            },
-          ],
-        },
+        { ...temp, rangeMin: 100, rangeMax: 0, calibration: { scale: 0, offset: 1 } },
+        { channel: 16, rules: [{ ...newRule(), condition: 'between', lower: 5, upper: 1, repeatSeconds: 0 }] },
       ],
       16,
     )
@@ -73,28 +90,11 @@ describe('传感器配置', () => {
     expect(validateSensors([temp], 16)).toEqual([])
   })
   it('说明文字', () => {
-    expect(ruleSummary({ enabled: true, alertType: 'range', minValue: 1, maxValue: 2, repeatInterval: 1 }, '℃')).toBe(
-      '1 ~ 2 ℃',
-    )
-    expect(correctionSummary({ channelNum: 0, correction: { mode: 'coefficient', coefficientValue: 1.02 } })).toBe(
-      '×1.02',
-    )
-    expect(correctionSummary({ channelNum: 0 })).toBe('—')
-  })
-})
-
-describe('cloneRule with relay actions', () => {
-  it('copies actions with a new code', () => {
-    const r = {
-      code: '0f8fad5b-d9cb-469f-a165-70867728950e',
-      enabled: true,
-      alertType: 'less',
-      repeatInterval: 60,
-      actions: [{ targetSn: 'SN2', relayIndex: 0, state: 1 }],
-    } as SensorAlertConfig
-    const c = cloneRule(r)
-    expect(c.code).not.toBe(r.code)
-    expect(c.actions).toEqual(r.actions)
-    expect(c.actions).not.toBe(r.actions)
+    expect(ruleSummary({ condition: 'between', lower: 1, upper: 2 }, '℃')).toBe('1 ~ 2 ℃')
+    expect(ruleSummary({ condition: 'greater', threshold: 35 })).toBe('> 35')
+    expect(calibrationSummary({ calibration: { scale: 1.02, offset: 0 } })).toBe('×1.02')
+    expect(calibrationSummary({ calibration: { scale: 1, offset: -0.5 } })).toBe('-0.5')
+    expect(calibrationSummary({ simulation: { base: 20, jitter: 1 } })).toBe('模拟 20 ±1')
+    expect(calibrationSummary({})).toBe('—')
   })
 })

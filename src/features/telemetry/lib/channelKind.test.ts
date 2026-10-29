@@ -13,10 +13,10 @@ describe('sensorKind', () => {
   })
 
   it('标准名为空时用显示名，再用单位', () => {
-    expect(sensorKind({ displayName: '1 号棚风速' })).toBe('wind')
-    expect(sensorKind({ displayName: '读数 A', unit: '℃' })).toBe('temperature')
+    expect(sensorKind({ label: '1 号棚风速' })).toBe('wind')
+    expect(sensorKind({ label: '读数 A', unit: '℃' })).toBe('temperature')
     expect(sensorKind({ unit: 'hPa' })).toBe('pressure')
-    expect(sensorKind({ displayName: '通道 9' })).toBe('generic')
+    expect(sensorKind({ label: '通道 9' })).toBe('generic')
   })
 })
 
@@ -27,7 +27,7 @@ describe('relayKind', () => {
     expect(relayKind({ standardName: '补光灯' })).toBe('light')
     expect(relayKind({ standardName: '风机' })).toBe('fan')
     expect(relayKind({ standardName: '水泵' })).toBe('pump')
-    expect(relayKind({ displayName: '东区喷淋' })).toBe('sprinkler')
-    expect(relayKind({ displayName: '备用' })).toBe('power')
+    expect(relayKind({ label: '东区喷淋' })).toBe('sprinkler')
+    expect(relayKind({ label: '备用' })).toBe('power')
   })
 })

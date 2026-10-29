@@ -17,7 +17,7 @@ export function moveItem<T>(arr: T[], from: number, to: number): T[] {
 
 /** 默认：按通道号排序、全选 */
 export const defaultSelection = (sensors: SensorConfig[]): ChannelSelection => {
-  const order = sensors.map((s) => s.channelNum).sort((a, b) => a - b)
+  const order = sensors.map((s) => s.channel).sort((a, b) => a - b)
   return { order, checked: order }
 }
 

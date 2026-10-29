@@ -3,7 +3,7 @@ import type { PageParams } from '@/api/types'
 
 export type DeviceCreateBody = Schemas['DeviceCreateBody']
 export type DeviceCompany = Schemas['DeviceCompanyView']
-export type AvailableCompany = Schemas['DeviceAvailableCompanyView']
+export type AvailableCompany = Schemas['DeviceCompanyView']
 
 export const adminDeviceKeys = {
   all: ['admin', 0, 'devices'] as const,

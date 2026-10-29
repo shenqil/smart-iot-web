@@ -78,7 +78,7 @@ function ScreenBody() {
   const types = useDeviceTypes()
   const typeName = (d: AppDevice) => types.nameOf(d.deviceTypeId)
   const typeIcon = (d: AppDevice) =>
-    d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.icon || undefined : undefined
+    d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl || undefined : undefined
   const isCamera = (d: AppDevice) => isVideoDeviceType(typeName(d))
 
   const devicesQ = useQuery({ ...appSiteDevicesQuery(companyId, siteId), enabled: Boolean(site) })

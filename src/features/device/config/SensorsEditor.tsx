@@ -11,22 +11,23 @@ import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useState } from 'react'
 import { useStandardSensors } from '@/features/dict/api'
 import { RESOLUTION_OPTIONS } from '@/lib/resolution'
-import { uuid } from '@/utils/uuid'
 import { AlertRulesEditor } from './AlertRulesEditor'
-import type { SensorConfig } from './api'
-import { CorrectionModal } from './CorrectionModal'
-import type { LinkageContext } from './RelayActionsModal'
-import { copyChannel, correctionSummary, prepareSensors, validateSensors } from './sensorRules'
+import type { SensorBody, SensorView } from './api'
+import { CalibrationModal } from './CalibrationModal'
+import {
+  calibrationSummary,
+  copyChannel,
+  prepareSensors,
+  type SensorDraft,
+  toDraft,
+  validateSensors,
+} from './sensorRules'
 
-type Row = { channelNum: number; cfg?: SensorConfig }
-
-/** 载入时给缺编码的规则补编码 (作为行 key，保存时也需要) */
-const normalize = (list: SensorConfig[]) =>
-  list.map((s) => ({ ...s, alertConfigs: (s.alertConfigs ?? []).map((r) => (r.code ? r : { ...r, code: uuid() })) }))
+type Row = { channel: number; cfg?: SensorDraft }
 
 /**
  * 传感器配置编辑器 (FRONTEND_DESIGN §3.5，平台与企业共用)
- * 行 = 通道号 0 ~ maxSensorChannels-1；未配置的通道不提交；保存为整体替换
+ * 行 = 通道号 0 ~ sensorChannels-1；未配置的通道不提交；保存为整体替换
  */
 export function SensorsEditor({
   sensors,
@@ -34,18 +35,16 @@ export function SensorsEditor({
   saving,
   onSave,
   onDirtyChange,
-  linkage,
 }: {
-  linkage?: LinkageContext
-  sensors: SensorConfig[]
+  sensors: SensorView[]
   maxChannels: number
   saving: boolean
-  onSave: (sensors: SensorConfig[]) => Promise<unknown>
+  onSave: (sensors: SensorBody[]) => Promise<unknown>
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const std = useStandardSensors()
-  const original = useMemo(() => normalize(sensors), [sensors])
-  const [list, setList] = useState<SensorConfig[]>(original)
+  const original = useMemo(() => sensors.map(toDraft), [sensors])
+  const [list, setList] = useState<SensorDraft[]>(original)
   const [expanded, setExpanded] = useState<number[]>([])
   const [showEmpty, setShowEmpty] = useState(maxChannels <= 64)
   const [correcting, setCorrecting] = useState<number | null>(null)
@@ -55,43 +54,41 @@ export function SensorsEditor({
   const dirty = JSON.stringify(list) !== JSON.stringify(original)
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
 
-  const byChannel = new Map(list.map((s) => [s.channelNum, s]))
-  const patch = (ch: number, p: Partial<SensorConfig>) =>
-    setList((l) => l.map((s) => (s.channelNum === ch ? { ...s, ...p } : s)))
-  const add = (cfg: SensorConfig) => setList((l) => [...l.filter((s) => s.channelNum !== cfg.channelNum), cfg])
-  const clear = (ch: number) => setList((l) => l.filter((s) => s.channelNum !== ch))
+  const byChannel = new Map(list.map((s) => [s.channel, s]))
+  const patch = (ch: number, p: Partial<SensorDraft>) =>
+    setList((l) => l.map((s) => (s.channel === ch ? { ...s, ...p } : s)))
+  const add = (cfg: SensorDraft) => setList((l) => [...l.filter((s) => s.channel !== cfg.channel), cfg])
+  const clear = (ch: number) => setList((l) => l.filter((s) => s.channel !== ch))
   const free = Array.from({ length: maxChannels }, (_, i) => i).filter((i) => !byChannel.has(i))
 
   const rows: Row[] = showEmpty
-    ? Array.from({ length: maxChannels }, (_, i) => ({ channelNum: i, cfg: byChannel.get(i) }))
-    : [...list].sort((a, b) => a.channelNum - b.channelNum).map((s) => ({ channelNum: s.channelNum, cfg: s }))
+    ? Array.from({ length: maxChannels }, (_, i) => ({ channel: i, cfg: byChannel.get(i) }))
+    : [...list].sort((a, b) => a.channel - b.channel).map((s) => ({ channel: s.channel, cfg: s }))
 
   const applyStandard = (ch: number, id: number | undefined) => {
     const d = id != null ? std.byId.get(id) : undefined
-    if (!d) return patch(ch, { standardId: undefined, standardName: undefined })
+    if (!d) return patch(ch, { standardSensorId: undefined, standardName: undefined })
     patch(ch, {
-      standardId: d.id,
+      standardSensorId: d.id,
       standardName: d.name,
       unit: d.unit || undefined,
-      minValue: d.minValue,
-      maxValue: d.maxValue,
-      resolution: (d.resolution || undefined) as SensorConfig['resolution'],
-      url: d.url || undefined,
+      rangeMin: d.rangeMin,
+      rangeMax: d.rangeMax,
+      resolution: (d.resolution || undefined) as SensorBody['resolution'],
     })
   }
 
   const save = async () => {
-    const out = prepareSensors(list)
-    const errs = validateSensors(out, maxChannels)
+    const errs = validateSensors(list, maxChannels)
     setErrors(errs)
     if (errs.length) return
-    await onSave(out)
+    await onSave(prepareSensors(list))
   }
 
   const columns: ColumnsType<Row> = [
     {
       title: '通道',
-      dataIndex: 'channelNum',
+      dataIndex: 'channel',
       width: 72,
       fixed: 'left',
       render: (v, r) => (
@@ -110,9 +107,9 @@ export function SensorsEditor({
             showSearch
             optionFilterProp="label"
             placeholder="选择后自动带出"
-            value={r.cfg.standardId ?? undefined}
+            value={r.cfg.standardSensorId ?? undefined}
             options={std.list.map((s) => ({ value: s.id, label: s.name }))}
-            onChange={(v) => applyStandard(r.channelNum, v)}
+            onChange={(v) => applyStandard(r.channel, v)}
           />
         ) : (
           <span className="text-fg-tertiary">未配置</span>
@@ -127,8 +124,8 @@ export function SensorsEditor({
             size="small"
             placeholder={r.cfg.standardName || '如 1 号棚空气温度'}
             maxLength={100}
-            value={r.cfg.displayName ?? ''}
-            onChange={(e) => patch(r.channelNum, { displayName: e.target.value })}
+            value={r.cfg.name ?? ''}
+            onChange={(e) => patch(r.channel, { name: e.target.value })}
           />
         ),
     },
@@ -141,7 +138,7 @@ export function SensorsEditor({
             size="small"
             value={r.cfg.unit ?? ''}
             maxLength={20}
-            onChange={(e) => patch(r.channelNum, { unit: e.target.value })}
+            onChange={(e) => patch(r.channel, { unit: e.target.value })}
           />
         ),
     },
@@ -154,15 +151,15 @@ export function SensorsEditor({
             <InputNumber
               size="small"
               className="w-20"
-              value={r.cfg.minValue ?? 0}
-              onChange={(v) => patch(r.channelNum, { minValue: v ?? 0 })}
+              value={r.cfg.rangeMin ?? 0}
+              onChange={(v) => patch(r.channel, { rangeMin: v ?? 0 })}
             />
             ~
             <InputNumber
               size="small"
               className="w-20"
-              value={r.cfg.maxValue ?? 0}
-              onChange={(v) => patch(r.channelNum, { maxValue: v ?? 0 })}
+              value={r.cfg.rangeMax ?? 0}
+              onChange={(v) => patch(r.channel, { rangeMax: v ?? 0 })}
             />
           </Space>
         ),
@@ -177,7 +174,7 @@ export function SensorsEditor({
             className="w-20"
             value={r.cfg.resolution ?? 0}
             options={RESOLUTION_OPTIONS}
-            onChange={(v) => patch(r.channelNum, { resolution: (v || undefined) as SensorConfig['resolution'] })}
+            onChange={(v) => patch(r.channel, { resolution: (v || undefined) as SensorBody['resolution'] })}
           />
         ),
     },
@@ -186,8 +183,8 @@ export function SensorsEditor({
       width: 110,
       render: (_, r) =>
         r.cfg && (
-          <Button size="small" type="link" className="px-0" onClick={() => setCorrecting(r.channelNum)}>
-            {correctionSummary(r.cfg) === '—' ? '设置' : correctionSummary(r.cfg)}
+          <Button size="small" type="link" className="px-0" onClick={() => setCorrecting(r.channel)}>
+            {calibrationSummary(r.cfg) === '—' ? '设置' : calibrationSummary(r.cfg)}
           </Button>
         ),
     },
@@ -196,16 +193,16 @@ export function SensorsEditor({
       width: 110,
       render: (_, r) => {
         if (!r.cfg) return null
-        const rules = r.cfg.alertConfigs ?? []
+        const rules = r.cfg.rules
         const on = rules.filter((x) => x.enabled).length
-        const open = expanded.includes(r.channelNum)
+        const open = expanded.includes(r.channel)
         return (
           <Button
             size="small"
             type="link"
             className="px-0"
             icon={open ? <DownOutlined /> : <RightOutlined />}
-            onClick={() => setExpanded(open ? expanded.filter((c) => c !== r.channelNum) : [...expanded, r.channelNum])}
+            onClick={() => setExpanded(open ? expanded.filter((c) => c !== r.channel) : [...expanded, r.channel])}
           >
             {rules.length ? (
               <span>
@@ -234,20 +231,16 @@ export function SensorsEditor({
                 onClick: ({ key }) => r.cfg && add(copyChannel(r.cfg, Number(key))),
               }}
             >
-              <Tooltip title="复制到其他通道 (告警规则生成新编码)">
+              <Tooltip title="复制到其他通道 (告警规则作为新规则，联动不复制)">
                 <Button type="text" size="small" icon={<CopyOutlined />} />
               </Tooltip>
             </Dropdown>
             <Tooltip title="清空该通道配置">
-              <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => clear(r.channelNum)} />
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => clear(r.channel)} />
             </Tooltip>
           </Space>
         ) : (
-          <Button
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={() => add({ channelNum: r.channelNum, alertConfigs: [] })}
-          >
+          <Button size="small" icon={<PlusOutlined />} onClick={() => add({ channel: r.channel, rules: [] })}>
             配置
           </Button>
         ),
@@ -267,7 +260,7 @@ export function SensorsEditor({
           <span className="text-fg-secondary">显示未配置通道</span>
         </Space>
         {!showEmpty && free.length > 0 && (
-          <Button size="small" icon={<PlusOutlined />} onClick={() => add({ channelNum: free[0], alertConfigs: [] })}>
+          <Button size="small" icon={<PlusOutlined />} onClick={() => add({ channel: free[0], rules: [] })}>
             配置下一个空闲通道 (CH {free[0]})
           </Button>
         )}
@@ -300,7 +293,7 @@ export function SensorsEditor({
       )}
       <Table<Row>
         size="small"
-        rowKey="channelNum"
+        rowKey="channel"
         columns={columns}
         dataSource={rows}
         pagination={rows.length > 64 ? { pageSize: 64, showSizeChanger: false } : false}
@@ -314,24 +307,23 @@ export function SensorsEditor({
           expandedRowRender: (r) =>
             r.cfg && (
               <AlertRulesEditor
-                rules={r.cfg.alertConfigs ?? []}
+                rules={r.cfg.rules}
                 unit={r.cfg.unit}
-                onChange={(alertConfigs) => patch(r.channelNum, { alertConfigs })}
-                linkage={linkage}
+                onChange={(rules) => patch(r.channel, { rules })}
               />
             ),
         }}
       />
       <div className="mt-2 text-fg-tertiary text-xs">
         <Tag className="mr-1">提示</Tag>
-        设备配置在所有授权企业间共享；保存后设备重连时生效，可在页头"断开连接"立即生效。
+        设备配置在所有授权企业间共享；保存后立即生效。删除通道或规则时，规则的联动动作一起删除。
       </div>
-      <CorrectionModal
+      <CalibrationModal
         open={correcting != null}
-        value={editing?.correction}
+        value={editing}
         onCancel={() => setCorrecting(null)}
-        onOk={(correction) => {
-          if (correcting != null) patch(correcting, { correction })
+        onOk={({ calibration, simulation }) => {
+          if (correcting != null) patch(correcting, { calibration, simulation })
           setCorrecting(null)
         }}
       />

@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/admin/alert-rules/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 设置规则的联动
+         * @description 整体替换一条规则的联动动作 (最多 16 个)，立即生效：规则每次触发与重复推送时执行 (手动接管中的继电器跳过)，条件解除时不执行。被控设备须在当前企业范围内、继电器通道已配置、同一路继电器不重复，否则 400 LINKAGE_ACTION_INVALID。需要滞回控制时配置两条规则，例如 > 35 开风机、< 34 关风机 (后者关闭生成告警记录)。
+         */
+        put: operations["admin-set-alert-rule-actions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/companies": {
         parameters: {
             query?: never;
@@ -99,7 +119,7 @@ export interface paths {
         };
         /**
          * 企业成员 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：joinedAt, role, userId, username。
+         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
          */
         get: operations["admin-list-company-members"];
         /**
@@ -127,7 +147,7 @@ export interface paths {
         };
         /**
          * 未加入该企业的用户 (分页)
-         * @description 用于分配成员。关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, status, systemRole, username。
+         * @description 用于分配成员。关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
          */
         get: operations["admin-list-company-available-users"];
         put?: never;
@@ -216,12 +236,12 @@ export interface paths {
         put?: never;
         /**
          * 创建设备
-         * @description 创建的设备不授权给任何企业 (公海设备)。SN 与通道数创建后不可修改；通道配置在创建后按标签页修改。
+         * @description 创建的设备不授权给任何企业 (公海设备)。SN 与通道数创建后不可修改；通道在创建后按标签页配置。
          */
         post: operations["admin-create-device"];
         /**
          * 批量删除设备
-         * @description 同时删除企业授权与园区挂载；告警与继电器操作记录按 SN 保留。在线设备会被断开，并删除设备的实时数据 (后台执行，不等待)。
+         * @description 同时删除通道、规则、联动、定时、企业授权与园区挂载；告警与继电器操作记录按 SN 保留。在线设备会被网关断开。
          */
         delete: operations["admin-delete-devices"];
         options?: never;
@@ -260,9 +280,29 @@ export interface paths {
         get: operations["admin-get-device"];
         /**
          * 修改设备基本信息
-         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
+         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后立即生效 (停用的设备立即断开)。
          */
         put: operations["admin-update-device"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/devices/{id}/alert-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 设备的告警规则及联动
+         * @description 联动配置页：这台设备的全部告警规则 (规则在传感器配置中维护) 及每条规则的联动动作。
+         */
+        get: operations["admin-list-device-alert-rules"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -279,8 +319,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * 修改摄像头配置
-         * @description 部分更新：未传的字段保留原值；secret 传空串或 ****** 也保留原值。
+         * 修改摄像头
+         * @description 部分更新：未传的字段保留原值；appSecret 传空串或 ****** 也保留原值。
          */
         put: operations["admin-update-device-camera"];
         post?: never;
@@ -299,7 +339,7 @@ export interface paths {
         };
         /**
          * 设备已授权的企业 (分页)
-         * @description 关键字匹配：企业名称；可排序字段：authorizedAt, companyId, companyName。
+         * @description 关键字匹配：企业名称、联系人、联系电话；可排序字段：createdAt, expiredAt, id, name, status。
          */
         get: operations["admin-list-device-companies"];
         /**
@@ -323,7 +363,7 @@ export interface paths {
         };
         /**
          * 设备未授权的企业 (分页)
-         * @description 用于授权。关键字匹配：企业名称；可排序字段：companyId, companyName。
+         * @description 用于授权。关键字匹配：企业名称、联系人、联系电话；可排序字段：createdAt, expiredAt, id, name, status。
          */
         get: operations["admin-list-device-available-companies"];
         put?: never;
@@ -345,7 +385,7 @@ export interface paths {
         put?: never;
         /**
          * 断开设备连接
-         * @description 同步断开设备与网关的连接 (最长约 5 秒)，设备会自动重连并加载最新配置；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。
+         * @description 同步断开设备与网关的连接 (最长约 7 秒)，设备会自动重连；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。
          */
         post: operations["admin-disconnect-device"];
         delete?: never;
@@ -363,13 +403,13 @@ export interface paths {
         };
         /**
          * 设备的定时规则
-         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)。relayConfigured 为 false 表示继电器通道已删除或不在规格内，规则不执行；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用或通道未配置时为 null)。
+         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用时为 null)。
          */
         get: operations["admin-list-relay-schedules"];
         put?: never;
         /**
          * 新增定时规则
-         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效 (不需要设备重连)。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
+         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
          */
         post: operations["admin-create-relay-schedule"];
         delete?: never;
@@ -386,8 +426,31 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** 修改继电器配置 */
+        /**
+         * 修改继电器
+         * @description 整体替换继电器通道，立即生效。被联动、定时规则或手动接管引用的通道不能删除 (409 RELAY_CHANNEL_IN_USE，details 列出引用方)。
+         */
         put: operations["admin-update-device-relays"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/devices/{id}/relays/linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 继电器联动总览
+         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
+         */
+        get: operations["admin-list-device-relay-linkages"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -404,30 +467,10 @@ export interface paths {
         };
         get?: never;
         /**
-         * 修改传感器配置
-         * @description 整体替换传感器通道配置 (含告警规则)。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
+         * 修改传感器与告警规则
+         * @description 整体替换传感器通道与告警规则，立即生效。已有规则传 id (保持不变，其联动随之保留)，新规则不传 id；不在列表中的通道与规则连同其联动一起删除。保存后这台设备进行中的阈值告警关闭，仍越限的在下一帧重新触发。
          */
         put: operations["admin-update-device-sensors"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/relay-linkages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 联动总览
-         * @description 只读。按 SN 精确匹配：返回该设备作为触发设备 (它的告警规则控制了哪些继电器) 与作为被控设备 (哪些规则在控制它的继电器) 的全部联动动作，企业端只返回触发设备与被控设备都属于本企业的行。联动动作在设备配置的告警规则中维护 (PUT /devices/{id}/sensors)，与规则一样在设备重连后生效。relayConfigured 为 false 表示被控设备已删除或继电器通道未配置，动作执行时会记为 failed。
-         */
-        get: operations["admin-list-relay-linkages"];
-        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -600,7 +643,7 @@ export interface paths {
         };
         /**
          * 用户列表 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, status, systemRole, username。unassigned=true 只看公海用户。
+         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。unassigned=true 只看公海用户。
          */
         get: operations["admin-list-users"];
         put?: never;
@@ -649,7 +692,7 @@ export interface paths {
         };
         /**
          * 用户所属企业 (分页)
-         * @description 关键字匹配：企业名称；可排序字段：companyId, companyName, joinedAt, role。
+         * @description 关键字匹配：企业名称；可排序字段：createdAt, expiredAt, id, name, status。
          */
         get: operations["admin-list-user-companies"];
         put?: never;
@@ -710,7 +753,7 @@ export interface paths {
         };
         /**
          * 告警列表 (分页)
-         * @description 当前授权给本企业的设备的全部告警。不返回总数 (hasMore 表示是否还有下一页)；未处理数量见 GET /alarms/unprocessed-count。关键字匹配：设备 SN、设备名称、告警编码、描述；可排序字段：alarmCount, alarmLevel, createdAt, id, lastAlarmAt。siteId 按设备当前的园区挂载筛选。
+         * @description 当前授权给本企业的设备的全部告警。不返回总数 (hasMore 表示是否还有下一页)；未处理数量见 GET /alarms/unprocessed-count。关键字匹配：设备 SN、设备名称、描述；可排序字段：alarmCount, createdAt, lastAlarmAt, level。siteId 按设备当前的园区挂载筛选。
          */
         get: operations["app-list-alarms"];
         put?: never;
@@ -770,7 +813,7 @@ export interface paths {
         };
         /**
          * 设备列表 (分页)
-         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道配置 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号)。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
+         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
          */
         get: operations["app-list-devices"];
         put?: never;
@@ -870,7 +913,7 @@ export interface paths {
         };
         /**
          * 历史数据 (原始数据)
-         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整传感器数组 (下标即通道号，2147483647 表示无读数)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
+         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整读数数组 (下标即通道号，null 表示无读数)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
          */
         get: operations["app-device-history"];
         put?: never;
@@ -890,7 +933,7 @@ export interface paths {
         };
         /**
          * 设备实时数据
-         * @description Redis 中的传感器数组、继电器数组与在线状态 (数组下标即通道号)。通道配置见设备列表；最近告警、操作日志分别用 GET /alarms?deviceId=、GET /operations?deviceId=。
+         * @description 传感器读数、继电器状态与在线状态 (数组下标即通道号，null 表示无读数)。通道配置见设备列表；最近告警、操作记录分别用 GET /alarms?deviceId=、GET /operations?deviceId=。
          */
         get: operations["app-device-realtime"];
         put?: never;
@@ -901,7 +944,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/app/devices/{id}/relay-links": {
+    "/api/v1/app/devices/{id}/relays/automation": {
         parameters: {
             query?: never;
             header?: never;
@@ -909,10 +952,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 继电器联动、定时与接管状态
-         * @description 本设备每路继电器被哪些告警规则联动控制 (含其他设备的规则)、启用的定时规则与下一次定时动作，以及手动接管状态；只返回有联动、定时或已接管的通道。打开页面时查询一次。手动接管期间定时动作同样跳过并记为失败「手动接管中」。
+         * 继电器定时与接管状态
+         * @description 每路已配置继电器启用中的定时规则、下一次定时动作与手动接管状态。手动接管期间联动与定时都跳过。控制这些继电器的联动见 GET /devices/{id}/relays/linkages。
          */
-        get: operations["app-device-relay-links"];
+        get: operations["app-device-relay-automation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{id}/relays/linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 继电器联动总览
+         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
+         */
+        get: operations["app-list-device-relay-linkages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -932,7 +995,7 @@ export interface paths {
         put?: never;
         /**
          * 控制继电器
-         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、已被标记为损坏 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发 (见 docs/RELAY_CONTROL.md §4.1)。takeover 为 true 时同时进入手动接管 (该通道的联动自动控制暂停，直到恢复)，接管写一条 status = hold 的记录。
+         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、故障 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发。takeover 为 true 时同时进入手动接管 (该通道的联动与定时暂停，直到恢复)，接管写一条 source = hold 的记录。
          */
         post: operations["app-control-relay"];
         delete?: never;
@@ -953,7 +1016,7 @@ export interface paths {
         post?: never;
         /**
          * 恢复自动控制
-         * @description 解除该通道的手动接管，写一条 status = release 的记录；之后的联动命令照常执行 (不主动对齐，等下一次告警推送)。未接管时 released = false。
+         * @description 解除该通道的手动接管，写一条 source = release 的记录；之后的联动与定时照常执行 (不主动对齐)。未接管时 released = false。
          */
         delete: operations["app-release-relay-hold"];
         options?: never;
@@ -969,8 +1032,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 操作日志 (分页)
-         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、操作人；可排序字段：createdAt, id。siteId 按设备当前的园区挂载筛选。
+         * 操作记录 (分页)
+         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、操作人；可排序字段：createdAt。siteId 按设备当前的园区挂载筛选。
          */
         get: operations["app-list-operations"];
         put?: never;
@@ -1210,6 +1273,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenant/alert-rules/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 设置规则的联动
+         * @description 整体替换一条规则的联动动作 (最多 16 个)，立即生效：规则每次触发与重复推送时执行 (手动接管中的继电器跳过)，条件解除时不执行。被控设备须在当前企业范围内、继电器通道已配置、同一路继电器不重复，否则 400 LINKAGE_ACTION_INVALID。需要滞回控制时配置两条规则，例如 > 35 开风机、< 34 关风机 (后者关闭生成告警记录)。
+         */
+        put: operations["tenant-set-alert-rule-actions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenant/company": {
         parameters: {
             query?: never;
@@ -1270,9 +1353,29 @@ export interface paths {
         get: operations["tenant-get-device"];
         /**
          * 修改设备基本信息
-         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。设备配置全局共享。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
+         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后立即生效 (停用的设备立即断开)。 设备配置全局共享，修改会影响其他授权企业。
          */
         put: operations["tenant-update-device"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/devices/{id}/alert-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 设备的告警规则及联动
+         * @description 联动配置页：这台设备的全部告警规则 (规则在传感器配置中维护) 及每条规则的联动动作。
+         */
+        get: operations["tenant-list-device-alert-rules"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1289,8 +1392,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * 修改摄像头配置
-         * @description 部分更新：未传的字段保留原值；secret 传空串或 ****** 也保留原值。
+         * 修改摄像头
+         * @description 部分更新：未传的字段保留原值；appSecret 传空串或 ****** 也保留原值。
          */
         put: operations["tenant-update-device-camera"];
         post?: never;
@@ -1311,7 +1414,7 @@ export interface paths {
         put?: never;
         /**
          * 断开设备连接
-         * @description 同步断开设备与网关的连接 (最长约 5 秒)，设备会自动重连并加载最新配置；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。 设备须已授权给本企业；设备配置全局共享，断开会同时影响其他授权企业 (临时断开，设备会自动重连)。
+         * @description 同步断开设备与网关的连接 (最长约 7 秒)，设备会自动重连；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。 设备配置全局共享，修改会影响其他授权企业。
          */
         post: operations["tenant-disconnect-device"];
         delete?: never;
@@ -1329,13 +1432,13 @@ export interface paths {
         };
         /**
          * 设备的定时规则
-         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)。relayConfigured 为 false 表示继电器通道已删除或不在规格内，规则不执行；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用或通道未配置时为 null)。
+         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用时为 null)。
          */
         get: operations["tenant-list-relay-schedules"];
         put?: never;
         /**
          * 新增定时规则
-         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效 (不需要设备重连)。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
+         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
          */
         post: operations["tenant-create-relay-schedule"];
         delete?: never;
@@ -1352,8 +1455,31 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** 修改继电器配置 */
+        /**
+         * 修改继电器
+         * @description 整体替换继电器通道，立即生效。被联动、定时规则或手动接管引用的通道不能删除 (409 RELAY_CHANNEL_IN_USE，details 列出引用方)。 设备配置全局共享，修改会影响其他授权企业。
+         */
         put: operations["tenant-update-device-relays"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/devices/{id}/relays/linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 继电器联动总览
+         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
+         */
+        get: operations["tenant-list-device-relay-linkages"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1370,8 +1496,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * 修改传感器配置
-         * @description 整体替换传感器通道配置 (含告警规则)。保存后不断开设备，配置在设备下次重连时生效 (响应中 notice 给出提示)；需要立即生效请调用断开连接接口。
+         * 修改传感器与告警规则
+         * @description 整体替换传感器通道与告警规则，立即生效。已有规则传 id (保持不变，其联动随之保留)，新规则不传 id；不在列表中的通道与规则连同其联动一起删除。保存后这台设备进行中的阈值告警关闭，仍越限的在下一帧重新触发。 设备配置全局共享，修改会影响其他授权企业。
          */
         put: operations["tenant-update-device-sensors"];
         post?: never;
@@ -1390,7 +1516,7 @@ export interface paths {
         };
         /**
          * 设备挂载的园区 (分页)
-         * @description 只含本企业的园区。可排序字段：id, mountedAt, name。
+         * @description 只含本企业的园区。关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
          */
         get: operations["tenant-list-device-sites"];
         /**
@@ -1412,28 +1538,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 设备尚未挂载的园区 (分页) */
-        get: operations["tenant-list-device-available-sites"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/tenant/relay-linkages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /**
-         * 联动总览
-         * @description 只读。按 SN 精确匹配：返回该设备作为触发设备 (它的告警规则控制了哪些继电器) 与作为被控设备 (哪些规则在控制它的继电器) 的全部联动动作，企业端只返回触发设备与被控设备都属于本企业的行。联动动作在设备配置的告警规则中维护 (PUT /devices/{id}/sensors)，与规则一样在设备重连后生效。relayConfigured 为 false 表示被控设备已删除或继电器通道未配置，动作执行时会记为 failed。
+         * 设备尚未挂载的园区 (分页)
+         * @description 关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
          */
-        get: operations["tenant-list-relay-linkages"];
+        get: operations["tenant-list-device-available-sites"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1546,7 +1655,7 @@ export interface paths {
         };
         /**
          * 可挂载到该园区的设备 (分页)
-         * @description 本企业已授权、尚未挂载到该园区的设备。关键字匹配：SN、名称、SIM 卡号、MAC 地址。
+         * @description 本企业已授权、尚未挂载到该园区的设备。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
          */
         get: operations["tenant-list-site-available-devices"];
         put?: never;
@@ -1566,7 +1675,7 @@ export interface paths {
         };
         /**
          * 本企业成员 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：joinedAt, role, userId, username。
+         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
          */
         get: operations["tenant-list-users"];
         put?: never;
@@ -1663,57 +1772,79 @@ export interface components {
         AlarmView: {
             /**
              * Format: int64
-             * @description 告警次数：同一告警持续推送期间只记一条 (5 分钟没有推送才结束)，计入推送次数 (每分钟更新)
+             * @description 持续期间的推送次数
              */
             alarmCount: number;
             /**
-             * Format: int32
-             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
-             */
-            alarmLevel: number;
-            /** @description greater / less / equal / range */
-            alarmSubType: string;
-            /** @enum {string} */
-            alarmType: "threshold_breach" | "device_offline" | "device_online" | "device_fault" | "relay_control_failed";
-            /** @description 告警编码：传感器告警为规则编码 (UUID)，离线为 offline，上线为 online */
-            alertCode: string;
-            /**
              * Format: int64
-             * @description 传感器通道号 (从 0 开始)，上下线记录为空
+             * @description threshold：传感器通道；relay_failed：继电器通道
              */
-            channelNum: number | null;
+            channel: number | null;
             /**
              * Format: date-time
-             * @description 首次告警时间 (该帧数据的采集时间)
+             * @description 触发时间 (帧时间)
              */
             createdAt: string;
+            /** @description 规则描述或原因 (快照) */
             description: string;
             /** Format: int64 */
             deviceId: number;
             /** @description 设备名称 (告警时的快照) */
             deviceName: string;
             deviceSn: string;
-            /** @description 扩展信息 (unit / display_name) */
-            extra: {
-                [key: string]: unknown;
-            };
+            /**
+             * Format: date-time
+             * @description 解除或关闭时间
+             */
+            endedAt: string | null;
             /** Format: int64 */
             id: number;
             /**
              * Format: date-time
-             * @description 最后一次告警时间 (次数为 1 时等于 createdAt)
+             * @description 最后一次推送时间
              */
             lastAlarmAt: string;
+            /**
+             * Format: int32
+             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
+             */
+            level: number;
+            /**
+             * Format: double
+             * @description 持续期间偏离阈值最远的值
+             */
+            peakValue: number | null;
             processRemark: string;
             processed: boolean;
             /** Format: date-time */
             processedAt: string | null;
             /** @description 处理人名称 (处理时的快照) */
             processorName: string;
-            /** @description 阈值 (range 为 min ~ max) */
-            threshold: string;
-            /** @description 首次告警时的实际值 */
-            value: string;
+            /**
+             * Format: int64
+             * @description threshold：来源规则
+             */
+            ruleId: number | null;
+            /**
+             * Format: int64
+             * @description relay_failed：来源定时规则
+             */
+            scheduleId: number | null;
+            /**
+             * @description active 进行中；recovered 已解除 (条件不再满足 / 设备重新上线)；closed 已关闭 (无法再判定：下线、配置变更、服务重启，或一次性告警)
+             * @enum {string}
+             */
+            status: "active" | "recovered" | "closed";
+            /**
+             * Format: double
+             * @description 触发时的值
+             */
+            triggerValue: number | null;
+            /**
+             * @description threshold 规则触发；offline 离线；fault 上报路数少于规格；relay_failed 定时开关执行失败
+             * @enum {string}
+             */
+            type: "threshold" | "offline" | "fault" | "relay_failed";
         };
         AuthLoginResult: {
             /**
@@ -1772,15 +1903,6 @@ export interface components {
              */
             systemRole: "admin" | "none";
             username: string;
-        };
-        CameraConfig: {
-            appKey?: string;
-            /** Format: int64 */
-            channelNumber?: number;
-            liveUrl?: string;
-            secret?: string;
-            serialNumber?: string;
-            type?: string;
         };
         CameraLiveView: {
             /** @description 萤石 accessToken (仅 ezviz)：播放器需要；不要写入日志或持久化 */
@@ -1951,35 +2073,86 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        DataDailyView: {
+            /** @description 按时间升序，最多 24 行；缺失的小时没有行 */
+            records: components["schemas"]["DataRecord"][];
+        };
+        DataDayRecord: {
+            /** @description 日期 YYYY-MM-DD (业务时区) */
+            date: string;
+            /** @description 读数数组 (同实时数据) */
+            vals: (number | null)[];
+        };
+        DataHistoryView: {
+            /** @description 按时间升序 */
+            records: components["schemas"]["DataRecord"][];
+        };
+        DataMonthlyView: {
+            /** @description 按日期升序，最多当月天数行；缺失的日期没有行 */
+            records: components["schemas"]["DataDayRecord"][];
+        };
+        DataRealtimeView: {
+            /** @description 是否在线 (Valkey 不可用时为 false) */
+            online: boolean;
+            /** @description 继电器状态 (0 断开 / 1 闭合)：下标即通道号；没有数据时为 null */
+            relays: number[] | null;
+            /**
+             * Format: date-time
+             * @description 继电器状态最近一次写入时间，没有数据时为 null
+             */
+            relaysAt: string | null;
+            /** @description 传感器读数：下标即通道号，null 表示无读数；没有数据时整体为 null */
+            sensors: (number | null)[];
+            /**
+             * Format: date-time
+             * @description 传感器采集时间，没有数据时为 null
+             */
+            sensorsAt: string | null;
+        };
+        DataRecord: {
+            /**
+             * Format: int64
+             * @description 时间 (Unix 毫秒)
+             */
+            time: number;
+            /** @description 读数数组：下标即通道号，null 表示无读数 (已配置的通道为换算校准后的值，未配置的为原始值) */
+            vals: (number | null)[];
+        };
+        DeviceAppRelay: {
+            /** Format: int64 */
+            channel: number;
+            /** @description 图标：通道自己的 > 标准继电器的 */
+            iconUrl: string;
+            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
+            label: string;
+            /** @description 标准继电器名称 (前端据此判断类别与图标) */
+            standardName: string;
+        };
         DeviceAppSensor: {
             /**
              * Format: int64
-             * @description 通道号 (从 0 开始)，即实时 / 历史 / 环比数组的下标
+             * @description 通道号，即实时 / 历史 / 环比读数数组的下标
              */
-            channelNum: number;
-            /** @description 自定义名称 (为空时显示标准名称) */
-            displayName?: string;
+            channel: number;
+            /** @description 图标：通道自己的 > 标准传感器的 */
+            iconUrl: string;
+            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
+            label: string;
+            /** Format: double */
+            rangeMax: number;
             /**
              * Format: double
-             * @description 量程上限
+             * @description 量程下限 (上下限都为 0 表示未配置)
              */
-            maxValue?: number;
+            rangeMin: number;
             /**
              * Format: double
-             * @description 量程下限
+             * @description 分辨率 (如 0.1)，用于格式化显示；0 表示未配置
              */
-            minValue?: number;
-            /**
-             * Format: double
-             * @description 分辨率 (如 0.1)，用于格式化显示
-             */
-            resolution?: number;
-            /** Format: int64 */
-            standardId?: number;
-            standardName?: string;
-            unit?: string;
-            /** @description 图标 */
-            url?: string;
+            resolution: number;
+            /** @description 标准传感器名称 (前端据此判断类别与配色) */
+            standardName: string;
+            unit: string;
         };
         DeviceAppView: {
             /** @description 封面图 URL */
@@ -2012,63 +2185,73 @@ export interface components {
              */
             longitude: number | null;
             macAddress: string;
-            /**
-             * Format: int64
-             * @description 继电器通道数 (创建后不可修改)
-             */
-            maxRelayChannels: number;
-            /**
-             * Format: int64
-             * @description 传感器通道数 (创建后不可修改)
-             */
-            maxSensorChannels: number;
             name: string;
-            /** @description 是否在线 (Redis 不可用时为 false) */
+            /** @description 是否在线 (Valkey 不可用时为 false) */
             online: boolean;
             /**
              * Format: int64
              * @description 采集间隔 (秒)
              */
             readInterval: number;
-            /** @description 继电器通道配置 */
-            relays: components["schemas"]["RelayConfig"][];
-            /** @description 传感器通道配置 (不含告警规则与校准参数) */
+            /**
+             * Format: int64
+             * @description 继电器路数 (规格，创建后不可修改)
+             */
+            relayChannels: number;
+            relays: components["schemas"]["DeviceAppRelay"][];
+            /**
+             * Format: int64
+             * @description 传感器路数 (规格，创建后不可修改)
+             */
+            sensorChannels: number;
             sensors: components["schemas"]["DeviceAppSensor"][];
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
+             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
             status: "active" | "inactive" | "fault";
             /** Format: date-time */
             updatedAt: string;
         };
-        DeviceAvailableCompanyView: {
-            /** Format: int64 */
-            companyId: number;
-            companyName: string;
-            /** @enum {string} */
-            companyStatus: "active" | "inactive";
-            /** Format: date-time */
-            expiredAt: string | null;
+        DeviceCalibration: {
+            /**
+             * Format: double
+             * @description 偏置
+             */
+            offset: number;
+            /**
+             * Format: double
+             * @description 系数 (不能为 0)
+             */
+            scale: number;
         };
         DeviceCameraBody: {
-            /** @description 开放平台 AppKey */
             appKey?: string;
+            /** @description 不传、空串或 ****** 表示保留原值 */
+            appSecret?: string;
+            /** Format: int64 */
+            cameraChannel?: number;
+            liveUrl?: string;
+            serialNo?: string;
+            vendor?: string;
+        };
+        DeviceCameraView: {
+            appKey: string;
+            /** @description 已配置时为 ****** */
+            appSecret: string;
             /**
              * Format: int64
              * @description 监控通道号
              */
-            channelNumber?: number;
+            cameraChannel: number;
             /** @description 直播 / 推流播放地址 */
-            liveUrl?: string;
-            /** @description 开放平台 Secret；不传、空串或 ****** 表示保留原值 */
-            secret?: string;
+            liveUrl: string;
             /** @description 摄像头序列号 */
-            serialNumber?: string;
-            /** @description 摄像头品牌 / 协议，如 ezviz、hikvision、dahua、rtsp、onvif */
-            type?: string;
+            serialNo: string;
+            /** @description 品牌 / 协议：ezviz、hikvision、dahua、rtsp、onvif */
+            vendor: string;
         };
         DeviceChangeResult: {
             /**
@@ -2082,12 +2265,16 @@ export interface components {
              */
             removed: number;
         };
+        DeviceCompaniesBody: {
+            /** @description 授权的企业 ID 全集 (空数组表示撤销全部授权) */
+            companyIds: number[];
+        };
         DeviceCompanyView: {
             /**
              * Format: date-time
-             * @description 授权时间
+             * @description 授权时间 (未授权的企业为 null)
              */
-            authorizedAt: string;
+            authorizedAt: string | null;
             /** Format: int64 */
             companyId: number;
             companyName: string;
@@ -2102,7 +2289,7 @@ export interface components {
         DeviceCreateBody: {
             coverImage?: string;
             description?: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ . : - */
+            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ : - */
             deviceSn: string;
             /**
              * Format: int64
@@ -2120,32 +2307,32 @@ export interface components {
              */
             longitude?: number;
             macAddress?: string;
-            /**
-             * Format: int64
-             * @description 继电器通道数，默认 32，创建后不可修改
-             */
-            maxRelayChannels?: number;
-            /**
-             * Format: int64
-             * @description 传感器通道数，默认 16，创建后不可修改
-             */
-            maxSensorChannels?: number;
             name: string;
             /**
              * Format: int64
              * @description 采集间隔 (秒，1~3600)，默认 60
              */
             readInterval?: number;
+            /**
+             * Format: int64
+             * @description 继电器路数，默认 32，创建后不可修改
+             */
+            relayChannels?: number;
+            /**
+             * Format: int64
+             * @description 传感器路数，默认 16，创建后不可修改
+             */
+            sensorChannels?: number;
             simCard?: string;
             /**
-             * @description 默认 active；停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
+             * @description 默认 active；停用的设备立即断开且不能接入
              * @enum {string}
              */
             status?: "active" | "inactive";
         };
         DeviceDetailView: {
-            /** @description 摄像头配置 (secret 脱敏为 ******) */
-            cameraConfig: components["schemas"]["CameraConfig"];
+            /** @description 摄像头 (未配置为 null；appSecret 脱敏为 ******) */
+            camera: components["schemas"]["DeviceCameraView"];
             /**
              * Format: int64
              * @description 已授权企业数 (仅平台管理端；0 表示公海设备)
@@ -2181,34 +2368,32 @@ export interface components {
              */
             longitude: number | null;
             macAddress: string;
-            /**
-             * Format: int64
-             * @description 继电器通道数 (创建后不可修改)
-             */
-            maxRelayChannels: number;
-            /**
-             * Format: int64
-             * @description 传感器通道数 (创建后不可修改)
-             */
-            maxSensorChannels: number;
             name: string;
-            /** @description 提示信息：修改基本信息、传感器配置后返回 (配置在设备下次重连时生效，需要立即生效请手动断开连接) */
-            notice?: string;
-            /** @description 是否在线 (Redis 不可用时为 false) */
+            /** @description 是否在线 (Valkey 不可用时为 false) */
             online: boolean;
             /**
              * Format: int64
              * @description 采集间隔 (秒)
              */
             readInterval: number;
-            /** @description 继电器通道配置 (通道号从 0 开始) */
-            relays: components["schemas"]["RelayConfig"][];
-            /** @description 传感器通道配置 (通道号从 0 开始) */
-            sensors: components["schemas"]["SensorConfig"][];
+            /**
+             * Format: int64
+             * @description 继电器路数 (规格，创建后不可修改)
+             */
+            relayChannels: number;
+            /** @description 继电器通道 (按通道号排序) */
+            relays: components["schemas"]["DeviceRelayView"][];
+            /**
+             * Format: int64
+             * @description 传感器路数 (规格，创建后不可修改)
+             */
+            sensorChannels: number;
+            /** @description 传感器通道 (按通道号排序，含告警规则) */
+            sensors: components["schemas"]["DeviceSensorView"][];
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
+             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
             status: "active" | "inactive" | "fault";
@@ -2219,18 +2404,211 @@ export interface components {
             /** @description 提示信息 */
             notice: string;
         };
+        DeviceRelayFields: {
+            /**
+             * Format: int64
+             * @description 通道号 (从 0 开始，小于设备继电器路数)
+             */
+            channel: number;
+            iconUrl?: string;
+            /** @description 展示名称；为空时显示标准名称 */
+            name?: string;
+            /**
+             * Format: int64
+             * @description 标准继电器 ID (名称作为默认标签)
+             */
+            standardRelayId?: number;
+        };
+        DeviceRelayView: {
+            /**
+             * Format: int64
+             * @description 通道号 (从 0 开始，小于设备继电器路数)
+             */
+            channel: number;
+            iconUrl?: string;
+            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
+            label: string;
+            /** @description 展示名称；为空时显示标准名称 */
+            name?: string;
+            /** @description 标准继电器名称 */
+            standardName: string;
+            /**
+             * Format: int64
+             * @description 标准继电器 ID (名称作为默认标签)
+             */
+            standardRelayId?: number;
+        };
         DeviceRelaysBody: {
-            /** @description 继电器通道配置 */
-            relays: components["schemas"]["RelayConfig"][];
+            /** @description 继电器通道；被联动、定时或手动接管引用的通道不能删除 */
+            relays: components["schemas"]["DeviceRelayFields"][];
+        };
+        DeviceRuleBody: {
+            /**
+             * @description greater: v > threshold；less: v < threshold；equal: |v - threshold| < 1e-5；between: lower ≤ v ≤ upper
+             * @enum {string}
+             */
+            condition: "greater" | "less" | "equal" | "between";
+            /** @description 是否生成告警记录；只用于联动的规则 (例如 < 34℃ 关风机) 设为 false */
+            createAlarm: boolean;
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description 已有规则的 ID (保持不变，联动随之保留)；新规则不传
+             */
+            id?: number;
+            /**
+             * Format: int32
+             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
+             */
+            level: number;
+            /**
+             * Format: double
+             * @description between 的下限
+             */
+            lower?: number;
+            /**
+             * Format: int64
+             * @description 条件持续满足期间的重复推送间隔 (秒)；每次推送都执行联动
+             */
+            repeatSeconds: number;
+            /** Format: double */
+            threshold?: number;
+            /**
+             * Format: double
+             * @description between 的上限
+             */
+            upper?: number;
+        };
+        DeviceRuleView: {
+            /**
+             * Format: int64
+             * @description 联动动作数 (删除带联动的规则前提示)
+             */
+            actionCount: number;
+            /**
+             * @description greater: v > threshold；less: v < threshold；equal: |v - threshold| < 1e-5；between: lower ≤ v ≤ upper
+             * @enum {string}
+             */
+            condition: "greater" | "less" | "equal" | "between";
+            /** @description 是否生成告警记录；只用于联动的规则 (例如 < 34℃ 关风机) 设为 false */
+            createAlarm: boolean;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            /**
+             * Format: int32
+             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
+             */
+            level: number;
+            /**
+             * Format: double
+             * @description between 的下限
+             */
+            lower?: number;
+            /**
+             * Format: int64
+             * @description 条件持续满足期间的重复推送间隔 (秒)；每次推送都执行联动
+             */
+            repeatSeconds: number;
+            /** Format: double */
+            threshold?: number;
+            /**
+             * Format: double
+             * @description between 的上限
+             */
+            upper?: number;
+        };
+        DeviceSensorBody: {
+            /** @description 校准，不传为 {scale: 1, offset: 0} */
+            calibration?: components["schemas"]["DeviceCalibration"];
+            /**
+             * Format: int64
+             * @description 通道号 (从 0 开始，小于设备传感器路数)，即读数数组的下标
+             */
+            channel: number;
+            iconUrl?: string;
+            /** @description 展示名称；为空时显示标准名称 */
+            name?: string;
+            /**
+             * Format: double
+             * @description 量程上限
+             */
+            rangeMax?: number;
+            /**
+             * Format: double
+             * @description 量程下限
+             */
+            rangeMin?: number;
+            /**
+             * Format: double
+             * @description 分辨率：物理值 = 原始值 × 分辨率，并按分辨率舍入；0 表示未配置
+             * @enum {number}
+             */
+            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
+            /** @description 告警规则 (按顺序) */
+            rules?: components["schemas"]["DeviceRuleBody"][] | null;
+            /** @description 模拟值，不传或 null 表示使用上报值 */
+            simulation?: components["schemas"]["DeviceSimulation"];
+            /**
+             * Format: int64
+             * @description 标准传感器 ID (名称作为默认标签)
+             */
+            standardSensorId?: number;
+            unit?: string;
+        };
+        DeviceSensorView: {
+            calibration: components["schemas"]["DeviceCalibration"];
+            /**
+             * Format: int64
+             * @description 通道号 (从 0 开始，小于设备传感器路数)，即读数数组的下标
+             */
+            channel: number;
+            iconUrl?: string;
+            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
+            label: string;
+            /** @description 展示名称；为空时显示标准名称 */
+            name?: string;
+            /**
+             * Format: double
+             * @description 量程上限
+             */
+            rangeMax?: number;
+            /**
+             * Format: double
+             * @description 量程下限
+             */
+            rangeMin?: number;
+            /**
+             * Format: double
+             * @description 分辨率：物理值 = 原始值 × 分辨率，并按分辨率舍入；0 表示未配置
+             * @enum {number}
+             */
+            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
+            rules: components["schemas"]["DeviceRuleView"][];
+            simulation: components["schemas"]["DeviceSimulation"];
+            /** @description 标准传感器名称 */
+            standardName: string;
+            /**
+             * Format: int64
+             * @description 标准传感器 ID (名称作为默认标签)
+             */
+            standardSensorId?: number;
+            unit?: string;
         };
         DeviceSensorsBody: {
-            /** @description 传感器通道配置；告警规则编码 code 由前端生成 */
-            sensors: components["schemas"]["SensorConfig"][];
+            /** @description 传感器通道；不在列表中的通道连同其规则 (和规则的联动) 一起删除 */
+            sensors: components["schemas"]["DeviceSensorBody"][];
+        };
+        DeviceSimulation: {
+            /** Format: double */
+            base: number;
+            /** Format: double */
+            jitter: number;
         };
         DeviceTenantCreateBody: {
             coverImage?: string;
             description?: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ . : - */
+            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ : - */
             deviceSn: string;
             /**
              * Format: int64
@@ -2248,27 +2626,27 @@ export interface components {
              */
             longitude?: number;
             macAddress?: string;
-            /**
-             * Format: int64
-             * @description 继电器通道数，默认 32，创建后不可修改
-             */
-            maxRelayChannels?: number;
-            /**
-             * Format: int64
-             * @description 传感器通道数，默认 16，创建后不可修改
-             */
-            maxSensorChannels?: number;
             name: string;
             /**
              * Format: int64
              * @description 采集间隔 (秒，1~3600)，默认 60
              */
             readInterval?: number;
+            /**
+             * Format: int64
+             * @description 继电器路数，默认 32，创建后不可修改
+             */
+            relayChannels?: number;
+            /**
+             * Format: int64
+             * @description 传感器路数，默认 16，创建后不可修改
+             */
+            sensorChannels?: number;
             simCard?: string;
             /** @description 挂载到本企业的园区 (1~50 个) */
             siteIds: number[] | null;
             /**
-             * @description 默认 active；停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)
+             * @description 默认 active；停用的设备立即断开且不能接入
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -2276,7 +2654,7 @@ export interface components {
         DeviceTypeBody: {
             description?: string;
             /** @description 图标 URL */
-            icon?: string;
+            iconUrl?: string;
             /** @description 类型名称 (唯一) */
             name: string;
             /**
@@ -2288,7 +2666,7 @@ export interface components {
         DeviceTypePatch: {
             description?: string;
             /** @description 图标 URL */
-            icon?: string;
+            iconUrl?: string;
             /** @description 类型名称 (唯一) */
             name?: string;
             /**
@@ -2302,7 +2680,7 @@ export interface components {
             createdAt: string;
             description: string;
             /** @description 图标 URL */
-            icon: string;
+            iconUrl: string;
             /** Format: int64 */
             id: number;
             name: string;
@@ -2336,12 +2714,12 @@ export interface components {
             name?: string;
             /**
              * Format: int64
-             * @description 采集间隔 (秒，1~3600)
+             * @description 采集间隔 (秒，1~3600)，立即生效
              */
             readInterval?: number;
             simCard?: string;
             /**
-             * @description 停用的设备不能接入 (已在线的设备在下次重连或手动断开后生效)；损坏 (fault) 的设备更换为与登记通道数相符的硬件后改为 active 即可重新接入 (仍不符会再次被标记)
+             * @description 停用的设备立即断开且不能接入；故障 (fault) 的设备更换为与规格相符的硬件后改为 active 即可重新接入
              * @enum {string}
              */
             status?: "active" | "inactive";
@@ -2377,28 +2755,28 @@ export interface components {
              */
             longitude: number | null;
             macAddress: string;
-            /**
-             * Format: int64
-             * @description 继电器通道数 (创建后不可修改)
-             */
-            maxRelayChannels: number;
-            /**
-             * Format: int64
-             * @description 传感器通道数 (创建后不可修改)
-             */
-            maxSensorChannels: number;
             name: string;
-            /** @description 是否在线 (Redis 不可用时为 false) */
+            /** @description 是否在线 (Valkey 不可用时为 false) */
             online: boolean;
             /**
              * Format: int64
              * @description 采集间隔 (秒)
              */
             readInterval: number;
+            /**
+             * Format: int64
+             * @description 继电器路数 (规格，创建后不可修改)
+             */
+            relayChannels: number;
+            /**
+             * Format: int64
+             * @description 传感器路数 (规格，创建后不可修改)
+             */
+            sensorChannels: number;
             /** @description SIM 卡号 / ICCID */
             simCard: string;
             /**
-             * @description active 启用；inactive 停用 (人工)；fault 损坏 (系统判定：上报路数少于配置的通道数，已断开)。只有 active 的设备能接入
+             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
              * @enum {string}
              */
             status: "active" | "inactive" | "fault";
@@ -2425,13 +2803,92 @@ export interface components {
             /** @description 主键 ID 列表 (1~500 个，不可重复) */
             ids: number[] | null;
         };
-        "IdInputStruct { CompanyIDs ListInt64 \"json:\\\"companyIds\\\" nullable:\\\"false\\\" maxItems:\\\"500\\\" uniqueItems:\\\"true\\\" doc:\\\"\u6388\u6743\u7684\u4F01\u4E1A ID \u5168\u96C6 (\u7A7A\u6570\u7EC4\u8868\u793A\u64A4\u9500\u5168\u90E8\u6388\u6743)\\\"\" }Body": {
-            /** @description 授权的企业 ID 全集 (空数组表示撤销全部授权) */
-            companyIds: number[];
+        LinkageActionBody: {
+            /**
+             * Format: int64
+             * @description 被控继电器通道 (须已配置)
+             */
+            channel: number;
+            /**
+             * Format: int64
+             * @description 被控设备 (可以是其他设备，须在当前企业范围内)
+             */
+            deviceId: number;
+            /**
+             * Format: int32
+             * @description 0 关 / 1 开
+             * @enum {integer}
+             */
+            state: 0 | 1;
         };
-        "IdInputStruct { SiteIDs ListInt64 \"json:\\\"siteIds\\\" nullable:\\\"false\\\" maxItems:\\\"200\\\" uniqueItems:\\\"true\\\" doc:\\\"\u6302\u8F7D\u7684\u56ED\u533A ID \u5168\u96C6\\\"\" }Body": {
-            /** @description 挂载的园区 ID 全集 */
-            siteIds: number[];
+        LinkageActionView: {
+            /** Format: int64 */
+            channel: number;
+            /** Format: int64 */
+            deviceId: number;
+            deviceName: string;
+            deviceSn: string;
+            /** @description 被控继电器标签 */
+            relayLabel: string;
+            /**
+             * Format: int32
+             * @enum {integer}
+             */
+            state: 0 | 1;
+        };
+        LinkageActionsBody: {
+            /** @description 联动动作 (最多 16 个，同一路继电器不重复)；空数组表示清除 */
+            actions: components["schemas"]["LinkageActionBody"][];
+        };
+        LinkageRuleView: {
+            actions: components["schemas"]["LinkageActionView"][];
+            /**
+             * Format: int64
+             * @description 传感器通道
+             */
+            channel: number;
+            /** @enum {string} */
+            condition: "greater" | "less" | "equal" | "between";
+            createAlarm: boolean;
+            /** @description 规则描述，例如 空气温度 > 35 ℃ */
+            description: string;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: int64 */
+            repeatSeconds: number;
+            /** @description 传感器通道标签 */
+            sensorLabel: string;
+        };
+        LinkageView: {
+            /**
+             * Format: int64
+             * @description 被控继电器通道
+             */
+            channel: number;
+            /** @description 规则描述 */
+            description: string;
+            /** @description 被控继电器标签 */
+            relayLabel: string;
+            /** @description 规则是否启用 (停用的规则不会触发) */
+            ruleEnabled: boolean;
+            /** Format: int64 */
+            ruleId: number;
+            /**
+             * Format: int64
+             * @description 触发设备
+             */
+            sourceDeviceId: number;
+            sourceDeviceName: string;
+            sourceDeviceSn: string;
+            /**
+             * Format: int32
+             * @description 动作：0 关 / 1 开
+             * @enum {integer}
+             */
+            state: 0 | 1;
         };
         LoginInputBody: {
             password: string;
@@ -2508,25 +2965,6 @@ export interface components {
             pageSize: number;
             /** @description 当前页数据 */
             records: components["schemas"]["DeviceAppView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageDeviceAvailableCompanyView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["DeviceAvailableCompanyView"][];
             /**
              * Format: int64
              * @description 符合条件的总条数
@@ -2742,21 +3180,20 @@ export interface components {
              */
             totalCount: number;
         };
-        RelayAction: {
-            /** Format: int64 */
-            relayIndex: number;
-            /** Format: int32 */
-            state: number;
-            targetSn: string;
-        };
-        RelayConfig: {
-            /** Format: int64 */
-            channelNum: number;
-            displayName?: string;
-            /** Format: int64 */
-            standardId?: number;
-            standardName?: string;
-            url?: string;
+        RelayAutomation: {
+            /**
+             * Format: int64
+             * @description 继电器通道号
+             */
+            channel: number;
+            /** @description 手动接管 (未接管为 null) */
+            hold: components["schemas"]["RelayHoldView"];
+            /** @description 继电器通道标签 */
+            label: string;
+            /** @description 下一次定时动作 (没有定时规则时为 null) */
+            next: components["schemas"]["RelayNextAction"];
+            /** @description 启用中的定时规则 */
+            schedules: components["schemas"]["RelayScheduleView"][];
         };
         RelayControlBody: {
             /**
@@ -2765,227 +3202,39 @@ export interface components {
              * @enum {integer}
              */
             state: 0 | 1;
-            /** @description 同时进入手动接管：该通道的联动自动控制暂停，直到恢复 (DELETE /devices/{id}/relays/{channel}/hold)；前置检查通过后先写接管记录再下发 */
+            /** @description 同时进入手动接管：该通道的联动与定时暂停，直到恢复 (DELETE /devices/{id}/relays/{channel}/hold) */
             takeover?: boolean;
         };
         RelayHoldView: {
             /**
-             * Format: int64
-             * @description 接管时间 (Unix 毫秒)
+             * Format: date-time
+             * @description 接管时间
              */
-            atMs: number;
+            at: string;
             /** @description 接管人 */
-            operator: string;
-        };
-        RelayLink: {
-            /** @description 手动接管信息 (未接管为 null) */
-            hold: components["schemas"]["RelayHoldView"];
-            /** @description 控制这一路继电器的联动动作 (含其他设备的规则) */
-            linkages: components["schemas"]["RelayLinkageView"][];
-            /** @description 下一次定时动作 (没有定时规则时为 null) */
-            next: components["schemas"]["RelayNextAction"];
-            /**
-             * Format: int64
-             * @description 继电器通道号
-             */
-            relayIndex: number;
-            /** @description 控制这一路继电器的定时规则 (只含启用的) */
-            schedules: components["schemas"]["RelayScheduleView"][];
-        };
-        RelayLinkageView: {
-            /** @description 告警规则编码 */
-            alertCode: string;
-            /**
-             * @description 规则类型
-             * @enum {string}
-             */
-            alertType: "greater" | "less" | "equal" | "range";
-            /** @description 传感器通道名称 (展示名称，没有时为标准名称) */
-            channelName: string;
-            /**
-             * Format: int64
-             * @description 传感器通道号
-             */
-            channelNum: number;
-            /** @description 规则是否启用 (停用的规则不会触发) */
-            enabled: boolean;
-            /**
-             * Format: int32
-             * @description 告警级别
-             */
-            level: number;
-            /**
-             * Format: double
-             * @description 区间上限 (range)
-             */
-            maxValue: number;
-            /**
-             * Format: double
-             * @description 区间下限 (range)
-             */
-            minValue: number;
-            /** @description 被控设备存在且该继电器通道已配置 (为 false 时动作执行会失败) */
-            relayConfigured: boolean;
-            /**
-             * Format: int64
-             * @description 继电器通道号
-             */
-            relayIndex: number;
-            /** @description 继电器通道名称 */
-            relayName: string;
-            /**
-             * Format: int64
-             * @description 触发设备主键
-             */
-            sourceDeviceId: number;
-            /** @description 触发设备名称 */
-            sourceDeviceName: string;
-            /** @description 触发设备 SN */
-            sourceDeviceSn: string;
-            /**
-             * Format: int32
-             * @description 动作：0 关 / 1 开
-             * @enum {integer}
-             */
-            state: 0 | 1;
-            /**
-             * Format: int64
-             * @description 被控设备主键 (设备已删除时为 null)
-             */
-            targetDeviceId: number | null;
-            /** @description 被控设备名称 (设备已删除时为空) */
-            targetDeviceName: string;
-            /** @description 被控设备 SN */
-            targetDeviceSn: string;
-            /**
-             * Format: double
-             * @description 阈值 (greater / less / equal)
-             */
-            threshold: number;
-            /** @description 传感器单位 */
-            unit: string;
+            operatorName: string;
         };
         RelayNextAction: {
-            /**
-             * Format: date-time
-             * @description 时刻
-             */
+            /** Format: date-time */
             at: string;
             /**
              * Format: int32
-             * @description 动作：0 关 / 1 开
+             * @description 0 关 / 1 开
              * @enum {integer}
              */
             state: 0 | 1;
         };
-        RelayReleaseView: {
-            /** @description 是否解除了接管 (该通道未接管时为 false) */
-            released: boolean;
-        };
-        RelayScheduleBody: {
-            /** @description 是否启用 */
-            enabled: boolean;
-            /**
-             * Format: int64
-             * @description 继电器通道号 (必须已配置)
-             */
-            relayIndex: number;
-            /** @description 备注 */
-            remark?: string;
+        RelayRecordView: {
             /**
              * Format: int32
-             * @description 失败重试次数 (0 表示不重试；全部失败后产生告警)
+             * @description 设备回报的实际状态 (未应答时为 null)
              */
-            retryCount: number;
-            /**
-             * Format: int32
-             * @description 重试间隔 (秒)
-             */
-            retryIntervalSec: number;
-            /**
-             * @description 开启时刻 HH:MM:SS (业务时区)
-             * @example 07:00:00
-             */
-            start: string;
-            /**
-             * @description 关闭时刻 HH:MM:SS；早于开启时刻表示次日关闭 (跨零点)，不能与开启时刻相同
-             * @example 19:00:00
-             */
-            stop: string;
-            /** @description 开启日 (1 = 周一 … 7 = 周日)；跨零点时关闭属于开启日 */
-            weekdays: number[] | null;
-        };
-        RelayScheduleView: {
-            /**
-             * Format: date-time
-             * @description 创建时间
-             */
-            createdAt: string;
-            /** @description 次日关闭 (关闭时刻早于开启时刻) */
-            crossesMidnight: boolean;
-            /**
-             * Format: int64
-             * @description 设备主键
-             */
-            deviceId: number;
-            /** @description 是否启用 */
-            enabled: boolean;
-            /**
-             * Format: int64
-             * @description 主键
-             */
-            id: number;
-            /**
-             * Format: date-time
-             * @description 下一次关闭时刻 (停用或通道未配置时为 null)
-             */
-            nextOff: string | null;
-            /**
-             * Format: date-time
-             * @description 下一次开启时刻 (停用或通道未配置时为 null)
-             */
-            nextOn: string | null;
-            /** @description 继电器通道已配置 (为 false 时规则不执行) */
-            relayConfigured: boolean;
+            actualState: number | null;
             /**
              * Format: int64
              * @description 继电器通道号
              */
-            relayIndex: number;
-            /** @description 继电器通道名称 (未配置时为空) */
-            relayName: string;
-            /** @description 备注 */
-            remark: string;
-            /**
-             * Format: int32
-             * @description 失败重试次数
-             */
-            retryCount: number;
-            /**
-             * Format: int32
-             * @description 重试间隔 (秒)
-             */
-            retryIntervalSec: number;
-            /** @description 开启时刻 HH:MM:SS */
-            start: string;
-            /** @description 关闭时刻 HH:MM:SS */
-            stop: string;
-            /**
-             * Format: date-time
-             * @description 修改时间
-             */
-            updatedAt: string;
-            /** @description 开启日说明：每天 / 周一、周三 */
-            weekdayText: string;
-            /** @description 开启日 (1 = 周一 … 7 = 周日) */
-            weekdays: number[];
-        };
-        RelayView: {
-            /**
-             * Format: int32
-             * @description 设备回报的实际状态 (设备未应答时为 null)
-             */
-            actualState: number | null;
+            channel: number;
             /**
              * Format: date-time
              * @description 下发时间
@@ -3004,71 +3253,108 @@ export interface components {
             finishedAt: string | null;
             /** Format: int64 */
             id: number;
-            /** @description 操作人名称 (操作时的快照)；联动自动控制为触发规则描述 */
+            /** @description 手动：操作人 (快照)；自动：来源描述 */
             operatorName: string;
             /**
-             * Format: int32
-             * @description 通道号 (从 0 开始)
-             */
-            relayIndex: number;
-            /**
-             * @description pending 执行中 (超过 1 分钟仍为 pending 视为超时)；success 设备确认；failed 确定未达到目标 (联动自动控制的未执行原因见 errorMessage)；timeout 已下发、结果未知；hold 手动接管 / release 恢复自动 (targetState 为当时的继电器状态)
+             * @description manual 手动；linkage 告警联动；schedule 定时；hold 进入手动接管；release 恢复自动
              * @enum {string}
              */
-            status: "pending" | "success" | "timeout" | "failed" | "hold" | "release";
+            source: "manual" | "linkage" | "schedule" | "hold" | "release";
+            /**
+             * Format: int64
+             * @description linkage：规则 ID；schedule：定时规则 ID
+             */
+            sourceId: number | null;
+            /**
+             * @description pending 执行中 (超过 1 分钟仍为 pending 视为超时)；success 设备确认；failed 确定未达到目标 (原因见 errorMessage)；timeout 已下发、结果未知
+             * @enum {string}
+             */
+            status: "pending" | "success" | "timeout" | "failed";
             /**
              * Format: int32
-             * @description 目标状态 0 关闭 / 1 开启
+             * @description 目标状态 0 关闭 / 1 开启；hold / release 为当时的状态
              */
             targetState: number;
         };
-        SensorAlertConfig: {
-            actions?: components["schemas"]["RelayAction"][] | null;
-            alertType?: string;
-            code?: string;
-            enabled: boolean;
-            /** Format: int32 */
-            level?: number;
-            /** Format: double */
-            maxValue?: number;
-            /** Format: double */
-            minValue?: number;
-            /** Format: int64 */
-            repeatInterval: number;
-            /** Format: double */
-            threshold?: number;
+        RelayReleaseView: {
+            /** @description 是否解除了接管 (该通道未接管时为 false) */
+            released: boolean;
         };
-        SensorConfig: {
-            alertConfigs?: components["schemas"]["SensorAlertConfig"][] | null;
-            /** Format: int64 */
-            channelNum: number;
-            correction?: components["schemas"]["SensorCorrection"];
-            displayName?: string;
-            /** Format: double */
-            maxValue?: number;
-            /** Format: double */
-            minValue?: number;
+        RelayScheduleBody: {
             /**
-             * Format: double
-             * @enum {number}
+             * Format: int64
+             * @description 继电器通道号 (必须已配置)
              */
-            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
-            /** Format: int64 */
-            standardId?: number;
-            standardName?: string;
-            unit?: string;
-            url?: string;
+            channel: number;
+            /** @description 是否启用 */
+            enabled: boolean;
+            /** @description 备注 */
+            remark?: string;
+            /**
+             * Format: int64
+             * @description 失败重试次数 (0 表示不重试；全部失败后产生告警)
+             */
+            retryCount: number;
+            /**
+             * Format: int64
+             * @description 重试间隔 (秒)
+             */
+            retryIntervalSec: number;
+            /**
+             * @description 开启时刻 HH:MM:SS (业务时区)
+             * @example 07:00:00
+             */
+            start: string;
+            /**
+             * @description 关闭时刻 HH:MM:SS；早于开启时刻表示次日关闭 (跨零点)，不能与开启时刻相同
+             * @example 19:00:00
+             */
+            stop: string;
+            /** @description 开启日 (1 = 周一 … 7 = 周日)；跨零点时关闭属于开启日 */
+            weekdays: number[] | null;
         };
-        SensorCorrection: {
-            /** Format: double */
-            coefficientValue?: number;
-            /** Format: double */
-            customValue?: number;
-            /** Format: double */
-            errorValue?: number;
-            /** Format: double */
-            floatValue?: number;
-            mode?: string;
+        RelayScheduleView: {
+            /**
+             * Format: int64
+             * @description 继电器通道号
+             */
+            channel: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 次日关闭 (关闭时刻早于开启时刻) */
+            crossesMidnight: boolean;
+            /** Format: int64 */
+            deviceId: number;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            /**
+             * Format: date-time
+             * @description 下一次关闭时刻 (停用时为 null)
+             */
+            nextOff: string | null;
+            /**
+             * Format: date-time
+             * @description 下一次开启时刻 (停用时为 null)
+             */
+            nextOn: string | null;
+            /** @description 继电器通道标签 */
+            relayLabel: string;
+            remark: string;
+            /** Format: int64 */
+            retryCount: number;
+            /** Format: int64 */
+            retryIntervalSec: number;
+            /** @description 开启时刻 HH:MM:SS */
+            start: string;
+            /** @description 关闭时刻 HH:MM:SS */
+            stop: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description 开启日说明：每天 / 周一、周三 */
+            weekdayText: string;
+            /** @description 开启日 (1 = 周一 … 7 = 周日) */
+            weekdays: number[];
         };
         SiteBody: {
             address?: string;
@@ -3158,6 +3444,10 @@ export interface components {
         SiteDeviceIDsBody: {
             /** @description 设备 ID (须已授权给本企业) */
             deviceIds: number[] | null;
+        };
+        SiteDeviceSitesBody: {
+            /** @description 挂载的园区 ID 全集 */
+            siteIds: number[];
         };
         SiteMountedView: {
             address: string;
@@ -3281,7 +3571,7 @@ export interface components {
             /** @description 当前页数据 */
             records: components["schemas"]["AlarmView"][];
         };
-        SliceRelayView: {
+        SliceRelayRecordView: {
             /** @description 是否还有下一页 */
             hasMore: boolean;
             /**
@@ -3295,9 +3585,11 @@ export interface components {
              */
             pageSize: number;
             /** @description 当前页数据 */
-            records: components["schemas"]["RelayView"][];
+            records: components["schemas"]["RelayRecordView"][];
         };
         StandardRelayBody: {
+            /** @description 图标 URL */
+            iconUrl?: string;
             /** @description 名称 (唯一) */
             name: string;
             /**
@@ -3305,10 +3597,10 @@ export interface components {
              * @description 排序 (越小越靠前)，默认 0
              */
             sort?: number;
-            /** @description 图标 URL */
-            url?: string;
         };
         StandardRelayPatch: {
+            /** @description 图标 URL */
+            iconUrl?: string;
             /** @description 名称 (唯一) */
             name?: string;
             /**
@@ -3316,12 +3608,12 @@ export interface components {
              * @description 排序 (越小越靠前)
              */
             sort?: number;
-            /** @description 图标 URL */
-            url?: string;
         };
         StandardRelayView: {
             /** Format: date-time */
             createdAt: string;
+            /** @description 图标 URL */
+            iconUrl: string;
             /** Format: int64 */
             id: number;
             /** @description 名称，如 灌溉电磁阀 */
@@ -3333,22 +3625,22 @@ export interface components {
             sort: number;
             /** Format: date-time */
             updatedAt: string;
-            /** @description 图标 URL */
-            url: string;
         };
         StandardSensorBody: {
+            /** @description 图标 URL */
+            iconUrl?: string;
+            /** @description 名称 (唯一) */
+            name: string;
             /**
              * Format: double
              * @description 量程最大值
              */
-            maxValue?: number;
+            rangeMax?: number;
             /**
              * Format: double
              * @description 量程最小值
              */
-            minValue?: number;
-            /** @description 名称 (唯一) */
-            name: string;
+            rangeMin?: number;
             /**
              * Format: double
              * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 或不填表示未配置 (物理值 = 原始值 × 分辨率，并按分辨率舍入)
@@ -3362,22 +3654,22 @@ export interface components {
             sort?: number;
             /** @description 单位，如 ℃ */
             unit?: string;
-            /** @description 图标 URL */
-            url?: string;
         };
         StandardSensorPatch: {
+            /** @description 图标 URL */
+            iconUrl?: string;
+            /** @description 名称 (唯一) */
+            name?: string;
             /**
              * Format: double
              * @description 量程最大值
              */
-            maxValue?: number;
+            rangeMax?: number;
             /**
              * Format: double
              * @description 量程最小值
              */
-            minValue?: number;
-            /** @description 名称 (唯一) */
-            name?: string;
+            rangeMin?: number;
             /**
              * Format: double
              * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 表示未配置
@@ -3391,26 +3683,26 @@ export interface components {
             sort?: number;
             /** @description 单位，如 ℃ */
             unit?: string;
-            /** @description 图标 URL */
-            url?: string;
         };
         StandardSensorView: {
             /** Format: date-time */
             createdAt: string;
+            /** @description 图标 URL */
+            iconUrl: string;
             /** Format: int64 */
             id: number;
+            /** @description 名称，如 空气温度 */
+            name: string;
             /**
              * Format: double
              * @description 量程最大值
              */
-            maxValue: number;
+            rangeMax: number;
             /**
              * Format: double
              * @description 量程最小值
              */
-            minValue: number;
-            /** @description 名称，如 空气温度 */
-            name: string;
+            rangeMin: number;
             /**
              * Format: double
              * @description 分辨率，如 0.1
@@ -3425,8 +3717,6 @@ export interface components {
             unit: string;
             /** Format: date-time */
             updatedAt: string;
-            /** @description 图标 URL */
-            url: string;
         };
         SysConfigBody: {
             description?: string;
@@ -3458,51 +3748,6 @@ export interface components {
             updatedAt: string;
             /** @description 配置值 (JSON 字符串，原样返回，由前端解析) */
             value: string;
-        };
-        TelemetryDailyView: {
-            /** @description 按时间升序，最多 24 行；缺失的小时没有行 */
-            records: components["schemas"]["TelemetryRecord"][];
-        };
-        TelemetryDayRecord: {
-            /** @description 日期 YYYY-MM-DD (业务时区) */
-            date: string;
-            /** @description 传感器数组 (同实时数据) */
-            vals: number[];
-        };
-        TelemetryHistoryView: {
-            /** @description 按时间升序 */
-            records: components["schemas"]["TelemetryRecord"][];
-        };
-        TelemetryMonthlyView: {
-            /** @description 按日期升序，最多当月天数行；缺失的日期没有行 */
-            records: components["schemas"]["TelemetryDayRecord"][];
-        };
-        TelemetryRealtimeView: {
-            /** @description 是否在线 (Redis 不可用时为 false) */
-            online: boolean;
-            /** @description 继电器状态数组 (0 断开 / 1 闭合)：长度 = 继电器通道数，下标即通道号；没有数据时为 null */
-            relays: number[] | null;
-            /**
-             * Format: date-time
-             * @description 继电器状态最近一次写入时间，没有数据时为 null
-             */
-            relaysAt: string | null;
-            /** @description 传感器数组：长度 = 传感器通道数，下标即通道号；值为 2147483647 表示该通道无读数 (无传感器)；没有数据时为 null */
-            sensors: number[] | null;
-            /**
-             * Format: date-time
-             * @description 传感器采集时间，没有数据时为 null
-             */
-            sensorsAt: string | null;
-        };
-        TelemetryRecord: {
-            /**
-             * Format: int64
-             * @description 时间 (Unix 毫秒)
-             */
-            time: number;
-            /** @description 传感器数组：长度 = 设备传感器通道数，下标即通道号 (有配置的通道为换算校准后的值，没有配置的为原始值) */
-            vals: number[];
         };
         UpdateMeInputBody: {
             /** @description 昵称 (可为空串)；不传表示不修改 */
@@ -3694,6 +3939,42 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "admin-set-alert-rule-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkageActionsBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageActionView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-list-companies": {
         parameters: {
             query?: {
@@ -3881,7 +4162,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
@@ -3928,7 +4209,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
             };
             header?: never;
@@ -4346,7 +4627,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看公海设备 (未授权给任何企业) */
                 unassigned?: boolean;
@@ -4544,6 +4825,38 @@ export interface operations {
             };
         };
     };
+    "admin-list-device-alert-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageRuleView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-update-device-camera": {
         parameters: {
             query?: never;
@@ -4633,7 +4946,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IdInputStruct { CompanyIDs ListInt64 \"json:\\\"companyIds\\\" nullable:\\\"false\\\" maxItems:\\\"500\\\" uniqueItems:\\\"true\\\" doc:\\\"\u6388\u6743\u7684\u4F01\u4E1A ID \u5168\u96C6 (\u7A7A\u6570\u7EC4\u8868\u793A\u64A4\u9500\u5168\u90E8\u6388\u6743)\\\"\" }Body"];
+                "application/json": components["schemas"]["DeviceCompaniesBody"];
             };
         };
         responses: {
@@ -4684,7 +4997,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceAvailableCompanyView"];
+                    "application/json": components["schemas"]["PageDeviceCompanyView"];
                 };
             };
             /** @description Error */
@@ -4778,8 +5091,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4834,6 +5147,38 @@ export interface operations {
             };
         };
     };
+    "admin-list-device-relay-linkages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "admin-update-device-sensors": {
         parameters: {
             query?: never;
@@ -4857,38 +5202,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceDetailView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-list-relay-linkages": {
-        parameters: {
-            query: {
-                /** @description 设备 SN (精确匹配)：返回该设备作为触发设备与作为被控设备的全部联动动作 */
-                sn: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelayLinkageView"][] | null;
                 };
             };
             /** @description Error */
@@ -5827,13 +6140,15 @@ export interface operations {
                 deviceId?: number;
                 /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
                 level?: number;
-                /** @description 告警类型 (relay_control_failed：定时开关执行失败) */
-                type?: "threshold_breach" | "device_offline" | "device_online" | "device_fault" | "relay_control_failed";
+                /** @description 告警类型 */
+                type?: "threshold" | "offline" | "fault" | "relay_failed";
+                /** @description 告警状态 */
+                status?: "active" | "recovered" | "closed";
                 /** @description 是否已处理 */
                 processed?: "true" | "false";
-                /** @description 告警时间起 (含，RFC3339) */
+                /** @description 触发时间起 (含，RFC3339) */
                 start?: string;
-                /** @description 告警时间止 (不含，RFC3339) */
+                /** @description 触发时间止 (不含，RFC3339) */
                 end?: string;
             };
             header: {
@@ -5953,7 +6268,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
@@ -6083,7 +6398,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TelemetryDailyView"];
+                    "application/json": components["schemas"]["DataDailyView"];
                 };
             };
             /** @description Error */
@@ -6121,7 +6436,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TelemetryMonthlyView"];
+                    "application/json": components["schemas"]["DataMonthlyView"];
                 };
             };
             /** @description Error */
@@ -6161,7 +6476,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TelemetryHistoryView"];
+                    "application/json": components["schemas"]["DataHistoryView"];
                 };
             };
             /** @description Error */
@@ -6196,7 +6511,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TelemetryRealtimeView"];
+                    "application/json": components["schemas"]["DataRealtimeView"];
                 };
             };
             /** @description Error */
@@ -6210,7 +6525,7 @@ export interface operations {
             };
         };
     };
-    "app-device-relay-links": {
+    "app-device-relay-automation": {
         parameters: {
             query?: never;
             header: {
@@ -6231,7 +6546,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayLink"][] | null;
+                    "application/json": components["schemas"]["RelayAutomation"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-list-device-relay-linkages": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageView"][] | null;
                 };
             };
             /** @description Error */
@@ -6272,7 +6622,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayView"];
+                    "application/json": components["schemas"]["RelayRecordView"];
                 };
             };
             /** @description Error */
@@ -6338,8 +6688,10 @@ export interface operations {
                 siteId?: number;
                 /** @description 只看该设备的操作 */
                 deviceId?: number;
-                /** @description 操作状态 (hold 手动接管 / release 恢复自动) */
-                status?: "pending" | "success" | "timeout" | "failed" | "hold" | "release";
+                /** @description 按来源筛选 */
+                source?: "manual" | "linkage" | "schedule" | "hold" | "release";
+                /** @description 按结果筛选 */
+                status?: "pending" | "success" | "timeout" | "failed";
                 /** @description 下发时间起 (含，RFC3339) */
                 start?: string;
                 /** @description 下发时间止 (不含，RFC3339) */
@@ -6360,7 +6712,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SliceRelayView"];
+                    "application/json": components["schemas"]["SliceRelayRecordView"];
                 };
             };
             /** @description Error */
@@ -6814,6 +7166,45 @@ export interface operations {
             };
         };
     };
+    "tenant-set-alert-rule-actions": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkageActionsBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageActionView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "tenant-get-company": {
         parameters: {
             query?: never;
@@ -6895,7 +7286,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
@@ -7075,6 +7466,41 @@ export interface operations {
             };
         };
     };
+    "tenant-list-device-alert-rules": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageRuleView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "tenant-update-device-camera": {
         parameters: {
             query?: never;
@@ -7203,8 +7629,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7249,6 +7675,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceDetailView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-list-device-relay-linkages": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                /** @description 主键 ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkageView"][] | null;
                 };
             };
             /** @description Error */
@@ -7360,7 +7821,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IdInputStruct { SiteIDs ListInt64 \"json:\\\"siteIds\\\" nullable:\\\"false\\\" maxItems:\\\"200\\\" uniqueItems:\\\"true\\\" doc:\\\"\u6302\u8F7D\u7684\u56ED\u533A ID \u5168\u96C6\\\"\" }Body"];
+                "application/json": components["schemas"]["SiteDeviceSitesBody"];
             };
         };
         responses: {
@@ -7417,41 +7878,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageSiteView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "tenant-list-relay-linkages": {
-        parameters: {
-            query: {
-                /** @description 设备 SN (精确匹配)：返回该设备作为触发设备与作为被控设备的全部联动动作 */
-                sn: string;
-            };
-            header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
-                "X-Company-ID": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelayLinkageView"][] | null;
                 };
             };
             /** @description Error */
@@ -7741,7 +8167,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
             };
             header: {
@@ -7867,7 +8293,7 @@ export interface operations {
                 sort?: string;
                 /** @description 按设备类型筛选 */
                 deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定损坏) */
+                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
             };
             header: {

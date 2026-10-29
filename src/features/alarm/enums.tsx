@@ -9,15 +9,22 @@ export const ALARM_LEVEL: Record<number, { label: string; color: string }> = {
 }
 
 export const ALARM_TYPE: Record<string, { label: string; color?: string }> = {
-  threshold_breach: { label: '越限', color: 'orange' },
-  device_offline: { label: '离线' },
-  device_online: { label: '上线', color: 'green' },
-  device_fault: { label: '损坏', color: 'red' },
-  relay_control_failed: { label: '继电器控制失败', color: 'magenta' },
+  threshold: { label: '越限', color: 'orange' },
+  offline: { label: '离线' },
+  fault: { label: '故障', color: 'red' },
+  relay_failed: { label: '定时开关失败', color: 'magenta' },
+}
+
+/** 告警状态：进行中 / 已解除 (条件不再满足、设备重新上线) / 已关闭 (无法再判定或一次性告警) */
+export const ALARM_STATUS: Record<string, { label: string; color: string }> = {
+  active: { label: '进行中', color: 'error' },
+  recovered: { label: '已解除', color: 'success' },
+  closed: { label: '已关闭', color: 'default' },
 }
 
 export const alarmLevelOptions = Object.entries(ALARM_LEVEL).map(([v, d]) => ({ value: Number(v), label: d.label }))
 export const alarmTypeOptions = Object.entries(ALARM_TYPE).map(([value, d]) => ({ value, label: d.label }))
+export const alarmStatusOptions = Object.entries(ALARM_STATUS).map(([value, d]) => ({ value, label: d.label }))
 
 export function AlarmLevelTag({ level }: { level: number }) {
   const d = ALARM_LEVEL[level]
@@ -29,9 +36,11 @@ export function AlarmLevelTag({ level }: { level: number }) {
   )
 }
 
-/** 阈值文案：greater → "> 35"，less → "< 5"，equal → "= 1"，range 原样 ("10 ~ 30") */
-export function thresholdText(subType: string, threshold: string, unit = '') {
-  if (!threshold) return '—'
-  const op = { greater: '> ', less: '< ', equal: '= ' }[subType] ?? ''
-  return `${op}${threshold}${unit ? ` ${unit}` : ''}`
+export function AlarmStatusTag({ status }: { status: string }) {
+  const d = ALARM_STATUS[status]
+  return (
+    <Tag color={d?.color ?? 'default'} className="m-0">
+      {d?.label ?? status}
+    </Tag>
+  )
 }

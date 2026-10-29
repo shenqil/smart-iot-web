@@ -87,7 +87,7 @@ export default function UserDetailPage() {
     {
       title: '企业',
       dataIndex: 'companyName',
-      sortField: 'companyName',
+      sortField: 'name',
       render: (v, r) => <Link to={`/admin/companies/${r.companyId}`}>{v}</Link>,
     },
     { title: '企业状态', dataIndex: 'companyStatus', render: (v) => <EnumTag value={v} defs={ACTIVE_STATUS} /> },
@@ -95,13 +95,12 @@ export default function UserDetailPage() {
     {
       title: '企业角色',
       dataIndex: 'role',
-      sortField: 'role',
       width: 130,
       render: (v, r) => (
         <Select size="small" className="w-24" value={v} options={ROLE_OPTIONS} onChange={(role) => setRole(r, role)} />
       ),
     },
-    { title: '加入时间', dataIndex: 'joinedAt', width: 160, sortField: 'joinedAt', render: fmtDateTime },
+    { title: '加入时间', dataIndex: 'joinedAt', width: 160, render: fmtDateTime },
     {
       title: '操作',
       width: 80,
@@ -166,7 +165,6 @@ export default function UserDetailPage() {
                   columns={columns}
                   rowKey="companyId"
                   keywordPlaceholder="企业名称"
-                  defaultSort="-joinedAt"
                   toolbar={
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => setJoining(true)}>
                       加入企业

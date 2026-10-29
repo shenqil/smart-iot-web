@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Switch, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Switch, Table, Tooltip } from 'antd'
 import { useState } from 'react'
 import { notify } from '@/app/notify'
 import { nextAtText, schedulePeriodText } from '@/features/relay/schedule'
@@ -31,7 +31,7 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
     },
   })
 
-  const relays = [...device.relays].sort((a, b) => a.channelNum - b.channelNum)
+  const relays = [...device.relays].sort((a, b) => a.channel - b.channel)
   const list = data ?? []
 
   return (
@@ -39,7 +39,7 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span className="text-fg-secondary">
           到点自动开启 / 关闭继电器
-          (秒级)；失败按设置重试，全部失败产生「继电器控制失败」告警，每次执行都有操作记录。保存后立即生效。
+          (秒级)；失败按设置重试，全部失败产生「定时开关失败」告警，每次执行都有操作记录。保存后立即生效。
         </span>
         <Button
           type="primary"
@@ -62,24 +62,17 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
         pagination={false}
         rootClassName="layout-fill"
         scroll={{ x: 'max-content', y: 400 }}
-        rowClassName={(s) => (s.enabled && s.relayConfigured ? '' : 'opacity-70')}
+        rowClassName={(s) => (s.enabled ? '' : 'opacity-70')}
         columns={[
           {
             title: '继电器',
             width: 200,
-            render: (_, s) =>
-              s.relayConfigured ? (
-                <span>
-                  <span className="font-mono text-fg-tertiary">CH {String(s.relayIndex).padStart(2, '0')}</span>{' '}
-                  {s.relayName}
-                </span>
-              ) : (
-                <Tooltip title="继电器通道已删除或不在规格内，规则不执行">
-                  <Tag color="error" className="m-0">
-                    CH {String(s.relayIndex).padStart(2, '0')} 未配置
-                  </Tag>
-                </Tooltip>
-              ),
+            render: (_, s) => (
+              <span>
+                <span className="font-mono text-fg-tertiary">CH {String(s.channel).padStart(2, '0')}</span>{' '}
+                {s.relayLabel}
+              </span>
+            ),
           },
           {
             title: '时段',
@@ -114,7 +107,6 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
                 size="small"
                 checked={s.enabled}
                 loading={toggle.isPending && toggle.variables?.id === s.id}
-                disabled={!s.enabled && !s.relayConfigured}
                 onChange={() => toggle.mutate(s)}
               />
             ),
@@ -137,7 +129,7 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
                     onClick={() =>
                       confirmAction({
                         title: '删除这条定时规则？',
-                        content: `${s.relayName || `CH ${s.relayIndex}`} · ${s.weekdayText} ${schedulePeriodText(s)}。删除后立即停止执行，不改变继电器当前状态。`,
+                        content: `${s.relayLabel} · ${s.weekdayText} ${schedulePeriodText(s)}。删除后立即停止执行，不改变继电器当前状态。`,
                         okText: '删除',
                         onOk: () => cfg.deleteSchedule(s.id),
                         successText: '已删除',

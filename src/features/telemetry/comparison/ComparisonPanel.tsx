@@ -78,7 +78,7 @@ export function ComparisonPanel({
   }
 
   const today = bizNow().endOf('day')
-  const selected = sensors.filter((s) => channels.includes(s.channelNum))
+  const selected = sensors.filter((s) => channels.includes(s.channel))
   const empty = current.data && !current.data.records?.length
 
   return (
@@ -133,12 +133,12 @@ export function ComparisonPanel({
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {selected.map((s) => {
-            const { cur, prev } = seriesOf(s.channelNum)
+            const { cur, prev } = seriesOf(s.channel)
             return (
               <MiniChart
-                key={s.channelNum}
+                key={s.channel}
                 sensor={s}
-                color={channelColor(sensors, s.channelNum)}
+                color={channelColor(sensors, s.channel)}
                 categories={categories}
                 cur={cur}
                 prev={prev}

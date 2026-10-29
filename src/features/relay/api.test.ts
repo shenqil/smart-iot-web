@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError, NETWORK_ERROR } from '@/api/errors'
-import { interpretControl, type RelayOp } from './api'
+import { interpretControl, mergeRelayLinks, type RelayAutomation, type RelayLinkage, type RelayOp } from './api'
 
 const op = (p: Partial<RelayOp>): RelayOp =>
   ({
     id: 1,
     deviceId: 1,
     deviceSn: 'GW',
-    relayIndex: 0,
+    channel: 0,
+    source: 'manual',
     targetState: 1,
     status: 'success',
     actualState: 1,
@@ -61,5 +62,20 @@ describe('interpretControl', () => {
   })
   it('401 交给全局处理', () => {
     expect(interpretControl({ ok: false, error: new ApiError(401, 'UNAUTHORIZED', 'x') }).global).toBe(true)
+  })
+})
+
+describe('mergeRelayLinks', () => {
+  const auto = (p: Partial<RelayAutomation>): RelayAutomation =>
+    ({ channel: 0, label: '', schedules: [], next: null, hold: null, ...p }) as unknown as RelayAutomation
+  it('按通道合并联动、定时与接管；没有自动控制的通道不出现', () => {
+    const links = mergeRelayLinks(
+      [auto({ channel: 0 }), auto({ channel: 1, hold: { operatorName: '张三', at: '2026-10-20T00:00:00Z' } })],
+      [{ channel: 2, ruleId: 7 } as RelayLinkage, { channel: 1, ruleId: 8 } as RelayLinkage],
+    )
+    expect(links.map((l) => [l.channel, l.linkages.length, Boolean(l.hold)])).toEqual([
+      [1, 1, true],
+      [2, 1, false],
+    ])
   })
 })

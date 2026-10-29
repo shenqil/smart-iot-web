@@ -1,7 +1,6 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import type { CSSProperties } from 'react'
-import { useStandardSensors } from '@/features/dict/api'
 import { decimalsOf, formatValue } from '@/lib/resolution'
 import { SENSOR_TONE, sensorKind } from '../lib/channelKind'
 import type { SensorReading } from '../lib/realtime'
@@ -15,12 +14,6 @@ const STATE_HINT: Partial<Record<SensorReading['state'], { short: string; full: 
 
 const WARNING = 'var(--ant-color-warning)'
 const MUTED = 'var(--ant-color-text-quaternary)'
-
-/** 通道图标：通道配置的图标 › 标准传感器字典的图标 (通道配置是保存时的快照，字典后补的图标也能显示) */
-export function useSensorIcon(config: { url?: string; standardId?: number }) {
-  const std = useStandardSensors().byId
-  return config.url || (config.standardId != null ? std.get(config.standardId)?.url : undefined) || undefined
-}
 
 /**
  * 传感器实时值卡片
@@ -38,14 +31,14 @@ export function useSensorIcon(config: { url?: string; standardId?: number }) {
  */
 export function SensorCard({ reading, trail, offline }: { reading: SensorReading; trail: number[]; offline: boolean }) {
   const { config, name, text, state, position } = reading
-  const icon = useSensorIcon(config)
+  const icon = config.iconUrl || undefined
   const alert = state === 'over' || state === 'under'
   const noValue = state === 'invalid' || state === 'empty'
   const unit = config.unit?.trim()
   const kind = sensorKind(config)
   const tone = offline || noValue ? MUTED : alert ? WARNING : SENSOR_TONE[kind]
   const standard = config.standardName?.trim()
-  const subtitle = [standard && standard !== name ? standard : null, `通道 ${config.channelNum}`]
+  const subtitle = [standard && standard !== name ? standard : null, `通道 ${config.channel}`]
     .filter(Boolean)
     .join(' · ')
 
@@ -55,7 +48,7 @@ export function SensorCard({ reading, trail, offline }: { reading: SensorReading
   const deltaText = Math.abs(delta).toFixed(decimals)
   const showDelta = !offline && Number(deltaText) !== 0
 
-  const range = `${formatValue(config.minValue, config.resolution)} ~ ${formatValue(config.maxValue, config.resolution)}${unit ? ` ${unit}` : ''}`
+  const range = `${formatValue(config.rangeMin, config.resolution)} ~ ${formatValue(config.rangeMax, config.resolution)}${unit ? ` ${unit}` : ''}`
 
   return (
     <div
@@ -129,9 +122,9 @@ export function SensorCard({ reading, trail, offline }: { reading: SensorReading
               />
             </div>
             <div className="mt-1 flex justify-between text-[11px] text-fg-tertiary tabular-nums">
-              <span>{formatValue(config.minValue, config.resolution)}</span>
+              <span>{formatValue(config.rangeMin, config.resolution)}</span>
               <span>
-                {formatValue(config.maxValue, config.resolution)}
+                {formatValue(config.rangeMax, config.resolution)}
                 {unit ? ` ${unit}` : ''}
               </span>
             </div>

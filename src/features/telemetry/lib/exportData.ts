@@ -1,20 +1,23 @@
 import type { Schemas } from '@/api/client'
 import { decimalsOf, isValidReading } from '@/lib/resolution'
+import { channelName } from './realtime'
 import { type Cell, EXCEL_MAX_ROWS, type XlsxColumn, type XlsxSheet } from './xlsx'
 
-export type SensorConfig = Schemas['SensorConfig']
-export type HistoryRecord = Schemas['TelemetryRecord']
+/** 导出用到的通道字段 (设备详情的传感器、数据端的传感器都满足) */
+export interface SensorConfig {
+  channel: number
+  label?: string
+  unit?: string
+  resolution?: number
+}
+export type HistoryRecord = Schemas['DataRecord']
 
 /** 导出的一列 (传感器通道) */
 export interface ExportChannel {
-  channelNum: number
+  channel: number
   header: string
   decimals: number
 }
-
-/** 通道显示名：显示名 > 标准传感器名 > 通道 N */
-export const channelName = (s: Pick<SensorConfig, 'channelNum' | 'displayName' | 'standardName'>) =>
-  s.displayName?.trim() || s.standardName?.trim() || `通道 ${s.channelNum}`
 
 /** 表头：名称（单位）；无单位时只有名称 */
 export const channelHeader = (s: SensorConfig) => {
@@ -27,7 +30,7 @@ export const channelHeader = (s: SensorConfig) => {
  * channelNums 中不在配置里的通道忽略
  */
 export function exportChannels(sensors: SensorConfig[], channelNums: number[]): ExportChannel[] {
-  const byNum = new Map(sensors.map((s) => [s.channelNum, s]))
+  const byNum = new Map(sensors.map((s) => [s.channel, s]))
   const picked = channelNums.flatMap((n) => {
     const s = byNum.get(n)
     return s ? [s] : []
@@ -37,8 +40,8 @@ export function exportChannels(sensors: SensorConfig[], channelNums: number[]): 
   return picked.map((s) => {
     const h = channelHeader(s)
     return {
-      channelNum: s.channelNum,
-      header: (count.get(h) ?? 0) > 1 ? `${h} #${s.channelNum}` : h,
+      channel: s.channel,
+      header: (count.get(h) ?? 0) > 1 ? `${h} #${s.channel}` : h,
       decimals: decimalsOf(s.resolution),
     }
   })
@@ -55,11 +58,11 @@ export function roundTo(v: number, decimals: number): number {
   return Math.round(v * f) / f
 }
 
-/** 一帧 → 一行：首列时间，其余按导出列取值；无读数 (2147483647) 或越界为空 */
+/** 一帧 → 一行：首列时间，其余按导出列取值；无读数 (null) 或越界为空 */
 export function recordRow(r: HistoryRecord, channels: ExportChannel[], offsetMinutes: number): Cell[] {
   const row: Cell[] = [excelSerial(r.time, offsetMinutes)]
   for (const c of channels) {
-    const v = r.vals?.[c.channelNum]
+    const v = r.vals?.[c.channel]
     row.push(isValidReading(v) ? roundTo(v, c.decimals) : null)
   }
   return row

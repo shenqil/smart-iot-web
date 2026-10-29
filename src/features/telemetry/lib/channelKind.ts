@@ -84,8 +84,8 @@ const UNIT_RULES: [SensorKind, RegExp][] = [
   ['electric', /^(v|a|w|kw|kwh)$/i],
 ]
 
-export function sensorKind(c: { standardName?: string; displayName?: string; unit?: string }): SensorKind {
-  for (const text of [c.standardName, c.displayName]) {
+export function sensorKind(c: { standardName?: string; label?: string; unit?: string }): SensorKind {
+  for (const text of [c.standardName, c.label]) {
     const t = text?.trim()
     if (!t) continue
     for (const [kind, re] of SENSOR_RULES) if (re.test(t)) return kind
@@ -107,8 +107,8 @@ const RELAY_RULES: [RelayKind, RegExp][] = [
   ['alarm', /报警|警示|声光|蜂鸣/],
 ]
 
-export function relayKind(c: { standardName?: string; displayName?: string }): RelayKind {
-  for (const text of [c.standardName, c.displayName]) {
+export function relayKind(c: { standardName?: string; label?: string }): RelayKind {
+  for (const text of [c.standardName, c.label]) {
     const t = text?.trim()
     if (!t) continue
     for (const [kind, re] of RELAY_RULES) if (re.test(t)) return kind

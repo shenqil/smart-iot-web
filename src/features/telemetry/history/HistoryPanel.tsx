@@ -83,7 +83,7 @@ export function HistoryPanel({
   const [reloadKey, setReloadKey] = useState(0)
 
   // 下载 + 解析：设备或时间范围变化时重新加载 (所有已配置通道一起解析，切换通道不用重新下载)
-  const allChannels = sensors.map((s) => s.channelNum).join(',')
+  const allChannels = sensors.map((s) => s.channel).join(',')
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 用于手动刷新
   useEffect(() => {
     const ctrl = new AbortController()
@@ -149,9 +149,9 @@ export function HistoryPanel({
     setExporting(true)
     try {
       const columns = sensors
-        .filter((s) => channels.includes(s.channelNum))
+        .filter((s) => channels.includes(s.channel))
         .map((s) => ({
-          channelNum: s.channelNum,
+          channel: s.channel,
           header: s.unit?.trim() ? `${channelName(s)} (${s.unit.trim()})` : channelName(s),
           decimals: decimalsOf(s.resolution),
         }))
@@ -170,7 +170,7 @@ export function HistoryPanel({
 
   const earliest = bizToPicker(earliestDate())
   const today = bizToPicker(bizNow().endOf('day'))
-  const selected = sensors.filter((s) => channels.includes(s.channelNum))
+  const selected = sensors.filter((s) => channels.includes(s.channel))
   const groups = groupByUnit(selected)
   const group = `history-${device.id}`
 
@@ -313,13 +313,13 @@ function UnitChart({
   onZoom: (z: [number, number] | null) => void
 }) {
   const decimals = Math.max(...sensors.map((s) => decimalsOf(s.resolution)))
-  const sensorsKey = sensors.map((s) => `${s.channelNum}:${channelName(s)}`).join('|')
+  const sensorsKey = sensors.map((s) => `${s.channel}:${channelName(s)}`).join('|')
   // 只在数据、范围、缩放变化时重建图表配置 (避免父组件每秒刷新时重置提示框)
   // biome-ignore lint/correctness/useExhaustiveDependencies: sensors 以 sensorsKey 代表
   const option = useMemo<ECOption>(
     () => ({
       animation: false,
-      color: sensors.map((s) => channelColor(allSensors, s.channelNum)),
+      color: sensors.map((s) => channelColor(allSensors, s.channel)),
       grid: { left: 8, right: 16, top: 36, bottom: slider ? 56 : 8, containLabel: true },
       legend: {
         top: 0,
@@ -371,7 +371,7 @@ function UnitChart({
         sampling: undefined,
         lineStyle: { width: 2 },
         emphasis: { disabled: true },
-        data: series.get(s.channelNum) ?? [],
+        data: series.get(s.channel) ?? [],
       })),
     }),
     [sensorsKey, unit, decimals, series, range, zoom, slider],

@@ -39,12 +39,12 @@ export function DeviceCompaniesTab({ deviceId }: { deviceId: number }) {
     {
       title: '企业',
       dataIndex: 'companyName',
-      sortField: 'companyName',
+      sortField: 'name',
       render: (v, r) => <Link to={`/admin/companies/${r.companyId}`}>{v}</Link>,
     },
     { title: '企业状态', dataIndex: 'companyStatus', render: (v) => <EnumTag value={v} defs={ACTIVE_STATUS} /> },
     { title: '服务过期', dataIndex: 'expiredAt', render: (v) => <ExpireTag value={v} /> },
-    { title: '授权时间', dataIndex: 'authorizedAt', width: 160, sortField: 'authorizedAt', render: fmtDateTime },
+    { title: '授权时间', dataIndex: 'authorizedAt', width: 160, render: fmtDateTime },
     {
       title: '操作',
       width: 100,
@@ -66,7 +66,6 @@ export function DeviceCompaniesTab({ deviceId }: { deviceId: number }) {
         columns={columns}
         rowKey="companyId"
         keywordPlaceholder="企业名称"
-        defaultSort="-authorizedAt"
         toolbar={
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAdding(true)}>
             授权给企业

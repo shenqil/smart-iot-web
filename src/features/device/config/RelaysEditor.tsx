@@ -3,9 +3,19 @@ import { Badge, Button, Input, Select, Space, Switch, Table, Tooltip } from 'ant
 import { useEffect, useMemo, useState } from 'react'
 import { OssUpload } from '@/components/form/OssUpload'
 import { useStandardRelays } from '@/features/dict/api'
-import type { RelayConfig } from './api'
+import type { RelayFields, RelayView } from './api'
 
-type Row = { channelNum: number; cfg?: RelayConfig }
+/** 编辑中的继电器通道：standardName 只用于显示 (不提交) */
+type RelayDraft = RelayFields & { standardName?: string }
+type Row = { channel: number; cfg?: RelayDraft }
+
+const toDraft = (r: RelayView): RelayDraft => ({
+  channel: r.channel,
+  standardRelayId: r.standardRelayId,
+  standardName: r.standardName || undefined,
+  name: r.name || undefined,
+  iconUrl: r.iconUrl || undefined,
+})
 
 /** 继电器配置编辑器 (平台与企业共用)：配置了的通道才能在数据端控制 */
 export function RelaysEditor({
@@ -15,33 +25,33 @@ export function RelaysEditor({
   onSave,
   onDirtyChange,
 }: {
-  relays: RelayConfig[]
+  relays: RelayView[]
   maxChannels: number
   saving: boolean
-  onSave: (relays: RelayConfig[]) => Promise<unknown>
+  onSave: (relays: RelayFields[]) => Promise<unknown>
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const std = useStandardRelays()
-  const original = useMemo(() => relays, [relays])
-  const [list, setList] = useState<RelayConfig[]>(original)
+  const original = useMemo(() => relays.map(toDraft), [relays])
+  const [list, setList] = useState<RelayDraft[]>(original)
   const [showEmpty, setShowEmpty] = useState(maxChannels <= 64)
   useEffect(() => setList(original), [original])
   const dirty = JSON.stringify(list) !== JSON.stringify(original)
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
 
-  const byChannel = new Map(list.map((r) => [r.channelNum, r]))
-  const patch = (ch: number, p: Partial<RelayConfig>) =>
-    setList((l) => l.map((r) => (r.channelNum === ch ? { ...r, ...p } : r)))
+  const byChannel = new Map(list.map((r) => [r.channel, r]))
+  const patch = (ch: number, p: Partial<RelayDraft>) =>
+    setList((l) => l.map((r) => (r.channel === ch ? { ...r, ...p } : r)))
   const free = Array.from({ length: maxChannels }, (_, i) => i).filter((i) => !byChannel.has(i))
   const rows: Row[] = showEmpty
-    ? Array.from({ length: maxChannels }, (_, i) => ({ channelNum: i, cfg: byChannel.get(i) }))
-    : [...list].sort((a, b) => a.channelNum - b.channelNum).map((r) => ({ channelNum: r.channelNum, cfg: r }))
+    ? Array.from({ length: maxChannels }, (_, i) => ({ channel: i, cfg: byChannel.get(i) }))
+    : [...list].sort((a, b) => a.channel - b.channel).map((r) => ({ channel: r.channel, cfg: r }))
 
   const save = () =>
     onSave(
       [...list]
-        .sort((a, b) => a.channelNum - b.channelNum)
-        .map((r) => ({ ...r, displayName: r.displayName?.trim() || undefined })),
+        .sort((a, b) => a.channel - b.channel)
+        .map(({ standardName: _s, ...r }) => ({ ...r, name: r.name?.trim() || undefined })),
     )
 
   return (
@@ -55,7 +65,7 @@ export function RelaysEditor({
           <span className="text-fg-secondary">显示未配置通道</span>
         </Space>
         {!showEmpty && free.length > 0 && (
-          <Button size="small" icon={<PlusOutlined />} onClick={() => setList([...list, { channelNum: free[0] }])}>
+          <Button size="small" icon={<PlusOutlined />} onClick={() => setList([...list, { channel: free[0] }])}>
             配置下一个空闲通道 (CH {free[0]})
           </Button>
         )}
@@ -71,7 +81,7 @@ export function RelaysEditor({
       </div>
       <Table<Row>
         size="small"
-        rowKey="channelNum"
+        rowKey="channel"
         dataSource={rows}
         pagination={rows.length > 64 ? { pageSize: 64, showSizeChanger: false } : false}
         rootClassName="layout-fill"
@@ -80,7 +90,7 @@ export function RelaysEditor({
         columns={[
           {
             title: '通道',
-            dataIndex: 'channelNum',
+            dataIndex: 'channel',
             width: 72,
             render: (v, r) => (
               <span className={`font-mono ${r.cfg ? '' : 'text-fg-tertiary'}`}>CH {String(v).padStart(2, '0')}</span>
@@ -94,8 +104,8 @@ export function RelaysEditor({
                 <OssUpload
                   scene="relay-icon"
                   size={32}
-                  value={r.cfg.url}
-                  onChange={(url) => patch(r.channelNum, { url })}
+                  value={r.cfg.iconUrl}
+                  onChange={(iconUrl) => patch(r.channel, { iconUrl })}
                 />
               ),
           },
@@ -111,11 +121,11 @@ export function RelaysEditor({
                   showSearch
                   optionFilterProp="label"
                   placeholder="选择后自动带出"
-                  value={r.cfg.standardId ?? undefined}
+                  value={r.cfg.standardRelayId ?? undefined}
                   options={std.list.map((s) => ({ value: s.id, label: s.name }))}
                   onChange={(id) => {
                     const d = id != null ? std.byId.get(id) : undefined
-                    patch(r.channelNum, { standardId: d?.id, standardName: d?.name, url: d?.url || r.cfg?.url })
+                    patch(r.channel, { standardRelayId: d?.id, standardName: d?.name, iconUrl: r.cfg?.iconUrl })
                   }}
                 />
               ) : (
@@ -131,8 +141,8 @@ export function RelaysEditor({
                   className="max-w-72"
                   maxLength={100}
                   placeholder={r.cfg.standardName || '如 1 号棚灌溉主阀'}
-                  value={r.cfg.displayName ?? ''}
-                  onChange={(e) => patch(r.channelNum, { displayName: e.target.value })}
+                  value={r.cfg.name ?? ''}
+                  onChange={(e) => patch(r.channel, { name: e.target.value })}
                 />
               ),
           },
@@ -147,15 +157,11 @@ export function RelaysEditor({
                     size="small"
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={() => setList(list.filter((x) => x.channelNum !== r.channelNum))}
+                    onClick={() => setList(list.filter((x) => x.channel !== r.channel))}
                   />
                 </Tooltip>
               ) : (
-                <Button
-                  size="small"
-                  icon={<PlusOutlined />}
-                  onClick={() => setList([...list, { channelNum: r.channelNum }])}
-                >
+                <Button size="small" icon={<PlusOutlined />} onClick={() => setList([...list, { channel: r.channel }])}>
                   配置
                 </Button>
               ),

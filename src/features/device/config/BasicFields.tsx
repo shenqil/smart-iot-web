@@ -23,7 +23,7 @@ export function BasicFields({ showFault = false }: { showFault?: boolean }) {
         <Form.Item
           name="readInterval"
           label="采集间隔 (秒)"
-          tooltip="1~3600 秒；修改后设备重连时生效"
+          tooltip="1~3600 秒；保存后立即生效"
           rules={[{ required: true, message: '请输入采集间隔' }]}
         >
           <InputNumber className="w-full" min={1} max={3600} precision={0} />
@@ -40,7 +40,11 @@ export function BasicFields({ showFault = false }: { showFault?: boolean }) {
           <Input />
         </Form.Item>
       </div>
-      <Form.Item name="status" label="状态" tooltip="停用的设备不能接入；已在线的设备在下次重连或手动断开后生效">
+      <Form.Item
+        name="status"
+        label="状态"
+        tooltip="停用的设备立即断开且不能接入；故障的设备更换为与规格相符的硬件后改为启用即可重新接入"
+      >
         <Radio.Group
           optionType="button"
           options={[

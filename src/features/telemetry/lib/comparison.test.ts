@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { INVALID_READING } from '@/lib/resolution'
 import { dailySeries, hourlySeries } from './comparison'
 
 describe('comparison', () => {
@@ -8,7 +7,7 @@ describe('comparison', () => {
       [
         { time: Date.parse('2026-10-19T16:00:05Z'), vals: [1] }, // 上海 00 时
         { time: Date.parse('2026-10-20T05:00:03Z'), vals: [2] }, // 13 时
-        { time: Date.parse('2026-10-20T06:00:03Z'), vals: [INVALID_READING] },
+        { time: Date.parse('2026-10-20T06:00:03Z'), vals: [null] },
       ],
       0,
       'Asia/Shanghai',

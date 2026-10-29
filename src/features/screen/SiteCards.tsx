@@ -281,9 +281,9 @@ export function AlarmCard({
             <button key={a.id} type="button" className="screen-row" onClick={() => onPick(a.deviceId)}>
               <span
                 className="w-9 flex-none rounded-[3px] border border-solid py-px text-center text-[12px]"
-                style={{ color: LEVEL_COLOR[a.alarmLevel], borderColor: LEVEL_COLOR[a.alarmLevel] }}
+                style={{ color: LEVEL_COLOR[a.level], borderColor: LEVEL_COLOR[a.level] }}
               >
-                {ALARM_LEVEL[a.alarmLevel]?.label ?? a.alarmLevel}
+                {ALARM_LEVEL[a.level]?.label ?? a.level}
               </span>
               <span className="screen-num w-[52px] flex-none text-[14px] text-[var(--sc-text-2)]" title={a.lastAlarmAt}>
                 {dayjs(a.lastAlarmAt).isSame(dayjs(), 'day')

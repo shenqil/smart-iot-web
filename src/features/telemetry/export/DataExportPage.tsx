@@ -210,7 +210,7 @@ export default function DataExportPage() {
           <div className="flex flex-wrap gap-1.5">
             <Tag color="processing">{TIME_HEADER}</Tag>
             {channels.map((c) => (
-              <Tag key={c.channelNum}>{c.header}</Tag>
+              <Tag key={c.channel}>{c.header}</Tag>
             ))}
             {!channels.length && <span className="text-fg-tertiary text-sm">未选择通道</span>}
           </div>

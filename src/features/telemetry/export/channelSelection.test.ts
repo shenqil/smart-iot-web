@@ -1,6 +1,6 @@
 import { moveItem, orderedChecked, reconcileSelection } from './channelSelection'
 
-const sensors = [{ channelNum: 2 }, { channelNum: 0 }, { channelNum: 1 }]
+const sensors = [{ channel: 2 }, { channel: 0 }, { channel: 1 }]
 
 describe('channelSelection', () => {
   it('移动项', () => {

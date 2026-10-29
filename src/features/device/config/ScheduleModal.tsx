@@ -5,13 +5,13 @@ import { handleGlobalError } from '@/app/queryClient'
 import { WEEKDAY_OPTIONS } from '@/features/relay/schedule'
 import { channelName } from '@/features/telemetry/lib/realtime'
 import { dayjs } from '@/lib/time'
-import type { RelayConfig, RelaySchedule, RelayScheduleBody } from './api'
+import type { RelaySchedule, RelayScheduleBody, RelayView } from './api'
 
 const CLOCK = 'HH:mm:ss'
 const ALL_DAYS = WEEKDAY_OPTIONS.map((o) => o.value)
 
 interface Values {
-  relayIndex: number
+  channel: number
   start: Dayjs
   stop: Dayjs
   weekdays: number[]
@@ -25,7 +25,7 @@ const clock = (v: string) => dayjs(v, CLOCK)
 
 /** 规则 -> 请求体 (修改为整体替换) */
 export const scheduleBody = (s: RelaySchedule): RelayScheduleBody => ({
-  relayIndex: s.relayIndex,
+  channel: s.channel,
   enabled: s.enabled,
   start: s.start,
   stop: s.stop,
@@ -47,7 +47,7 @@ export function ScheduleModal({
   /** 修改的规则；为空表示新增 */
   schedule?: RelaySchedule
   /** 已配置的继电器通道 */
-  relays: RelayConfig[]
+  relays: RelayView[]
   onSave: (body: RelayScheduleBody) => Promise<unknown>
   onClose: () => void
 }) {
@@ -64,7 +64,7 @@ export function ScheduleModal({
     form.setFieldsValue(
       schedule
         ? {
-            relayIndex: schedule.relayIndex,
+            channel: schedule.channel,
             start: clock(schedule.start),
             stop: clock(schedule.stop),
             weekdays: schedule.weekdays,
@@ -73,7 +73,7 @@ export function ScheduleModal({
             remark: schedule.remark,
             enabled: schedule.enabled,
           }
-        : { relayIndex: relays[0]?.channelNum, weekdays: ALL_DAYS, retryCount: 0, retryIntervalSec: 30, enabled: true },
+        : { channel: relays[0]?.channel, weekdays: ALL_DAYS, retryCount: 0, retryIntervalSec: 30, enabled: true },
     )
   }, [open, schedule, relays, form])
 
@@ -82,7 +82,7 @@ export function ScheduleModal({
     setSaving(true)
     try {
       await onSave({
-        relayIndex: v.relayIndex,
+        channel: v.channel,
         enabled: v.enabled,
         start: v.start.format(CLOCK),
         stop: v.stop.format(CLOCK),
@@ -100,9 +100,9 @@ export function ScheduleModal({
   }
 
   // 修改时保留原通道 (即使已被删除)，便于看清楚是哪一路
-  const options = relays.map((r) => ({ value: r.channelNum, label: `CH ${r.channelNum} · ${channelName(r)}` }))
-  if (schedule && !relays.some((r) => r.channelNum === schedule.relayIndex)) {
-    options.unshift({ value: schedule.relayIndex, label: `CH ${schedule.relayIndex} (未配置)` })
+  const options = relays.map((r) => ({ value: r.channel, label: `CH ${r.channel} · ${channelName(r)}` }))
+  if (schedule && !relays.some((r) => r.channel === schedule.channel)) {
+    options.unshift({ value: schedule.channel, label: `CH ${schedule.channel} (未配置)` })
   }
 
   return (
@@ -117,7 +117,7 @@ export function ScheduleModal({
       width={520}
     >
       <Form form={form} layout="vertical" className="mt-4" requiredMark={false}>
-        <Form.Item name="relayIndex" label="继电器" rules={[{ required: true, message: '请选择继电器' }]}>
+        <Form.Item name="channel" label="继电器" rules={[{ required: true, message: '请选择继电器' }]}>
           <Select options={options} placeholder="选择继电器通道" />
         </Form.Item>
         <Space.Compact block>

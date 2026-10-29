@@ -5,7 +5,7 @@ import { BIZ_TZ, dayjs } from '@/lib/time'
  * 日环比：整点值 (每小时收到的第一帧) 按业务时区落到 0~23 时；缺失为 null (折线断开)
  */
 export function hourlySeries(
-  records: { time: number; vals: number[] }[] | null | undefined,
+  records: { time: number; vals: readonly (number | null)[] }[] | null | undefined,
   channel: number,
   tz = BIZ_TZ,
 ): (number | null)[] {
@@ -19,7 +19,7 @@ export function hourlySeries(
 
 /** 月环比：每日值 (每天 12:00 起收到的第一帧) 落到 1~当月天数 (下标 0 = 1 日) */
 export function dailySeries(
-  records: { date: string; vals: number[] }[] | null | undefined,
+  records: { date: string; vals: readonly (number | null)[] }[] | null | undefined,
   channel: number,
   month: string,
 ): (number | null)[] {

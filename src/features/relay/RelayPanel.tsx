@@ -1,7 +1,6 @@
 import { ClockCircleOutlined, LockOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button, Empty, Switch, Tag, Tooltip } from 'antd'
 import type { AppDevice } from '@/features/device/api'
-import { useStandardRelays } from '@/features/dict/api'
 import { relayKind } from '@/features/telemetry/lib/channelKind'
 import { type AppRelay, byChannel, channelName, type Realtime } from '@/features/telemetry/lib/realtime'
 import { RelayGlyph } from '@/features/telemetry/realtime/ChannelGlyph'
@@ -24,9 +23,9 @@ function LinkBadges({ link, onRelease }: { link: RelayLink | undefined; onReleas
             <div className="space-y-1">
               <div>受以下告警规则联动控制 (告警时自动执行)：</div>
               {link.linkages.map((l) => (
-                <div key={`${l.sourceDeviceSn}-${l.alertCode}`}>
+                <div key={l.ruleId}>
                   · {linkageTriggerText(l)} → {linkageActionText(l.state)}
-                  {!l.enabled && ' (规则已停用)'}
+                  {!l.ruleEnabled && ' (规则已停用)'}
                 </div>
               ))}
             </div>
@@ -59,9 +58,7 @@ function LinkBadges({ link, onRelease }: { link: RelayLink | undefined; onReleas
       )}
       {link.hold && (
         <>
-          <Tooltip
-            title={`${link.hold.operator || '—'} 于 ${fmtDateTime(new Date(link.hold.atMs).toISOString())} 接管，联动与定时暂停`}
-          >
+          <Tooltip title={`${link.hold.operatorName || '—'} 于 ${fmtDateTime(link.hold.at)} 接管，联动与定时暂停`}>
             <Tag color="purple" icon={<LockOutlined />} className="m-0 cursor-help">
               手动接管中
             </Tag>
@@ -86,9 +83,8 @@ export interface RelayPanelProps {
 export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
   const { busy, blocked, toggle, links, release } = useRelayControl(device, realtime)
   const relays = byChannel(device.relays)
-  const stdRelays = useStandardRelays().byId
-  // 通道配置的图标 › 标准继电器字典的图标 › 按名称匹配的内置图标
-  const iconOf = (r: AppRelay) => r.url || (r.standardId != null ? stdRelays.get(r.standardId)?.url : undefined)
+  // 通道配置的图标 › 标准继电器的图标 (服务端已合并) › 按名称匹配的内置图标
+  const iconOf = (r: AppRelay) => r.iconUrl || undefined
 
   if (!relays.length) return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="未配置继电器通道" />
 
@@ -101,16 +97,16 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
       }
     >
       {relays.map((r) => {
-        const state = realtime?.relays?.[r.channelNum]
+        const state = realtime?.relays?.[r.channel]
         const known = state === 0 || state === 1
         const on = state === 1
-        const loading = busy.has(r.channelNum)
+        const loading = busy.has(r.channel)
         const reason = blocked ?? (realtime && !known ? '暂无状态数据' : null)
         const icon = iconOf(r)
         const kind = relayKind(r)
         return (
           <div
-            key={r.channelNum}
+            key={r.channel}
             className={`flex items-center gap-3 rounded-lg border border-solid px-3 py-2.5 transition-colors ${
               on && !blocked ? 'border-primary/40 bg-primary-bg' : 'border-line bg-container'
             }`}
@@ -140,7 +136,7 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
                 {channelName(r)}
               </div>
               <div className="text-fg-tertiary text-xs">
-                通道 {r.channelNum}
+                通道 {r.channel}
                 <span className="ml-2">
                   {loading ? (
                     '执行中…'
@@ -155,7 +151,7 @@ export function RelayPanel({ device, realtime, layout }: RelayPanelProps) {
                   )}
                 </span>
               </div>
-              <LinkBadges link={links.get(r.channelNum)} onRelease={() => release(r)} />
+              <LinkBadges link={links.get(r.channel)} onRelease={() => release(r)} />
             </div>
             <Tooltip title={reason}>
               <Switch

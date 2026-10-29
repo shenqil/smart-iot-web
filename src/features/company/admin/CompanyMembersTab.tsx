@@ -60,7 +60,6 @@ export function CompanyMembersTab({ companyId }: { companyId: number }) {
     {
       title: '企业角色',
       dataIndex: 'role',
-      sortField: 'role',
       width: 130,
       render: (v, r) => (
         <Select size="small" className="w-24" value={v} options={ROLE_OPTIONS} onChange={(role) => setRole(r, role)} />
@@ -77,7 +76,7 @@ export function CompanyMembersTab({ companyId }: { companyId: number }) {
         </>
       ),
     },
-    { title: '加入时间', dataIndex: 'joinedAt', width: 160, sortField: 'joinedAt', render: fmtDateTime },
+    { title: '加入时间', dataIndex: 'joinedAt', width: 160, render: fmtDateTime },
     {
       title: '操作',
       width: 80,
@@ -99,7 +98,6 @@ export function CompanyMembersTab({ companyId }: { companyId: number }) {
         columns={columns}
         rowKey="id"
         keywordPlaceholder="用户名 / 昵称 / 手机号"
-        defaultSort="-joinedAt"
         filters={[
           { name: 'role', placeholder: '企业角色', options: ROLE_OPTIONS, width: 110 },
           { name: 'status', placeholder: '账号状态', options: enumOptions(ACTIVE_STATUS), width: 110 },
