@@ -1,12 +1,10 @@
-import { DisconnectOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Card, Tabs, Tag, Tooltip } from 'antd'
+import { Button, Card, Skeleton, Space, Tabs, Tooltip } from 'antd'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
-import { useBlocker, useSearchParams } from 'react-router'
+import { useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { notify } from '@/app/notify'
-import { DetailHeader } from '@/components/DetailHeader'
-import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
-import { useDeviceTypes } from '@/features/dict/api'
+import { OnlineTag } from '@/components/StatusTag'
 import { confirmDisconnect } from './actions'
 import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey, linkageKeys, schedulesKey } from './api'
 import { BasicForm } from './BasicForm'
@@ -46,7 +44,7 @@ export function DeviceConfigPage({
   notice?: ReactNode
 }) {
   const qc = useQueryClient()
-  const types = useDeviceTypes()
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') || 'basic'
   const [dirty, setDirty] = useState(false)
@@ -133,49 +131,41 @@ export function DeviceConfigPage({
 
   return (
     <>
-      <DetailHeader
-        loading={isPending}
-        backTo={backTo}
-        title={d?.name}
-        tags={
-          d && (
-            <>
-              <OnlineTag online={d.online} />
-              <EnumTag value={d.status} defs={DEVICE_STATUS} />
-              <Tag>{types.nameOf(d.deviceTypeId)}</Tag>
-            </>
-          )
-        }
-        subtitle={
-          d && (
-            <span>
-              SN <span className="font-mono">{d.deviceSn}</span> · 传感器 {sensorCount}/{d.sensorChannels} · 继电器{' '}
-              {relayCount}/{d.relayChannels} · 采集间隔 {d.readInterval}s
-            </span>
-          )
-        }
-        extra={
-          d && (
-            <>
-              <Tooltip title={d.online ? '断开后设备会自动重连' : '设备当前离线'}>
-                <Button icon={<DisconnectOutlined />} onClick={() => confirmDisconnect(cfg, id)}>
-                  断开连接
-                </Button>
-              </Tooltip>
-              {headerExtra?.(d)}
-            </>
-          )
-        }
-      />
       {notice}
       {/* 表格类页签 (传感器 / 继电器 / 扩展页签) 撑满剩余高度，表格内滚动；表单页签保持自然高度 */}
       <Card variant="borderless" className={FORM_TABS.has(tab) ? undefined : 'layout-fill'}>
+        {isPending && <Skeleton active paragraph={{ rows: 6 }} />}
         {d && (
           <Tabs
             className="layout-fill"
             activeKey={tab}
             onChange={switchTab}
             destroyOnHidden
+            tabBarExtraContent={{
+              left: (
+                <Space className="mr-3" size="small">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ArrowLeftOutlined />}
+                    aria-label="返回"
+                    onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
+                  />
+                  <span className="font-semibold text-fg text-sm">{d.name}</span>
+                  <OnlineTag online={d.online} />
+                </Space>
+              ),
+              right: (
+                <Space size="small">
+                  <Tooltip title={d.online ? '断开后设备会自动重连' : '设备当前离线'}>
+                    <Button size="small" icon={<DisconnectOutlined />} onClick={() => confirmDisconnect(cfg, id)}>
+                      断开连接
+                    </Button>
+                  </Tooltip>
+                  {headerExtra?.(d)}
+                </Space>
+              ),
+            }}
             items={[
               {
                 key: 'basic',
