@@ -1,12 +1,12 @@
 server {
-    listen 8080;
+    listen 80;
     server_name _;
 
     # 1. 前端静态资源根目录 (请确认与你部署 dist 的实际路径一致)
     root /var/www/smart-iot/dist;
     index index.html;
 
-    # 关键：避免 301 重定向时丢失 8080 端口
+    # 避免 301 重定向时端口异常
     port_in_redirect on;
 
     # 客户端上传限制
