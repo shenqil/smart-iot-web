@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { api, unwrap } from '@/api/client'
-import { navigateTo } from '@/app/navigation'
+import { loginPath, navigateTo } from '@/app/navigation'
 import { queryClient } from '@/app/queryClient'
 import { useSession } from '@/stores/session'
 import { authKeys } from './keys'
@@ -36,7 +36,7 @@ export async function logout() {
     // 令牌已失效等情况忽略
   }
   useSession.getState().clear()
-  navigateTo('/login', { replace: true })
+  navigateTo(loginPath(), { replace: true })
   // 等登录页渲染后再清缓存，避免仍挂载的页面因缓存清空重新请求
   setTimeout(() => queryClient.clear(), 0)
 }

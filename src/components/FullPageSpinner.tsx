@@ -1,9 +1,8 @@
-import { Spin } from 'antd'
-
+/** 首次路由加载不强制下载 PC 组件库。 */
 export function FullPageSpinner() {
   return (
-    <div className="flex h-full min-h-[50vh] flex-1 items-center justify-center">
-      <Spin size="large" />
+    <div role="status" aria-live="polite" style={{ padding: 24, textAlign: 'center' }}>
+      加载中…
     </div>
   )
 }

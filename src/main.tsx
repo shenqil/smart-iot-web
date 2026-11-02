@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useSyncExternalStore } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router'
 import { AppProviders } from '@/app/AppProviders'
@@ -11,11 +11,21 @@ if (import.meta.env.VITE_APP_TITLE) document.title = import.meta.env.VITE_APP_TI
 const root = document.getElementById('root')
 if (!root) throw new Error('#root not found')
 
-createRoot(root).render(
-  <StrictMode>
-    <AppProviders>
+function Application() {
+  const pathname = useSyncExternalStore(
+    (listener) => router.subscribe(() => listener()),
+    () => router.state.location.pathname,
+  )
+  return (
+    <AppProviders pathname={pathname}>
       <SessionWatcher />
       <RouterProvider router={router} />
     </AppProviders>
+  )
+}
+
+createRoot(root).render(
+  <StrictMode>
+    <Application />
   </StrictMode>,
 )

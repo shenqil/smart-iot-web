@@ -69,3 +69,16 @@ export const processAlarms = (companyId: number, ids: number[], remark: string) 
       body: { ids, remark: remark || undefined },
     }),
   )
+
+/** 支持详情刷新/深链接；服务端重新校验当前企业的设备授权。 */
+export const alarmDetailQuery = (companyId: number, alarmId: number) =>
+  queryOptions({
+    queryKey: ['app', companyId, 'alarms', 'detail', alarmId],
+    queryFn: ({ signal }) =>
+      unwrap(
+        api.GET('/api/v1/app/alarms/{id}', {
+          params: { header: companyHeader(companyId), path: { id: alarmId } },
+          signal,
+        }),
+      ),
+  })

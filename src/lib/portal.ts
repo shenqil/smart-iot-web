@@ -71,6 +71,9 @@ export function isPathAllowed(path: string, me: Me, companies: MyCompany[]): boo
   if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) return false
   const pathname = path.split(/[?#]/)[0]
   if (pathname === '/account') return true
+  if (pathname === '/h5/no-company' || pathname === '/h5/no-permission') return true
+  const mobile = /^\/h5\/(\d+)(?:\/|$)/.exec(pathname)
+  if (mobile) return canEnter('app', me, companies, Number(mobile[1]))
   const p = parsePortalPath(pathname)
   if (!p) return false
   const portal = p.portal === 'screen' ? 'app' : p.portal

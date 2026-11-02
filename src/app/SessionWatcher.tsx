@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { SESSION_STORAGE_KEY, useSession } from '@/stores/session'
-import { currentPath, loginPath, navigateTo } from './navigation'
+import { currentPath, entryPath, loginPath, navigateTo } from './navigation'
 import { notify } from './notify'
 import { expireSession, queryClient } from './queryClient'
 
@@ -30,9 +30,10 @@ export function SessionWatcher() {
       if (before === after) return
       queryClient.clear()
       if (!after) {
-        if (!window.location.pathname.startsWith('/login')) navigateTo(loginPath(currentPath()), { replace: true })
+        if (!['/login', '/h5/login'].includes(window.location.pathname))
+          navigateTo(loginPath(currentPath()), { replace: true })
       } else {
-        navigateTo('/', { replace: true }) // 其他标签页切换了账号
+        navigateTo(entryPath(), { replace: true }) // 其他标签页切换了账号
       }
     }
     window.addEventListener('storage', onStorage)

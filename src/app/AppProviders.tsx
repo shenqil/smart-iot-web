@@ -1,28 +1,26 @@
-import { StyleProvider } from '@ant-design/cssinjs'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { App, ConfigProvider } from 'antd'
-import zhCN from 'antd/locale/zh_CN'
-import { type ReactNode, useEffect } from 'react'
-import { bindNotify } from './notify'
+import { lazy, type ReactNode, Suspense } from 'react'
+import { isMobilePath } from './navigation'
 import { queryClient } from './queryClient'
-import { lightTheme } from './theme'
 import '@/lib/time'
 
-function AppBridge() {
-  const { message, modal } = App.useApp()
-  useEffect(() => bindNotify(message, modal), [message, modal])
-  return null
-}
+const DesktopProviders = lazy(() => import('./DesktopProviders'))
+const MobileProviders = lazy(() => import('./MobileProviders'))
 
-export function AppProviders({ children }: { children: ReactNode }) {
+/** 公共查询/会话不依赖 UI；两端主题与反馈实现独立按需加载。 */
+export function AppProviders({ children, pathname }: { children: ReactNode; pathname: string }) {
+  const Provider = isMobilePath(pathname) ? MobileProviders : DesktopProviders
   return (
-    <StyleProvider layer>
-      <ConfigProvider locale={zhCN} theme={lightTheme}>
-        <App className="h-full">
-          <AppBridge />
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </App>
-      </ConfigProvider>
-    </StyleProvider>
+    <QueryClientProvider client={queryClient}>
+      <Suspense
+        fallback={
+          <div role="status" style={{ padding: 24 }}>
+            加载中…
+          </div>
+        }
+      >
+        <Provider>{children}</Provider>
+      </Suspense>
+    </QueryClientProvider>
   )
 }

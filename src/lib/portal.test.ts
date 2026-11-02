@@ -14,6 +14,7 @@ const me = (systemRole: 'admin' | 'none' = 'none'): Me => ({
   id: 1,
   username: 'u',
   nickname: '',
+  avatar: '',
   phone: null,
   systemRole,
   status: 'active',
@@ -96,5 +97,14 @@ describe('路径解析与权限', () => {
   it('switchPortalPath 沿用当前企业', () => {
     expect(switchPortalPath('app', [A, U], 1)).toBe('/app/1/monitor')
     expect(switchPortalPath('tenant', [A, U], 2)).toBe('/tenant/1')
+  })
+})
+
+describe('移动回跳权限', () => {
+  it('验证企业授权，拒绝登录页和未授权企业', () => {
+    expect(isPathAllowed('/h5/2/home', me(), [U])).toBe(true)
+    expect(isPathAllowed('/h5/3/home', me(), [U, X])).toBe(false)
+    expect(isPathAllowed('/h5/login', me(), [U])).toBe(false)
+    expect(isPathAllowed('//evil.test/h5/2/home', me(), [U])).toBe(false)
   })
 })

@@ -5,7 +5,7 @@ import { loadFrontendConfig } from '@/features/sysconfig/api'
 import { canEnter, landingPath, type Portal } from '@/lib/portal'
 import { usePref } from '@/stores/pref'
 import { hasValidSession, useSession } from '@/stores/session'
-import { loginPath } from './navigation'
+import { entryPath, loginPath } from './navigation'
 import { notify } from './notify'
 import { queryClient } from './queryClient'
 
@@ -66,9 +66,20 @@ export function companyGuard(portal: Exclude<Portal, 'admin'>, rememberAs: Porta
       notify.warning(
         portal === 'tenant' ? '无权管理该企业，或企业已停用 / 过期' : '无权访问该企业，或企业已停用 / 过期',
       )
-      throw redirect('/')
+      throw redirect(entryPath(pathOf(request)))
     }
     if (rememberAs) usePref.getState().remember(rememberAs, companyId)
     return { companyId }
   }
 }
+
+/** 移动端保持数据使用身份和移动落地，不沿用平台管理员的桌面落地优先级。 */
+export async function mobileLandingLoader({ request }: LoaderFunctionArgs) {
+  const { companies } = await loadSession(request)
+  const preferred = usePref.getState().lastCompanyId
+  const company =
+    companies.find((c) => c.accessible && c.companyId === preferred) ?? companies.find((c) => c.accessible)
+  return redirect(company ? `/h5/${company.companyId}/home` : '/h5/no-company')
+}
+
+export const mobileLoginLoader = () => (hasValidSession() ? redirect('/h5') : null)

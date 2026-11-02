@@ -10,7 +10,21 @@ export const navigateTo: NavigateFn = (to, opts) => navigateImpl(to, opts)
 
 export const currentPath = () => `${window.location.pathname}${window.location.search}`
 
-export const loginPath = (redirect?: string) =>
-  redirect && redirect !== '/' && !redirect.startsWith('/login')
-    ? `/login?redirect=${encodeURIComponent(redirect)}`
-    : '/login'
+export const isMobilePath = (path: string) => {
+  const pathname = path.split(/[?#]/)[0]
+  return pathname === '/h5' || pathname.startsWith('/h5/')
+}
+export const entryPath = (path = currentPath()) => (isMobilePath(path) ? '/h5' : '/')
+
+export function loginPath(redirect?: string) {
+  const target = isMobilePath(redirect ?? currentPath()) ? '/h5/login' : '/login'
+  const pathname = redirect?.split(/[?#]/)[0]
+  return redirect &&
+    pathname !== '/' &&
+    pathname !== '/h5' &&
+    pathname !== '/h5/' &&
+    pathname !== '/login' &&
+    pathname !== '/h5/login'
+    ? `${target}?redirect=${encodeURIComponent(redirect)}`
+    : target
+}

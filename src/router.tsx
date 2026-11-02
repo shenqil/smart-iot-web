@@ -1,5 +1,13 @@
 import { createBrowserRouter } from 'react-router'
-import { adminGuard, companyGuard, landingLoader, loginLoader, rootLoader } from '@/app/guards'
+import {
+  adminGuard,
+  companyGuard,
+  landingLoader,
+  loginLoader,
+  mobileLandingLoader,
+  mobileLoginLoader,
+  rootLoader,
+} from '@/app/guards'
 import { registerNavigate } from '@/app/navigation'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { RouteError } from '@/components/RouteError'
@@ -9,6 +17,31 @@ import { tenantRoutes } from '@/portals/tenant/routes'
 
 /** 路由总表 (FRONTEND_DESIGN §1.1)：端与企业都在 URL 里，页面按端 lazy 分包 */
 export const router = createBrowserRouter([
+  {
+    path: '/h5/login',
+    loader: mobileLoginLoader,
+    HydrateFallback: FullPageSpinner,
+    lazy: async () => ({ Component: (await import('@/portals/mobile/LoginPage')).default }),
+  },
+  {
+    path: '/h5',
+    loader: rootLoader,
+    HydrateFallback: FullPageSpinner,
+    errorElement: <RouteError />,
+    children: [
+      { index: true, loader: mobileLandingLoader },
+      {
+        path: 'no-company',
+        lazy: async () => ({ Component: (await import('@/portals/mobile/NoCompanyPage')).default }),
+      },
+      {
+        path: ':companyId/home',
+        loader: companyGuard('app'),
+        lazy: async () => ({ Component: (await import('@/portals/mobile/EntryPage')).default }),
+      },
+      { path: '*', lazy: async () => ({ Component: (await import('@/features/auth/NotFoundPage')).default }) },
+    ],
+  },
   {
     path: '/login',
     loader: loginLoader,

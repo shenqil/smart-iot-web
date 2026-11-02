@@ -804,6 +804,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/alarms/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 告警详情 */
+        get: operations["app-get-alarm"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/devices": {
         parameters: {
             query?: never;
@@ -813,9 +830,26 @@ export interface paths {
         };
         /**
          * 设备列表 (分页)
-         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
+         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。online 按完整授权范围的在线快照先筛选再分页；Valkey 不可用时该筛选返回 503。unclassified=true 筛选未分类。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
          */
         get: operations["app-list-devices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 设备数量、类型与在线状态汇总 */
+        get: operations["app-device-summary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1127,7 +1161,7 @@ export interface paths {
         };
         /** 当前用户信息 */
         get: operations["auth-me"];
-        /** 修改自己的昵称与手机号 (部分更新：未传的字段不修改) */
+        /** 修改自己的昵称、手机号与头像 (部分更新：未传的字段不修改) */
         put: operations["auth-update-me"];
         post?: never;
         delete?: never;
@@ -1889,6 +1923,8 @@ export interface components {
             status: "active" | "inactive";
         };
         AuthProfile: {
+            /** @description 头像 URL，空串表示未设置 */
+            avatar: string;
             /** Format: date-time */
             createdAt: string;
             /** Format: int64 */
@@ -2605,6 +2641,26 @@ export interface components {
             /** Format: double */
             jitter: number;
         };
+        DeviceSummaryView: {
+            /**
+             * Format: int64
+             * @description 范围内唯一授权设备数量，不累加园区挂载次数
+             */
+            deviceCount: number;
+            deviceTypes: components["schemas"]["DeviceTypeCount"][];
+            /** Format: int64 */
+            offlineCount: number;
+            /** Format: int64 */
+            onlineCount: number;
+            onlineKnown: boolean;
+            /** Format: int64 */
+            siteCount: number;
+            /**
+             * Format: int64
+             * @description 在线服务不可用时不将未知状态计为离线
+             */
+            unknownCount: number;
+        };
         DeviceTenantCreateBody: {
             coverImage?: string;
             description?: string;
@@ -2662,6 +2718,15 @@ export interface components {
              * @description 排序 (越小越靠前)，默认 0
              */
             sort?: number;
+        };
+        DeviceTypeCount: {
+            /** Format: int64 */
+            count: number;
+            /**
+             * Format: int64
+             * @description 为空表示未分类
+             */
+            deviceTypeId: number | null;
         };
         DeviceTypePatch: {
             description?: string;
@@ -3750,6 +3815,8 @@ export interface components {
             value: string;
         };
         UpdateMeInputBody: {
+            /** @description 头像 http/https URL；空串清除，未传不修改 */
+            avatar?: string;
             /** @description 昵称 (可为空串)；不传表示不修改 */
             nickname?: string;
             /** @description 手机号；传 null 或空串表示清空，不传表示不修改 */
@@ -6255,6 +6322,40 @@ export interface operations {
             };
         };
     };
+    "app-get-alarm": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "app-list-devices": {
         parameters: {
             query?: {
@@ -6272,6 +6373,10 @@ export interface operations {
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
+                /** @description 在线/离线；不传表示不限。先筛选完整候选集，再分页 */
+                online?: "true" | "false";
+                /** @description 只看未分类设备；不能与 deviceTypeId 同时使用 */
+                unclassified?: boolean;
             };
             header: {
                 /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
@@ -6289,6 +6394,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageDeviceAppView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-summary": {
+        parameters: {
+            query?: {
+                /** @description 园区 ID，不传表示企业范围 */
+                siteId?: number;
+            };
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceSummaryView"];
                 };
             };
             /** @description Error */

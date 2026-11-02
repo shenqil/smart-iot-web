@@ -1,0 +1,45 @@
+.mobile-root {
+  --adm-color-primary: #0f766e;
+  height: 100%;
+  color: #223248;
+  background: #f4f6fa;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+.mobile-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.mobile-topbar {
+  padding-top: env(safe-area-inset-top);
+  background: #fff;
+  flex-shrink: 0;
+}
+.mobile-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.mobile-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.mobile-stat {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  background: #f0f7f5;
+  border-radius: 8px;
+}
+.mobile-stat strong {
+  font-size: 24px;
+  font-weight: 500;
+}

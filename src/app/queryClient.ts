@@ -2,7 +2,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import { COMPANY_DENIED_CODES, errorText, isApiError, NETWORK_ERROR } from '@/api/errors'
 import { authKeys } from '@/features/auth/keys'
 import { useSession } from '@/stores/session'
-import { currentPath, loginPath, navigateTo } from './navigation'
+import { currentPath, entryPath, loginPath, navigateTo } from './navigation'
 import { notify } from './notify'
 
 declare module '@tanstack/react-query' {
@@ -51,7 +51,7 @@ export function handleGlobalError(error: unknown, silent?: boolean) {
         title: '当前企业不可用',
         content: error.message,
         okText: '返回首页',
-        onOk: () => navigateTo('/', { replace: true }),
+        onOk: () => navigateTo(entryPath(), { replace: true }),
         afterClose: () => {
           companyDeniedOpen = false
         },
