@@ -858,6 +858,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 设备详情（数据端安全视图） */
+        get: operations["app-get-device"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/devices/{id}/camera/live": {
         parameters: {
             query?: never;
@@ -2208,6 +2225,10 @@ export interface components {
              * @description 设备类型 ID，为空表示未分类 (名称从设备类型字典获取)
              */
             deviceTypeId: number | null;
+            /** @description 是否有未处理告警 */
+            hasAlarm?: boolean;
+            /** @description 是否配置摄像头，不包含任何摄像头凭证 */
+            hasCamera?: boolean;
             /** Format: int64 */
             id: number;
             /**
@@ -2224,6 +2245,8 @@ export interface components {
             name: string;
             /** @description 是否在线 (Valkey 不可用时为 false) */
             online: boolean;
+            /** @description 在线状态是否可用；false 时 online 不是可靠离线结论 */
+            onlineKnown?: boolean;
             /**
              * Format: int64
              * @description 采集间隔 (秒)
@@ -6373,6 +6396,12 @@ export interface operations {
                 status?: "active" | "inactive" | "fault";
                 /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
+                /** @description 指定已授权设备 */
+                deviceId?: number;
+                /** @description 按已配置通道/摄像头能力筛选 */
+                capability?: "sensor" | "relay" | "camera";
+                /** @description 仅有未处理告警的设备 */
+                hasAlarm?: boolean;
                 /** @description 在线/离线；不传表示不限。先筛选完整候选集，再分页 */
                 online?: "true" | "false";
                 /** @description 只看未分类设备；不能与 deviceTypeId 同时使用 */
@@ -6429,6 +6458,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceSummaryView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-get-device": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
+                "X-Company-ID": number;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceAppView"];
                 };
             };
             /** @description Error */

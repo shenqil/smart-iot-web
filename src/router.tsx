@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, redirect } from 'react-router'
 import {
   adminGuard,
   companyGuard,
@@ -35,9 +35,37 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/portals/mobile/NoCompanyPage')).default }),
       },
       {
-        path: ':companyId/home',
+        path: ':companyId',
         loader: companyGuard('app'),
-        lazy: async () => ({ Component: (await import('@/portals/mobile/EntryPage')).default }),
+        lazy: async () => ({ Component: (await import('@/portals/mobile/Layout')).default }),
+        children: [
+          { index: true, loader: () => redirect('home') },
+          { path: 'home', lazy: async () => ({ Component: (await import('@/portals/mobile/HomePage')).default }) },
+          { path: 'sites', lazy: async () => ({ Component: (await import('@/portals/mobile/SitesPage')).default }) },
+          {
+            path: 'sites/:siteId',
+            lazy: async () => ({ Component: (await import('@/portals/mobile/SitesPage')).default }),
+          },
+          {
+            path: 'devices',
+            lazy: async () => ({ Component: (await import('@/portals/mobile/DevicesPage')).default }),
+          },
+          { path: 'alarms', lazy: async () => ({ Component: (await import('@/portals/mobile/AlarmsPage')).default }) },
+          {
+            path: 'alarms/:alarmId',
+            lazy: async () => ({ Component: (await import('@/portals/mobile/AlarmsPage')).default }),
+          },
+          {
+            path: 'operations',
+            lazy: async () => ({ Component: (await import('@/portals/mobile/OperationsPage')).default }),
+          },
+          { path: 'map', lazy: async () => ({ Component: (await import('@/portals/mobile/MapPage')).default }) },
+          ...['me', 'profile', 'password', 'company-info', 'device-info'].map((path) => ({
+            path,
+            lazy: async () => ({ Component: (await import('@/portals/mobile/AccountPages')).default }),
+          })),
+          { path: '*', loader: () => redirect('home') },
+        ],
       },
       { path: '*', lazy: async () => ({ Component: (await import('@/features/auth/NotFoundPage')).default }) },
     ],

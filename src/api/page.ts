@@ -17,7 +17,8 @@ export async function fetchAllPages<T>(
   for (let page = 1; page <= maxPages; page++) {
     const r = await fetchPage(page, MAX_PAGE_SIZE)
     out.push(...(r.records ?? []))
-    if (out.length >= r.totalCount || (r.records ?? []).length < MAX_PAGE_SIZE) break
+    if (out.length >= r.totalCount) return out
+    if (!(r.records ?? []).length) throw new Error('分页数据发生变化，请刷新重试')
   }
-  return out
+  throw new Error('数据量超过加载上限，请缩小范围后重试')
 }

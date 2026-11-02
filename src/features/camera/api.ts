@@ -29,6 +29,7 @@ export const controlPTZ = (companyId: number, deviceId: number, body: PTZBody) =
   api.POST('/api/v1/app/devices/{id}/camera/ptz', {
     params: { path: { id: deviceId }, header: companyHeader(companyId) },
     body,
+    signal: AbortSignal.timeout(10_000),
   })
 
 /** 云台方向码 (萤石开放平台) */

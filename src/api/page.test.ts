@@ -17,3 +17,22 @@ describe('fetchAllPages', () => {
     expect(await fetchAllPages(async () => ({ records: null, totalCount: 0, page: 1, pageSize: 200 }))).toEqual([])
   })
 })
+
+it('超过上限必须报错，不能把部分数据当全部', async () => {
+  await expect(
+    fetchAllPages(
+      async (page, pageSize) => ({
+        records: Array.from({ length: 200 }, (_, i) => i),
+        totalCount: 1000,
+        page,
+        pageSize,
+      }),
+      2,
+    ),
+  ).rejects.toThrow('上限')
+})
+it('统计仍有数据但返回空页时报告变化', async () => {
+  await expect(
+    fetchAllPages(async (page, pageSize) => ({ records: [], totalCount: 1, page, pageSize })),
+  ).rejects.toThrow('变化')
+})

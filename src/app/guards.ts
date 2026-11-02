@@ -3,6 +3,7 @@ import { isApiError } from '@/api/errors'
 import { meQuery, myCompaniesQuery } from '@/features/auth/api'
 import { loadFrontendConfig } from '@/features/sysconfig/api'
 import { canEnter, landingPath, type Portal } from '@/lib/portal'
+import { mobileEquivalent, prefersMobile } from '@/portals/mobile/routing'
 import { usePref } from '@/stores/pref'
 import { hasValidSession, useSession } from '@/stores/session'
 import { entryPath, loginPath } from './navigation'
@@ -67,6 +68,11 @@ export function companyGuard(portal: Exclude<Portal, 'admin'>, rememberAs: Porta
         portal === 'tenant' ? '无权管理该企业，或企业已停用 / 过期' : '无权访问该企业，或企业已停用 / 过期',
       )
       throw redirect(entryPath(pathOf(request)))
+    }
+    if (portal === 'app' && prefersMobile()) {
+      const url = new URL(request.url)
+      const target = mobileEquivalent(url.pathname, url.search)
+      if (target) throw redirect(target)
     }
     if (rememberAs) usePref.getState().remember(rememberAs, companyId)
     return { companyId }
