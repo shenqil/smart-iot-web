@@ -1,8 +1,8 @@
+@import "../portals/mobile/tokens.css";
 .mobile-root {
-  --adm-color-primary: #0f766e;
   height: 100%;
-  color: #223248;
-  background: #f4f6fa;
+  color: var(--h5-text);
+  background: var(--h5-background);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
 }
 .mobile-page {

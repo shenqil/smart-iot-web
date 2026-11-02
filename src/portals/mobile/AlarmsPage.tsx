@@ -1,14 +1,31 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button, Checkbox, PullToRefresh, SearchBar, TextArea } from 'antd-mobile'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router'
 import { queryClient } from '@/app/queryClient'
 import { type AlarmQuery, alarmDetailQuery, alarmsQuery, processAlarms } from '@/features/alarm/api'
 import { appSitesQuery } from '@/features/site/api'
 import { useCompanyId, useMe } from '@/hooks/session'
-import { bizNow, fmtDateTime } from '@/lib/time'
+import { fmtDateTime } from '@/lib/time'
+import { TimeFilter } from './components/TimeRangeFilter'
 import { positiveId } from './filters'
-import { Card, Choice, Empty, Failure, Icon, Loading, Page, Sheet, showFailure, mobileToast as Toast } from './ui'
+import { useUrlFilters } from './hooks/useUrlFilters'
+import {
+  Card,
+  Choice,
+  DetailList,
+  Empty,
+  Failure,
+  Icon,
+  Loading,
+  Notice,
+  Page,
+  Pagination,
+  Sheet,
+  StatusTag,
+  showFailure,
+  mobileToast as Toast,
+} from './ui'
 
 export const LEVELS: Record<number, string> = { 1: '紧急', 2: '重要', 3: '警告', 4: '提示' }
 export const ALARM_STATES: Record<string, string> = { active: '进行中', recovered: '已解除', closed: '已关闭' }
@@ -24,7 +41,7 @@ export default function AlarmsPage() {
 }
 function AlarmList() {
   const cid = useCompanyId(),
-    [params, setParams] = useSearchParams(),
+    { params, setParams, patch, goPage } = useUrlFilters(),
     page = positiveId(params.get('page')) ?? 1,
     processed = ['true', 'all'].includes(params.get('processed') ?? '') ? (params.get('processed') ?? 'false') : 'false'
   const sites = useQuery(appSitesQuery(cid)),
@@ -61,19 +78,6 @@ function AlarmList() {
     setSelected([])
     setMulti(false)
   }, [signature])
-  const patch = useCallback(
-    (values: Record<string, string>) =>
-      setParams((old) => {
-        const p = new URLSearchParams(old)
-        p.delete('page')
-        for (const [k, v] of Object.entries(values)) {
-          if (v) p.set(k, v)
-          else p.delete(k)
-        }
-        return p
-      }),
-    [setParams],
-  )
   useEffect(() => {
     if (text === keyword) return
     const t = setTimeout(() => patch({ keyword: text.trim() }), 500)
@@ -140,12 +144,16 @@ function AlarmList() {
             <Empty title="暂无匹配告警" />
           ) : (
             records.map((a) => (
-              <Card key={a.id}>
+              <Card key={a.id} className="h5-record-card">
                 <div className="h5-row">
                   <div className="h5-tags">
-                    <span className={`h5-level level-${a.level}`}>{LEVELS[a.level] ?? `级别${a.level}`}</span>
-                    <span className="h5-chip">{ALARM_STATES[a.status] ?? a.status}</span>
-                    <span className="h5-chip">{a.processed ? '已处理' : '未处理'}</span>
+                    <StatusTag tone={a.level === 1 ? 'danger' : a.level === 2 ? 'warning' : 'info'}>
+                      {LEVELS[a.level] ?? `级别${a.level}`}
+                    </StatusTag>
+                    <StatusTag tone={a.status === 'active' ? 'warning' : 'success'}>
+                      {ALARM_STATES[a.status] ?? a.status}
+                    </StatusTag>
+                    <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
                   </div>
                   {multi && !a.processed && (
                     <Checkbox
@@ -181,35 +189,12 @@ function AlarmList() {
           )}
         </div>
       </PullToRefresh>
-      <div className="h5-pagination">
-        <Button
-          size="small"
-          disabled={page <= 1 || query.isFetching}
-          onClick={() =>
-            setParams((old) => {
-              const p = new URLSearchParams(old)
-              p.set('page', String(page - 1))
-              return p
-            })
-          }
-        >
-          上一页
-        </Button>
-        <span>第 {page} 页</span>
-        <Button
-          size="small"
-          disabled={!query.data?.hasMore || query.isFetching}
-          onClick={() =>
-            setParams((old) => {
-              const p = new URLSearchParams(old)
-              p.set('page', String(page + 1))
-              return p
-            })
-          }
-        >
-          下一页
-        </Button>
-      </div>
+      <Pagination
+        page={page}
+        hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+        busy={query.isFetching}
+        onChange={goPage}
+      />
       {multi && (
         <div className="h5-batch-bar">
           <span>已选 {selected.length} 条</span>
@@ -218,7 +203,16 @@ function AlarmList() {
           </Button>
         </div>
       )}
-      <Sheet title="告警筛选" visible={filter} close={() => setFilter(false)}>
+      <Sheet
+        title="告警筛选"
+        visible={filter}
+        close={() => setFilter(false)}
+        footer={
+          <Button block color="primary" onClick={() => setFilter(false)}>
+            查看筛选结果
+          </Button>
+        }
+      >
         <Choice
           label="园区"
           value={q.siteId ? String(q.siteId) : ''}
@@ -260,9 +254,6 @@ function AlarmList() {
         <TimeFilter start={q.start} end={q.end} apply={(start, end) => patch({ start, end })} />
         <Button block onClick={() => setParams(q.siteId ? { siteId: String(q.siteId) } : {})}>
           清除筛选
-        </Button>
-        <Button block color="primary" onClick={() => setFilter(false)}>
-          完成
         </Button>
       </Sheet>
       <ProcessSheet
@@ -321,6 +312,12 @@ export function ProcessSheet({ ids, close, done }: { ids: number[] | null; close
     <Sheet
       title={`处理 ${ids?.length ?? 0} 条告警`}
       visible={!!ids}
+      dismissible={!busy}
+      footer={
+        <Button block color="primary" loading={busy} onClick={submit}>
+          确认处理
+        </Button>
+      }
       close={() => {
         if (!busy) close()
       }}
@@ -338,9 +335,6 @@ export function ProcessSheet({ ids, close, done }: { ids: number[] | null; close
         autoSize={{ minRows: 3, maxRows: 6 }}
         disabled={busy}
       />
-      <Button block color="primary" loading={busy} onClick={submit}>
-        确认处理
-      </Button>
     </Sheet>
   )
 }
@@ -367,7 +361,7 @@ function AlarmDetail({ id }: { id: number }) {
               <div className="h5-tags">
                 <span className={`h5-level level-${a.level}`}>{LEVELS[a.level] ?? a.level}</span>
                 <span className="h5-chip">{ALARM_STATES[a.status]}</span>
-                <span className="h5-chip">{a.processed ? '已处理' : '未处理'}</span>
+                <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
               </div>
               <h1>{a.description || '设备告警'}</h1>
               <p>
@@ -375,23 +369,18 @@ function AlarmDetail({ id }: { id: number }) {
               </p>
             </Card>
             <Card title="告警详情">
-              <dl className="h5-dl">
-                {[
-                  ['类型', TYPES[a.type]],
-                  ['首次发生', fmtDateTime(a.createdAt)],
-                  ['最近发生', fmtDateTime(a.lastAlarmAt)],
-                  ['结束时间', fmtDateTime(a.endedAt)],
-                  ['累计次数', a.alarmCount],
-                  ['触发值', a.triggerValue ?? '—'],
-                  ['持续期间极值', a.peakValue ?? '—'],
-                  ['通道', a.channel ?? '—'],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <dt>{k}</dt>
-                    <dd>{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <DetailList
+                items={[
+                  { label: '类型', value: TYPES[a.type] },
+                  { label: '首次发生', value: fmtDateTime(a.createdAt) },
+                  { label: '最近发生', value: fmtDateTime(a.lastAlarmAt) },
+                  { label: '结束时间', value: fmtDateTime(a.endedAt) },
+                  { label: '累计次数', value: a.alarmCount },
+                  { label: '触发值', value: a.triggerValue ?? '—' },
+                  { label: '持续期间极值', value: a.peakValue ?? '—' },
+                  { label: '通道', value: a.channel ?? '—' },
+                ]}
+              />
             </Card>
             {a.processed ? (
               <Card title="处理信息">
@@ -405,7 +394,7 @@ function AlarmDetail({ id }: { id: number }) {
                 处理此告警
               </Button>
             )}
-            <p className="h5-notice">告警状态与人工处理分别记录；“已处理”不代表设备异常已经解除。</p>
+            <Notice>告警状态与人工处理分别记录；“已处理”不代表设备异常已经解除。</Notice>
             <Link className="h5-navigation-card" to={`/h5/${cid}/devices?deviceId=${a.deviceId}`}>
               查看关联设备 ›
             </Link>
@@ -416,58 +405,3 @@ function AlarmDetail({ id }: { id: number }) {
     </Page>
   )
 }
-export function TimeFilter({
-  start,
-  end,
-  apply,
-}: {
-  start?: string
-  end?: string
-  apply: (start: string, end: string) => void
-}) {
-  const [a, setA] = useState(start ? dayTime(start) : ''),
-    [b, setB] = useState(end ? dayTime(end) : '')
-  useEffect(() => {
-    setA(start ? dayTime(start) : '')
-    setB(end ? dayTime(end) : '')
-  }, [start, end])
-  return (
-    <>
-      <label className="h5-field">
-        开始时间
-        <input
-          type="datetime-local"
-          min={bizNow().subtract(1, 'month').startOf('month').format('YYYY-MM-DDTHH:mm')}
-          value={a}
-          onChange={(e) => setA(e.target.value)}
-        />
-      </label>
-      <label className="h5-field">
-        结束时间
-        <input
-          type="datetime-local"
-          value={b}
-          max={bizNow().format('YYYY-MM-DDTHH:mm')}
-          onChange={(e) => setB(e.target.value)}
-        />
-      </label>
-      <Button
-        block
-        onClick={() => {
-          if ((a && !b) || (!a && b) || (a && b && (a >= b || b > bizNow().format('YYYY-MM-DDTHH:mm')))) {
-            Toast.show('请填写完整有效的时间范围')
-            return
-          }
-          apply(a ? dayToQuery(a) : '', b ? dayToQuery(b) : '')
-        }}
-      >
-        应用时间
-      </Button>
-    </>
-  )
-}
-
-import { BIZ_TZ, dayjs } from '@/lib/time'
-
-const dayTime = (s: string) => dayjs(s).tz(BIZ_TZ).format('YYYY-MM-DDTHH:mm')
-const dayToQuery = (s: string) => dayjs.tz(s, BIZ_TZ).format()

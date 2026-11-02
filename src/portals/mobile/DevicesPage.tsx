@@ -7,7 +7,7 @@ import { appSitesQuery } from '@/features/site/api'
 import { useCompanyId, useMe } from '@/hooks/session'
 import { listDevices } from './api'
 import DevicePage from './DevicePage'
-import { DeviceBookmarkCard, DeviceReading } from './deviceCards'
+import { DeviceBookmarkCard, DeviceListItem } from './deviceCards'
 import { positiveId, readDeviceFilters } from './filters'
 import { preferenceKey, useMobilePreferences } from './preferences'
 import { Choice, Empty, Failure, Icon, Loading, Page, Sheet } from './ui'
@@ -68,7 +68,7 @@ function DeviceList() {
     })
   const devices = [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()]
   const base = `/h5/${cid}`,
-    bookmarksFiltered = bookmarks.filter((d) => d.name.includes(search.trim()))
+    bookmarksFiltered = bookmarks.filter((d) => d.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
   return (
     <Page
       title={
@@ -89,7 +89,11 @@ function DeviceList() {
         )
       }
     >
-      <SearchBar value={search} onChange={setSearch} placeholder="搜索名称、设备 SN" />
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder={isBookmarks ? '搜索已保存的设备名称' : '搜索名称、设备 SN'}
+      />
       {isBookmarks ? (
         <>
           <p className="h5-muted">
@@ -148,41 +152,16 @@ function DeviceList() {
             />
           ) : devices.length ? (
             devices.map((d) => (
-              <div className="h5-device-item" key={d.id}>
-                <Link
-                  className="h5-device-row"
-                  to={`${base}/devices?deviceId=${d.id}${filters.siteId ? `&siteId=${filters.siteId}` : ''}${goal === 'history' && d.sensors.length ? '&tab=history' : ''}`}
-                >
-                  <span className="h5-device-glyph">
-                    <Icon name={d.hasCamera ? 'camera' : d.sensors.length ? 'sensor' : 'relay'} />
-                  </span>
-                  <div>
-                    <strong>{d.name}</strong>
-                    <small>
-                      {types.nameOf(d.deviceTypeId)} · SN {d.deviceSn}
-                    </small>
-                    <small className={d.online ? 'h5-online' : 'h5-muted'}>
-                      {d.onlineKnown === false ? '? 在线状态未知' : d.online ? '● 在线' : '○ 离线'}
-                      {d.status !== 'active' ? ` · ${d.status === 'fault' ? '故障' : '停用'}` : ''} · {d.sensors.length}{' '}
-                      个传感器 / {d.relays.length} 路继电器
-                    </small>
-                    {d.hasAlarm && <small className="h5-warning">存在未处理告警</small>}
-                    <DeviceReading device={d} />
-                  </div>
-                </Link>
-                <button
-                  type="button"
-                  className="h5-device-star"
-                  aria-label={`${entry?.favorites.some((f) => f.id === d.id) ? '取消关注' : '关注'}${d.name}`}
-                  onClick={() =>
-                    useMobilePreferences
-                      .getState()
-                      .toggle(me.id, cid, { id: d.id, name: d.name, siteId: filters.siteId })
-                  }
-                >
-                  {entry?.favorites.some((f) => f.id === d.id) ? '★' : '☆'}
-                </button>
-              </div>
+              <DeviceListItem
+                key={d.id}
+                device={d}
+                typeName={types.nameOf(d.deviceTypeId)}
+                to={`${base}/devices?deviceId=${d.id}${filters.siteId ? `&siteId=${filters.siteId}` : ''}${goal === 'history' && d.sensors.length ? '&tab=history' : ''}`}
+                favorite={!!entry?.favorites.some((f) => f.id === d.id)}
+                onFavorite={() =>
+                  useMobilePreferences.getState().toggle(me.id, cid, { id: d.id, name: d.name, siteId: filters.siteId })
+                }
+              />
             ))
           ) : (
             <Empty title="当前条件下暂无设备" />
@@ -203,7 +182,16 @@ function DeviceList() {
           />
         </>
       )}
-      <Sheet title="设备范围与筛选" visible={open} close={() => setOpen(false)}>
+      <Sheet
+        title="设备范围与筛选"
+        visible={open}
+        close={() => setOpen(false)}
+        footer={
+          <Button block color="primary" onClick={() => setOpen(false)}>
+            查看筛选结果
+          </Button>
+        }
+      >
         <Choice
           label="园区"
           value={filters.siteId ? String(filters.siteId) : ''}
@@ -253,9 +241,6 @@ function DeviceList() {
           ]}
           onChange={(v) => setFilter('hasAlarm', v)}
         />
-        <Button block color="primary" onClick={() => setOpen(false)}>
-          完成
-        </Button>
       </Sheet>
     </Page>
   )

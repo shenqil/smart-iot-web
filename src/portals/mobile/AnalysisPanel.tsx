@@ -34,12 +34,20 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
     [draft, setDraft] = useState(valid),
     [start, setStart] = useState(() => params.get('start') ?? bizNow().startOf('day').format('YYYY-MM-DDTHH:mm')),
     [end, setEnd] = useState(() => params.get('end') ?? bizNow().format('YYYY-MM-DDTHH:mm'))
-  const rangeStart = params.get('start') ?? start,
-    rangeEnd = params.get('end') ?? end
+  const [initialRange] = useState(() => ({
+    start: params.get('start') ?? bizNow().startOf('day').format('YYYY-MM-DDTHH:mm'),
+    end: params.get('end') ?? bizNow().format('YYYY-MM-DDTHH:mm'),
+  }))
+  const rangeStart = params.get('start') ?? initialRange.start,
+    rangeEnd = params.get('end') ?? initialRange.end
   const period = params.get('period') === 'month' ? 'month' : 'day',
     date = comparisonDate(params.get('date')),
     month = comparisonDate(params.get('month'), true),
     overlay = params.get('overlay') !== 'false'
+  const [draftPeriod, setDraftPeriod] = useState(period),
+    [draftDate, setDraftDate] = useState(date),
+    [draftMonth, setDraftMonth] = useState(month),
+    [draftOverlay, setDraftOverlay] = useState(overlay)
   const patch = (values: Record<string, string>) =>
     setParams(
       (old) => {
@@ -61,7 +69,14 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
         return
       }
       patch({ channels: draft.join(','), start, end })
-    } else patch({ channels: draft.join(',') })
+    } else
+      patch({
+        channels: draft.join(','),
+        period: draftPeriod,
+        date: draftDate,
+        month: draftMonth,
+        overlay: String(draftOverlay),
+      })
     setOpen(false)
   }
   const preset = (p: string) => {
@@ -87,6 +102,10 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
             size="small"
             fill="none"
             onClick={() => {
+              setDraftPeriod(period)
+              setDraftDate(date)
+              setDraftMonth(month)
+              setDraftOverlay(overlay)
               setDraft(valid)
               setStart(rangeStart)
               setEnd(rangeEnd)
@@ -117,7 +136,16 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
       ) : (
         <Comparison device={device} channels={valid} period={period} date={date} month={month} overlay={overlay} />
       )}
-      <Sheet title="分析条件" visible={open} close={() => setOpen(false)}>
+      <Sheet
+        title="分析条件"
+        visible={open}
+        close={() => setOpen(false)}
+        footer={
+          <Button block color="primary" onClick={apply}>
+            应用条件
+          </Button>
+        }
+      >
         {mode === 'history' ? (
           <>
             <Choice
@@ -158,23 +186,22 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
           <>
             <Choice
               label="对比维度"
-              value={period}
+              value={draftPeriod}
               options={[
                 { label: '日环比', value: 'day' },
                 { label: '月环比', value: 'month' },
               ]}
-              onChange={(v) => patch({ period: v })}
+              onChange={(v) => setDraftPeriod(v === 'month' ? 'month' : 'day')}
             />
-            {period === 'day' ? (
+            {draftPeriod === 'day' ? (
               <label className="h5-field">
                 日期
                 <input
                   type="date"
-                  value={date}
+                  value={draftDate}
                   max={bizNow().format('YYYY-MM-DD')}
                   onChange={(e) => {
-                    if (e.target.value && e.target.value <= bizNow().format('YYYY-MM-DD'))
-                      patch({ date: e.target.value })
+                    if (e.target.value && e.target.value <= bizNow().format('YYYY-MM-DD')) setDraftDate(e.target.value)
                   }}
                 />
               </label>
@@ -183,16 +210,16 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
                 月份
                 <input
                   type="month"
-                  value={month}
+                  value={draftMonth}
                   max={bizNow().format('YYYY-MM')}
                   onChange={(e) => {
-                    if (e.target.value && e.target.value <= bizNow().format('YYYY-MM')) patch({ month: e.target.value })
+                    if (e.target.value && e.target.value <= bizNow().format('YYYY-MM')) setDraftMonth(e.target.value)
                   }}
                 />
               </label>
             )}
-            <Checkbox checked={overlay} onChange={(v) => patch({ overlay: String(v) })}>
-              叠加{period === 'day' ? '前一天' : '上月'}
+            <Checkbox checked={draftOverlay} onChange={(v) => setDraftOverlay(v)}>
+              叠加{draftPeriod === 'day' ? '前一天' : '上月'}
             </Checkbox>
           </>
         )}
@@ -206,9 +233,6 @@ export default function AnalysisPanel({ device, mode }: { device: AppDevice; mod
             ))}
           </div>
         </Checkbox.Group>
-        <Button block color="primary" onClick={apply}>
-          应用条件
-        </Button>
       </Sheet>
     </>
   )

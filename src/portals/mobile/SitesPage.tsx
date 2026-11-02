@@ -5,7 +5,7 @@ import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { appDeviceSummaryQuery } from '@/features/device/api'
 import { appSitesQuery, weatherQuery } from '@/features/site/api'
 import { useCompanyId } from '@/hooks/session'
-import { SitePreview } from './HomePage'
+import { SitePreview } from './components/SiteCard'
 import { Card, Empty, Failure, Loading, Page, StatRing } from './ui'
 
 export default function SitesPage() {

@@ -1,0 +1,51 @@
+.h5-account-hero {
+  padding: 20px 12px 28px;
+  background: radial-gradient(ellipse at top right, #d7eee1, transparent 70%);
+  margin: -16px -14px 14px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.h5-avatar-editor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.h5-upload {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background: #eaf5ed;
+  padding: 13px 17px;
+  border-radius: 12px;
+  color: #39846b;
+  font-size: 12px;
+}
+
+.h5-account-hero h1 {
+  font-size: 23px;
+  margin: 14px 0 0;
+}
+
+.h5-account-hero p {
+  font-size: 12px;
+  color: #819b8a;
+}
+
+.h5-account-hero a {
+  font-size: 12px;
+  color: #3d846a;
+}
+
+.h5-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+}

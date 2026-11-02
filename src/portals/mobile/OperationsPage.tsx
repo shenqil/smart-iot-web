@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button, SearchBar } from 'antd-mobile'
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { type OperationQuery, operationsQuery } from '@/features/relay/api'
 import { appSitesQuery } from '@/features/site/api'
 import { opDisplayStatus } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
+import { useNow } from '@/hooks/useNow'
 import { fmtDateTime } from '@/lib/time'
-import { TimeFilter } from './AlarmsPage'
+import { TimeFilter } from './components/TimeRangeFilter'
 import { positiveId } from './filters'
-import { Card, Choice, Empty, Failure, Icon, Loading, Page, Sheet } from './ui'
+import { useUrlFilters } from './hooks/useUrlFilters'
+import { Card, Choice, Empty, Failure, Icon, Loading, Notice, Page, Pagination, Sheet, StatusTag } from './ui'
 
 const SOURCES: Record<string, string> = {
   manual: '手动',
@@ -21,7 +23,7 @@ const SOURCES: Record<string, string> = {
 const STATUS: Record<string, string> = { pending: '执行中', success: '成功', failed: '失败', timeout: '未应答' }
 export default function OperationsPage() {
   const cid = useCompanyId(),
-    [params, setParams] = useSearchParams(),
+    { params, patch, goPage } = useUrlFilters(),
     [open, setOpen] = useState(false),
     [search, setSearch] = useState(params.get('keyword') ?? ''),
     sites = useQuery(appSitesQuery(cid)),
@@ -42,18 +44,7 @@ export default function OperationsPage() {
     sort: '-createdAt',
   }
   const query = useQuery(operationsQuery(cid, q)),
-    patch = useCallback(
-      (values: Record<string, string>) =>
-        setParams((old) => {
-          const p = new URLSearchParams(old)
-          p.delete('page')
-          for (const [k, v] of Object.entries(values))
-            if (v) p.set(k, v)
-            else p.delete(k)
-          return p
-        }),
-      [setParams],
-    )
+    now = useNow(10_000)
   useEffect(() => {
     setSearch(keyword)
   }, [keyword])
@@ -71,7 +62,7 @@ export default function OperationsPage() {
         </Button>
       }
     >
-      <p className="h5-notice">包含其他企业成员对同一设备的操作；记录仅保留当月与上月。</p>
+      <Notice>同一设备的操作记录在授权范围内共享 · 保留当月与上月</Notice>
       <SearchBar placeholder="设备 SN、操作人" value={search} onChange={setSearch} />
       {query.isPending || query.isPlaceholderData ? (
         <Loading />
@@ -86,12 +77,20 @@ export default function OperationsPage() {
         <Empty title="暂无操作记录" />
       ) : (
         query.data.records.map((r) => (
-          <Card key={r.id}>
+          <Card key={r.id} className="h5-record-card">
             <div className="h5-tags">
               <span className="h5-chip">{SOURCES[r.source] ?? r.source}</span>
-              <span className={opDisplayStatus(r) === 'success' ? 'h5-online' : 'h5-warning'}>
-                {STATUS[opDisplayStatus(r)] ?? r.status}
-              </span>
+              <StatusTag
+                tone={
+                  opDisplayStatus(r, now) === 'success'
+                    ? 'success'
+                    : opDisplayStatus(r, now) === 'failed'
+                      ? 'danger'
+                      : 'warning'
+                }
+              >
+                {STATUS[opDisplayStatus(r, now)] ?? r.status}
+              </StatusTag>
             </div>
             <h2>
               {r.source === 'hold'
@@ -117,36 +116,22 @@ export default function OperationsPage() {
           </Card>
         ))
       )}
-      <div className="h5-pagination">
-        <Button
-          size="small"
-          disabled={page <= 1 || query.isFetching}
-          onClick={() =>
-            setParams((old) => {
-              const p = new URLSearchParams(old)
-              p.set('page', String(page - 1))
-              return p
-            })
-          }
-        >
-          上一页
-        </Button>
-        <span>第 {page} 页</span>
-        <Button
-          size="small"
-          disabled={!query.data?.hasMore || query.isFetching}
-          onClick={() =>
-            setParams((old) => {
-              const p = new URLSearchParams(old)
-              p.set('page', String(page + 1))
-              return p
-            })
-          }
-        >
-          下一页
-        </Button>
-      </div>
-      <Sheet title="记录筛选" visible={open} close={() => setOpen(false)}>
+      <Pagination
+        page={page}
+        hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+        busy={query.isFetching}
+        onChange={goPage}
+      />
+      <Sheet
+        title="记录筛选"
+        visible={open}
+        close={() => setOpen(false)}
+        footer={
+          <Button block color="primary" onClick={() => setOpen(false)}>
+            查看筛选结果
+          </Button>
+        }
+      >
         <Choice
           label="园区"
           value={q.siteId ? String(q.siteId) : ''}
@@ -176,9 +161,6 @@ export default function OperationsPage() {
           onChange={(v) => patch({ status: v })}
         />
         <TimeFilter start={q.start} end={q.end} apply={(start, end) => patch({ start, end })} />
-        <Button block color="primary" onClick={() => setOpen(false)}>
-          完成
-        </Button>
       </Sheet>
     </Page>
   )

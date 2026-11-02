@@ -13,7 +13,15 @@ import { fmtDateTime } from '@/lib/time'
 import { mobileDeviceQuery } from './api'
 import { Card, mobileDialog as Dialog, Failure, showFailure, mobileToast as Toast } from './ui'
 
-export default function MobileRelayPanel({ device, realtime }: { device: AppDevice; realtime?: Realtime }) {
+export default function MobileRelayPanel({
+  device,
+  realtime,
+  realtimeError = false,
+}: {
+  device: AppDevice
+  realtime?: Realtime
+  realtimeError?: boolean
+}) {
   const cid = useCompanyId(),
     qc = useQueryClient(),
     links = useQuery(relayLinksQuery(cid, device.id)),
@@ -30,9 +38,11 @@ export default function MobileRelayPanel({ device, realtime }: { device: AppDevi
     }
   }, [])
   const blocked =
-    (device.onlineKnown === false
-      ? '在线状态未知，暂不能控制'
-      : relayBlockedReason(device, realtime?.online ?? device.online)) || denied
+    (realtimeError
+      ? '实时状态获取失败，请刷新后控制'
+      : device.onlineKnown === false
+        ? '在线状态未知，暂不能控制'
+        : relayBlockedReason(device, realtime?.online ?? device.online)) || denied
   const toggle = async (channel: number, next: 0 | 1) => {
     if (blocked || busyRef.current.has(channel) || !links.data) return
     busyRef.current.add(channel)

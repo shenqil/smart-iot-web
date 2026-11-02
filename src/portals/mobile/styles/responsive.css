@@ -1,0 +1,72 @@
+@media (min-width: 680px) {
+  .h5-app {
+    max-width: 680px;
+    margin: auto;
+    border-left: 1px solid #dbe7df;
+    border-right: 1px solid #dbe7df;
+  }
+  .h5-scroll {
+    padding: 22px;
+  }
+  .h5-distribution {
+    gap: 40px;
+  }
+  .h5-type-ring {
+    width: 160px;
+    height: 160px;
+  }
+}
+@media (max-width: 360px) {
+  .h5-scroll {
+    padding: 12px 10px 24px;
+  }
+  .h5-card {
+    border-radius: 16px;
+  }
+  .h5-card .h5-card-header {
+    padding: 14px 14px 0;
+  }
+  .h5-card .h5-card-body {
+    padding: 14px;
+  }
+  .h5-home-welcome h1 {
+    font-size: 23px;
+  }
+  .h5-distribution {
+    gap: 12px;
+  }
+  .h5-type-ring {
+    width: 104px;
+    height: 104px;
+    padding: 11px;
+  }
+  .h5-ring,
+  .h5-overview .h5-ring {
+    width: 88px;
+    height: 88px;
+  }
+  .h5-overview h3 {
+    font-size: 14px;
+  }
+  .h5-brand {
+    display: none;
+  }
+  .h5-quick-dock {
+    padding: 8px;
+  }
+  .h5-shortcuts a {
+    font-size: 9px;
+  }
+  .h5-shortcuts svg {
+    padding: 8px;
+  }
+  .h5-row {
+    gap: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h5-app * {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}

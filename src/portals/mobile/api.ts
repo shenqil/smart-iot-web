@@ -38,10 +38,15 @@ export const mapDevicesQuery = (companyId: number, siteId?: number) =>
   queryOptions({
     queryKey: ['app', companyId, 'devices', 'map', siteId ?? null],
     queryFn: async ({ signal }) => {
-      const out: AppDevice[] = []
+      const out: AppDevice[] = [],
+        seen = new Set<number>()
       for (let page = 1; page <= 100; page++) {
         const data = await listDevices(companyId, { siteId, page, pageSize: 200 }, signal)
-        out.push(...data.records)
+        for (const d of data.records) {
+          if (seen.has(d.id)) throw new Error('设备列表发生变化，请刷新后重试')
+          seen.add(d.id)
+          out.push(d)
+        }
         if (out.length >= data.totalCount) return out
         if (!data.records.length) throw new Error('设备列表发生变化，请刷新后重试')
       }

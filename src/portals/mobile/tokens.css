@@ -1,0 +1,27 @@
+/* 两端主题隔离：弹层挂到 mobile-root 后使用同一套设计变量。 */
+.mobile-root {
+  --h5-primary: #16765f;
+  --h5-primary-soft: #eaf5ee;
+  --h5-background: #f3f6f2;
+  --h5-surface: #fff;
+  --h5-text: #233d31;
+  --h5-muted: #63786d;
+  --h5-line: #e3ebe3;
+  --h5-danger: #be514e;
+  --h5-warning: #976522;
+  --h5-info: #487c98;
+  --h5-radius: 18px;
+  --h5-radius-small: 12px;
+  --h5-shadow: 0 4px 20px #183c2c06;
+  --adm-color-primary: var(--h5-primary);
+  --adm-color-success: #16765f;
+  --adm-color-warning: #aa7838;
+  --adm-color-danger: var(--h5-danger);
+  --adm-color-text: var(--h5-text);
+  --adm-color-text-secondary: var(--h5-muted);
+  --adm-border-color: var(--h5-line);
+  --adm-font-size-main: 14px;
+  color: var(--h5-text);
+  background: var(--h5-background);
+  -webkit-font-smoothing: antialiased;
+}

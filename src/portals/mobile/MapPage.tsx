@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import { Link, useSearchParams } from 'react-router'
 import { isValidLngLat, TDT_SUBDOMAINS, tdtTileUrl, useTdtBrowserKey } from '@/components/map/tianditu'
@@ -26,7 +26,7 @@ export default function MapPage() {
     key = useTdtBrowserKey(),
     types = useDeviceTypes()
   const [keyword, setKeyword] = useState(''),
-    [selected, setSelected] = useState<AppDevice | null>(null),
+    [selectedId, setSelectedId] = useState<number | null>(null),
     [target, setTarget] = useState<[number, number] | null>(null),
     [satellite, setSatellite] = useState(false),
     [tileError, setTileError] = useState(false)
@@ -38,9 +38,11 @@ export default function MapPage() {
       [q.data, keyword],
     ),
     points = useMemo(() => rows.filter((d) => isValidLngLat(d.longitude, d.latitude)), [rows])
+  const select = useCallback((d: AppDevice) => setSelectedId(d.id), [])
+  const selected = rows.find((d) => d.id === selectedId)
   // biome-ignore lint/correctness/useExhaustiveDependencies: changing site clears the old map selection
   useEffect(() => {
-    setSelected(null)
+    setSelectedId(null)
     setTarget(null)
   }, [site])
   return (
@@ -80,14 +82,14 @@ export default function MapPage() {
                   url={tdtTileUrl(satellite ? 'img' : 'vec', key)}
                   subdomains={TDT_SUBDOMAINS}
                   attribution="天地图"
-                  eventHandlers={{ tileerror: () => setTileError(true) }}
+                  eventHandlers={{ tileerror: () => setTileError(true), load: () => setTileError(false) }}
                 />
                 <TileLayer
                   key={`label:${satellite}:${key}`}
                   url={tdtTileUrl(satellite ? 'cia' : 'cva', key)}
                   subdomains={TDT_SUBDOMAINS}
                 />
-                <Markers devices={points} select={setSelected} target={target} />
+                <Markers devices={points} select={select} target={target} />
               </MapContainer>
             </div>
           )}
@@ -121,7 +123,7 @@ export default function MapPage() {
             <Card
               title={selected.name}
               extra={
-                <Button size="mini" fill="none" onClick={() => setSelected(null)}>
+                <Button size="mini" fill="none" onClick={() => setSelectedId(null)}>
                   关闭
                 </Button>
               }
@@ -165,7 +167,7 @@ export default function MapPage() {
                     <Button
                       size="mini"
                       onClick={() => {
-                        setSelected(d)
+                        setSelectedId(d.id)
                         setTarget([d.latitude ?? 0, d.longitude ?? 0])
                       }}
                     >

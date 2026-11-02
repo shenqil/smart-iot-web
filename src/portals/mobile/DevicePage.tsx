@@ -4,16 +4,18 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
-import { agoText, byChannel, channelName, readSensor } from '@/features/telemetry/lib/realtime'
+import { agoText, byChannel } from '@/features/telemetry/lib/realtime'
 import { realtimeQuery } from '@/features/telemetry/realtime/api'
 import { useCompanyId, useMe } from '@/hooks/session'
 import { useNow } from '@/hooks/useNow'
 import { fmtDateTime } from '@/lib/time'
 import { mobileDeviceQuery } from './api'
+import { DeviceStatus, deviceOnline } from './components/DeviceStatus'
+import { SensorTile } from './components/SensorTile'
 import { positiveId } from './filters'
 import { preferenceKey, useMobilePreferences } from './preferences'
 import RelayPanel from './RelayPanel'
-import { Card, Choice, Empty, Failure, Loading, Page, Sheet, useVisible } from './ui'
+import { Card, Choice, Empty, Failure, Loading, Notice, Page, Sheet, useVisible } from './ui'
 
 const Analysis = lazy(() => import('./AnalysisPanel'))
 const Video = lazy(() => import('./VideoPanel'))
@@ -24,10 +26,10 @@ export default function DevicePage({ id }: { id: number }) {
     me = useMe(),
     [params, setParams] = useSearchParams(),
     siteId = positiveId(params.get('siteId')),
-    device = useQuery(mobileDeviceQuery(cid, id, siteId)),
+    visible = useVisible(),
+    device = useQuery({ ...mobileDeviceQuery(cid, id, siteId), enabled: visible, refetchInterval: 30_000 }),
     d = device.data
-  const visible = useVisible(),
-    rt = useQuery({
+  const rt = useQuery({
       ...realtimeQuery(cid, id),
       enabled:
         visible &&
@@ -50,11 +52,14 @@ export default function DevicePage({ id }: { id: number }) {
         : tab === 'video' && d?.hasCamera
           ? 'video'
           : 'realtime'
+  const visitedId = device.data?.id,
+    visitedName = device.data?.name
   useEffect(() => {
-    if (d) useMobilePreferences.getState().visit(me.id, cid, { id: d.id, name: d.name, siteId })
-  }, [d?.id, d?.name, me.id, cid, siteId, d])
+    if (visitedId && visitedName)
+      useMobilePreferences.getState().visit(me.id, cid, { id: visitedId, name: visitedName, siteId })
+  }, [visitedId, visitedName, me.id, cid, siteId])
   const known = d?.onlineKnown !== false,
-    online = known ? (rt.data?.online ?? d?.online) : undefined,
+    online = deviceOnline(d, rt.data),
     stale = !!(
       online &&
       rt.data?.sensorsAt &&
@@ -79,11 +84,8 @@ export default function DevicePage({ id }: { id: number }) {
     <Page
       title={
         <>
-          {d?.name ?? '设备'}
-          <small className={online ? 'h5-online' : 'h5-muted'}>
-            {' '}
-            {online === undefined ? '?' : online ? '●' : '○'}
-          </small>
+          <span className="h5-title-label">{d?.name ?? '设备'}</span>
+          <DeviceStatus online={online} />
         </>
       }
       titleClick={() => setSwitching(true)}
@@ -120,7 +122,7 @@ export default function DevicePage({ id }: { id: number }) {
             <div className="h5-hero">
               <h1>{d.name}</h1>
               <p>
-                {siteId ? `${sites.data?.find((s) => s.id === siteId)?.name} · ` : ''}
+                {siteId ? `${sites.data?.find((s) => s.id === siteId)?.name ?? '当前园区'} · ` : ''}
                 {types.nameOf(d.deviceTypeId)} ·{' '}
                 {d.status === 'active' ? '启用' : d.status === 'inactive' ? '停用' : '故障'}
               </p>
@@ -149,9 +151,9 @@ export default function DevicePage({ id }: { id: number }) {
               </Suspense>
             ) : (
               <>
-                {online === false && <p className="h5-notice">设备离线，显示最后一次数据；离线期间不能控制。</p>}
-                {!known && <p className="h5-warning">在线服务暂不可用，设备状态未知；请稍后刷新。</p>}
-                {stale && <p className="h5-warning">设备仍在线，但传感器数据已超过三个采集周期未更新。</p>}
+                {online === false && <Notice>设备离线，显示最后一次数据；离线期间不能控制。</Notice>}
+                {!known && <Notice tone="warning">在线服务暂不可用，设备状态未知；请稍后刷新。</Notice>}
+                {stale && <Notice tone="warning">设备仍在线，但传感器数据已超过三个采集周期未更新。</Notice>}
                 {!!d.sensors.length && (
                   <Card
                     title="实时数据"
@@ -171,41 +173,15 @@ export default function DevicePage({ id }: { id: number }) {
                     {rt.isError && <p className="h5-warning">刷新失败{rt.data ? '，保留上次读数' : '，请重试'}</p>}
                     <p className="h5-muted">更新于 {agoText(rt.data?.sensorsAt, now)}</p>
                     <div className="h5-grid-two">
-                      {byChannel(d.sensors).map((s) => {
-                        const reading = readSensor(s, rt.data?.sensors)
-                        return (
-                          <div
-                            className={`h5-sensor ${['over', 'under'].includes(reading.state) ? 'h5-out-of-range' : ''}`}
-                            key={s.channel}
-                          >
-                            <small>{channelName(s)}</small>
-                            <div className="h5-reading">
-                              {reading.text}
-                              <small>{s.unit}</small>
-                            </div>
-                            {reading.position != null && (
-                              <div className="h5-track">
-                                <span style={{ width: `${reading.position * 100}%` }} />
-                              </div>
-                            )}
-                            <small>
-                              {reading.state === 'over'
-                                ? '超出量程上限'
-                                : reading.state === 'under'
-                                  ? '低于量程下限'
-                                  : !online
-                                    ? '最后上报值'
-                                    : reading.state === 'empty'
-                                      ? '尚未上报'
-                                      : `通道 ${s.channel}`}
-                            </small>
-                          </div>
-                        )
-                      })}
+                      {byChannel(d.sensors).map((sensor) => (
+                        <SensorTile key={sensor.channel} sensor={sensor} values={rt.data?.sensors} online={online} />
+                      ))}
                     </div>
                   </Card>
                 )}
-                {!!d.relays.length && <RelayPanel key={d.id} device={d} realtime={rt.data} />}
+                {!!d.relays.length && (
+                  <RelayPanel key={d.id} device={d} realtime={rt.data} realtimeError={rt.isError} />
+                )}
                 {!d.sensors.length && !d.relays.length && !d.hasCamera && (
                   <Empty title="尚未配置传感器、继电器或摄像头">请联系企业管理员配置通道</Empty>
                 )}
