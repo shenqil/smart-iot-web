@@ -15,6 +15,4 @@ export function mobileEquivalent(pathname: string, search: string): string | nul
             : 'home'
   return `/h5/${match[1]}/${page}${params.size ? `?${params}` : ''}`
 }
-export const prefersMobile = () =>
-  sessionStorage.getItem('siot.prefer-desktop') !== 'true' &&
-  window.matchMedia?.('(max-width: 768px) and (pointer: coarse)').matches === true
+export const prefersMobile = () => window.matchMedia?.('(max-width: 768px) and (pointer: coarse)').matches === true

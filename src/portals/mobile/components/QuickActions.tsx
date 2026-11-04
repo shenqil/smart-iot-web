@@ -12,37 +12,28 @@ const shortcuts = [
 ]
 export function useQuickActions() {
   const [visible, setVisible] = useState(false),
-    movement = useRef({ y: 0, direction: 0 })
+    visibleRef = useRef(false),
+    lastY = useRef(0)
+  visibleRef.current = visible
+
   const onScroll = (el: HTMLElement) => {
-    const max = el.scrollHeight - el.clientHeight,
-      y = Math.max(0, el.scrollTop),
-      state = movement.current
-    if (max <= 0) return
-    if (max - y <= 20) {
-      setVisible(true)
-      state.y = y
-      state.direction = 0
-      return
+    const y = Math.max(0, el.scrollTop)
+    if (visibleRef.current && Math.abs(y - lastY.current) > 2) {
+      setVisible(false)
+      visibleRef.current = false
     }
-    const delta = y - state.y,
-      direction = Math.sign(delta)
-    if (direction !== state.direction && Math.abs(delta) > 2) {
-      state.direction = direction
-      state.y = y
-      return
-    }
-    if (Math.abs(delta) >= 16) {
-      setVisible(delta < 0)
-      state.y = y
-    }
+    lastY.current = y
   }
   return {
     visible,
     onScroll,
-    open: () => setVisible(true),
+    open: () => {
+      setVisible(true)
+      visibleRef.current = true
+    },
     close: () => {
       setVisible(false)
-      movement.current.direction = 0
+      visibleRef.current = false
     },
   }
 }

@@ -73,16 +73,6 @@ function Me() {
       </Card>
       <Button
         block
-        fill="outline"
-        onClick={() => {
-          sessionStorage.setItem('siot.prefer-desktop', 'true')
-          navigate(`/app/${cid}/monitor`)
-        }}
-      >
-        使用电脑版
-      </Button>
-      <Button
-        block
         color="danger"
         fill="none"
         onClick={async () => {

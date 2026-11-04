@@ -56,7 +56,7 @@ describe('H5 首页', () => {
     expect(screen.getByText('远程控制')).toBeInTheDocument()
     expect(screen.queryByText('水肥一体化')).not.toBeInTheDocument()
   })
-  it('向下滚隐藏、向上滚出现、滚到底出现', async () => {
+  it('滚动时不随滚动交互展开，手动点开后滚动即收起', async () => {
     const { container } = setup()
     await screen.findByText('80.0%')
     const el = container.querySelector('.h5-scroll') as HTMLDivElement
@@ -68,22 +68,32 @@ describe('H5 首页', () => {
       Object.defineProperty(el, 'scrollTop', { configurable: true, writable: true, value: y })
       fireEvent.scroll(el)
     }
+    // 默认悬浮，滚动时不随滚动交互展开
     await act(async () => {
       scroll(50)
       scroll(90)
     })
     expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
+
     await act(async () => {
       scroll(70)
       scroll(40)
     })
+    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
+
+    await act(async () => scroll(600))
+    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
+
+    // 手动点开
+    fireEvent.click(screen.getByRole('button', { name: '打开快捷入口' }))
     expect(screen.getByText('远程控制')).toBeInTheDocument()
+
+    // 滚动收起
     await act(async () => {
-      scroll(100)
-      scroll(150)
+      scroll(500)
     })
     expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-    await act(async () => scroll(600))
-    expect(screen.getByText('远程控制')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
   })
 })
