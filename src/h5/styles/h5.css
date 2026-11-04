@@ -1,0 +1,7 @@
+/* 业务端样式按职责组织；基础变量在 MobileProviders 中加载。 */
+@import "./layout.css";
+@import "./components.css";
+@import "./home.css";
+@import "./workspace.css";
+@import "./account.css";
+@import "./responsive.css";

@@ -17,7 +17,24 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@pc/*": ["./src/pc/*"],
+      "@h5/*": ["./src/h5/*"],
+      "@/api/*": ["./src/shared/api/*"],
+      "@/api": ["./src/shared/api"],
+      "@/stores/*": ["./src/shared/stores/*"],
+      "@/hooks/*": ["./src/shared/hooks/*"],
+      "@/lib/*": ["./src/shared/lib/*"],
+      "@/types/*": ["./src/shared/types/*"],
+      "@/utils/*": ["./src/shared/utils/*"],
+      "@/features/*": ["./src/pc/features/*"],
+      "@/components/*": ["./src/pc/components/*"],
+      "@/layouts/*": ["./src/pc/layouts/*"],
+      "@/portals/*": ["./src/pc/portals/*"],
+      "@/app/*": ["./src/shared/*"],
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }
