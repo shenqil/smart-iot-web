@@ -43,37 +43,56 @@ export function Page({
     if (!el || !body) return
     let pending = true,
       last = positions.get(key) ?? 0
-    const collapse = () => el.style.setProperty('--collapse', String(Math.min(1, Math.max(0, el.scrollTop / 120))))
+    const getScrollY = () =>
+      Math.max(
+        typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop || 0 : 0,
+        el.scrollTop || 0,
+      )
+    const collapse = () => el.style.setProperty('--collapse', String(Math.min(1, Math.max(0, getScrollY() / 120))))
     const restore = () => {
       if (!pending) return
+      const maxScroll = Math.max(
+        typeof document !== 'undefined' ? document.documentElement.scrollHeight - window.innerHeight : 0,
+        el.scrollHeight - el.clientHeight,
+      )
+      if (typeof window !== 'undefined') window.scrollTo(0, last)
       el.scrollTop = last
       collapse()
-      if (el.scrollHeight - el.clientHeight >= last) pending = false
+      if (maxScroll >= last) pending = false
     }
     const record = () => {
-      if (!pending) last = el.scrollTop
+      if (!pending) last = getScrollY()
       collapse()
+      onScroll?.(el)
     }
     const takeOver = () => {
       pending = false
-      last = el.scrollTop
+      last = getScrollY()
     }
     restore()
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(restore)
     observer?.observe(body)
+    window.addEventListener('scroll', record, { passive: true })
     el.addEventListener('scroll', record)
+    window.addEventListener('wheel', takeOver, { passive: true })
+    window.addEventListener('touchstart', takeOver, { passive: true })
+    window.addEventListener('keydown', takeOver)
     el.addEventListener('wheel', takeOver, { passive: true })
     el.addEventListener('touchstart', takeOver, { passive: true })
     el.addEventListener('keydown', takeOver)
     return () => {
       remember(key, last)
       observer?.disconnect()
+      window.removeEventListener('scroll', record)
       el.removeEventListener('scroll', record)
+      window.removeEventListener('wheel', takeOver)
+      window.removeEventListener('touchstart', takeOver)
+      window.removeEventListener('keydown', takeOver)
       el.removeEventListener('wheel', takeOver)
       el.removeEventListener('touchstart', takeOver)
       el.removeEventListener('keydown', takeOver)
     }
-  }, [key])
+  }, [key, onScroll])
   return (
     <div className="h5-page">
       <header className="h5-chrome">

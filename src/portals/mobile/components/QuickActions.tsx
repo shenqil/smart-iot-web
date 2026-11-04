@@ -16,8 +16,12 @@ export function useQuickActions() {
     lastY = useRef(0)
   visibleRef.current = visible
 
-  const onScroll = (el: HTMLElement) => {
-    const y = Math.max(0, el.scrollTop)
+  const onScroll = (el?: HTMLElement) => {
+    const y = Math.max(
+      0,
+      el?.scrollTop ?? 0,
+      typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop || 0 : 0,
+    )
     if (visibleRef.current && Math.abs(y - lastY.current) > 2) {
       setVisible(false)
       visibleRef.current = false

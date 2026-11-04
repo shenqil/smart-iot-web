@@ -1,22 +1,23 @@
 @import "../portals/mobile/tokens.css";
 .mobile-root {
-  height: 100%;
+  min-height: 100dvh;
   color: var(--h5-text);
   background: var(--h5-background);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
 }
 .mobile-page {
-  height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 .mobile-content {
   flex: 1;
-  min-height: 0;
-  overflow: auto;
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
 }
 .mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
   padding-top: env(safe-area-inset-top);
   background: #fff;
   flex-shrink: 0;

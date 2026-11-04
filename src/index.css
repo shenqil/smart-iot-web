@@ -23,6 +23,13 @@ body,
   height: 100%;
 }
 
+html:has(.mobile-root),
+body:has(.mobile-root),
+#root:has(.mobile-root) {
+  height: auto;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;

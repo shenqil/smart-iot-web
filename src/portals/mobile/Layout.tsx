@@ -22,12 +22,24 @@ export default function MobileLayout() {
   useLayoutEffect(() => {
     const el = bottomRef.current,
       app = appRef.current
-    if (!el || !app) return
-    const measure = () => app.style.setProperty('--h5-bottom-height', `${el.getBoundingClientRect().height}px`)
+    if (!el || !app) {
+      document.documentElement.style.setProperty('--h5-bottom-height', '0px')
+      app?.style.setProperty('--h5-bottom-height', '0px')
+      return
+    }
+    const measure = () => {
+      const h = `${el.getBoundingClientRect().height}px`
+      app.style.setProperty('--h5-bottom-height', h)
+      document.documentElement.style.setProperty('--h5-bottom-height', h)
+    }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      document.documentElement.style.setProperty('--h5-bottom-height', '0px')
+      app.style.setProperty('--h5-bottom-height', '0px')
+    }
   }, [root, cid])
   return (
     <div className="h5-app" key={cid} ref={appRef}>
