@@ -1,6 +1,6 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Form, Input } from 'antd'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { errorText } from '@/api/errors'
 import { queryClient } from '@/app/queryClient'
@@ -23,14 +23,69 @@ const FEATURES = [
 export default function LoginPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const [form] = Form.useForm<LoginForm>()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const onFinish = async ({ username, password }: LoginForm) => {
+  const syncAutofillValues = useCallback(() => {
+    const formEl = document.getElementById('pc-login-form')
+    if (!formEl) {
+      return {
+        username: form.getFieldValue('username') || '',
+        password: form.getFieldValue('password') || '',
+      }
+    }
+    const uInput = formEl.querySelector<HTMLInputElement>('input[name="username"]')
+    const pInput = formEl.querySelector<HTMLInputElement>('input[name="password"]')
+    const updates: Partial<LoginForm> = {}
+    if (uInput?.value && !form.getFieldValue('username')) {
+      updates.username = uInput.value
+    }
+    if (pInput?.value && !form.getFieldValue('password')) {
+      updates.password = pInput.value
+    }
+    if (Object.keys(updates).length > 0) {
+      form.setFieldsValue(updates)
+    }
+    return {
+      username: form.getFieldValue('username') || uInput?.value || '',
+      password: form.getFieldValue('password') || pInput?.value || '',
+    }
+  }, [form])
+
+  useEffect(() => {
+    const timers = [100, 300, 800].map((delay) =>
+      setTimeout(() => {
+        syncAutofillValues()
+      }, delay),
+    )
+    return () => {
+      for (const t of timers) clearTimeout(t)
+    }
+  }, [syncAutofillValues])
+
+  const handleAnimationStart: React.AnimationEventHandler<HTMLInputElement> = (e) => {
+    if (e.animationName === 'onAutofillStart' || (e.target as HTMLInputElement).matches(':-webkit-autofill')) {
+      syncAutofillValues()
+    }
+  }
+
+  const onFinish = async (values?: Partial<LoginForm>) => {
     setError(null)
+    const synced = syncAutofillValues()
+    const username = (values?.username || synced.username || '').trim()
+    const password = values?.password || synced.password || ''
+    if (!username) {
+      setError('请输入用户名')
+      return
+    }
+    if (!password) {
+      setError('请输入密码')
+      return
+    }
     setLoading(true)
     try {
-      await login(username.trim(), password)
+      await login(username, password)
       const [me, companies] = await Promise.all([
         queryClient.ensureQueryData(meQuery),
         queryClient.ensureQueryData(myCompaniesQuery),
@@ -43,6 +98,13 @@ export default function LoginPage() {
       setError(errorText(e))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const onFinishFailed = () => {
+    const synced = syncAutofillValues()
+    if (synced.username && synced.password) {
+      onFinish(synced)
     }
   }
 
@@ -91,12 +153,46 @@ export default function LoginPage() {
           <h2 className="m-0 font-semibold text-2xl text-fg">登录</h2>
           <p className="mt-2 mb-8 text-fg-secondary">使用平台分配的账号登录</p>
           {error && <Alert type="error" showIcon title={error} className="mb-6" />}
-          <Form<LoginForm> layout="vertical" size="large" onFinish={onFinish} requiredMark={false} autoComplete="on">
+          <Form<LoginForm>
+            form={form}
+            id="pc-login-form"
+            name="login"
+            method="post"
+            action="#"
+            layout="vertical"
+            size="large"
+            onFinish={onFinish}
+            onFinishFailed={onFinishFailed}
+            onSubmitCapture={syncAutofillValues}
+            requiredMark={false}
+            autoComplete="on"
+          >
             <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
-              <Input prefix={<UserOutlined className="text-fg-tertiary" />} autoComplete="username" autoFocus />
+              <Input
+                id="username"
+                name="username"
+                prefix={<UserOutlined className="text-fg-tertiary" />}
+                placeholder="请输入用户名"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                onAnimationStart={handleAnimationStart}
+                autoFocus
+              />
             </Form.Item>
             <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
-              <Input.Password prefix={<LockOutlined className="text-fg-tertiary" />} autoComplete="current-password" />
+              <Input.Password
+                id="password"
+                name="password"
+                prefix={<LockOutlined className="text-fg-tertiary" />}
+                placeholder="请输入密码"
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                onAnimationStart={handleAnimationStart}
+              />
             </Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading} className="mt-2">
               登录

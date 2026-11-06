@@ -88,7 +88,7 @@
 .mobile-login .adm-form {
   --border-top: 0;
   --border-bottom: 0;
-  --border-inner: 1px solid #e0eae3;
+  --border-inner: 0;
   --adm-color-background: transparent;
 }
 .mobile-login .adm-list {
@@ -97,18 +97,185 @@
 .mobile-login .adm-list-body {
   background: transparent;
 }
+.mobile-login .adm-list-item {
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.mobile-login .adm-list-item-content {
+  padding: 0;
+}
+.mobile-login .adm-form-item {
+  padding: 0 0 16px 0;
+}
 .mobile-login .adm-form-item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #315143;
+  margin-bottom: 8px;
+  padding: 0;
+  line-height: 1.4;
+}
+.mobile-login .adm-form-item-feedback-error {
   font-size: 12px;
-  color: #849a8c;
+  color: #dc2626;
+  padding-top: 6px;
+  padding-left: 4px;
 }
-.mobile-login .adm-input-element {
+
+/* 输入框外壳卡片美化 */
+.mobile-input-box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 52px;
+  padding: 0 14px;
+  background: #ffffff;
+  border: 1.5px solid #dce8e1;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(22, 118, 95, 0.03);
+  transition:
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-input-box:focus-within,
+.mobile-input-box.is-focused {
+  border-color: #16765f;
+  box-shadow:
+    0 0 0 3.5px rgba(22, 118, 95, 0.12),
+    0 3px 10px rgba(22, 118, 95, 0.08);
+  background: #ffffff;
+}
+
+/* 前缀图标 */
+.mobile-input-prefix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7d988b;
+  margin-right: 12px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.mobile-input-box:focus-within .mobile-input-prefix,
+.mobile-input-box.is-focused .mobile-input-prefix {
+  color: #16765f;
+}
+
+/* 原生输入控件 */
+.mobile-input-control {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
   font-size: 16px;
+  color: #1c4f41;
+  font-weight: 500;
+  line-height: normal;
+  -webkit-appearance: none;
 }
+
+.mobile-input-control::placeholder {
+  color: #9cb1a5;
+  font-weight: 400;
+}
+
+/* 后缀操作按钮 (清除/显隐密码) */
+.mobile-input-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #7d988b;
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.mobile-input-action-btn:active {
+  color: #16765f;
+  transform: scale(0.92);
+}
+
+/* 错误提示条 */
+.mobile-login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: mobileFadeIn 0.2s ease;
+}
+
+@keyframes mobileFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 登录按钮 */
 .mobile-login .adm-form-footer {
-  padding: 26px 0;
+  padding: 16px 0 0 0;
 }
 .mobile-login .adm-form-footer .adm-button {
   --border-radius: 14px;
-  height: 50px;
-  box-shadow: 0 7px 20px #185b4730;
+  height: 52px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  box-shadow: 0 8px 24px rgba(22, 118, 95, 0.26);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+.mobile-login .adm-form-footer .adm-button:active {
+  transform: scale(0.985);
+  box-shadow: 0 4px 12px rgba(22, 118, 95, 0.2);
+}
+
+/* 浏览器自动填充与密码管理支持 */
+@keyframes onAutofillStart {
+  from {
+    opacity: 0.99;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-login input:-webkit-autofill,
+.mobile-login input:-webkit-autofill:hover,
+.mobile-login input:-webkit-autofill:focus,
+.mobile-login input:-webkit-autofill:active {
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖浏览器默认 autofill 用户代理样式 */
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖浏览器默认 autofill 用户代理样式 */
+  -webkit-text-fill-color: #1c4f41 !important;
+  transition: background-color 50000s ease-in-out 0s;
+  animation-name: onAutofillStart;
 }

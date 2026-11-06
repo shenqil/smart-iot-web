@@ -154,3 +154,25 @@ body {
     }
   }
 }
+
+/* 浏览器自动填充与密码管理支持 */
+@keyframes onAutofillStart {
+  from {
+    opacity: 0.99;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+#pc-login-form input:-webkit-autofill,
+#pc-login-form input:-webkit-autofill:hover,
+#pc-login-form input:-webkit-autofill:focus,
+#pc-login-form input:-webkit-autofill:active {
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖浏览器默认 autofill 用户代理样式 */
+  -webkit-box-shadow: 0 0 0 1000px var(--color-container, #ffffff) inset !important;
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖浏览器默认 autofill 用户代理样式 */
+  -webkit-text-fill-color: var(--color-fg, #1f2937) !important;
+  transition: background-color 50000s ease-in-out 0s;
+  animation-name: onAutofillStart;
+}
