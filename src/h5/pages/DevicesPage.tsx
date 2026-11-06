@@ -1,6 +1,7 @@
 import type { AppDevice } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
+import { isVideoDeviceType } from '@shared/telemetry/lib/realtime'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Button, SearchBar } from 'antd-mobile'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -85,10 +86,45 @@ function DeviceList() {
       if (key === 'unclassified') p.delete('deviceTypeId')
       return p
     })
-  const devices = useMemo(
-    () => [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()],
-    [query.data?.pages],
-  )
+  const videoTypeIds = useMemo(() => types.list.filter((t) => isVideoDeviceType(t.name)).map((t) => t.id), [types.list])
+  const isVideoFilterAllowed =
+    !filters.unclassified && (!filters.deviceTypeId || videoTypeIds.includes(filters.deviceTypeId))
+  const videoQuery = useQuery({
+    queryKey: ['app', cid, 'devices', 'video-online', filters.siteId, filters.keyword],
+    queryFn: async ({ signal }) => {
+      const list: AppDevice[] = []
+      for (const tid of videoTypeIds) {
+        const res = await listDevices(
+          cid,
+          { siteId: filters.siteId, deviceTypeId: tid, keyword: filters.keyword, pageSize: 50 },
+          signal,
+        )
+        list.push(...res.records)
+      }
+      return list
+    },
+    enabled: filters.online === 'true' && isTabActive && videoTypeIds.length > 0 && isVideoFilterAllowed,
+  })
+
+  const rawDevices = useMemo(() => {
+    const list = [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()]
+    if (filters.online === 'true' && videoQuery.data?.length) {
+      for (const vd of videoQuery.data) {
+        if (!list.some((d) => d.id === vd.id)) {
+          list.push(vd)
+        }
+      }
+    }
+    return list
+  }, [query.data?.pages, filters.online, videoQuery.data])
+
+  const devices = useMemo(() => {
+    let list = rawDevices
+    if (filters.online === 'false') {
+      list = list.filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
+    }
+    return list.map((d) => (isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? { ...d, online: true } : d))
+  }, [rawDevices, filters.online, types])
   const favoriteIds = useMemo(() => new Set((entry?.favorites ?? []).map((f) => f.id)), [entry?.favorites])
   const toggleFavorite = useCallback(
     (d: AppDevice) => {

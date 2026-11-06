@@ -1,5 +1,7 @@
 import { appDeviceSummaryQuery } from '@shared/api/device'
+import { useDeviceTypes } from '@shared/api/dict'
 import type { SiteView } from '@shared/api/site'
+import { adjustSummaryOnlineStats } from '@shared/telemetry/lib/realtime'
 import { useQuery } from '@tanstack/react-query'
 import { ProgressBar } from 'antd-mobile'
 import { Link } from 'react-router'
@@ -8,10 +10,12 @@ import { useInView } from '@/hooks/useInView'
 import { Icon } from './Icon'
 export function SitePreview({ site }: { site: SiteView }) {
   const cid = useCompanyId(),
+    types = useDeviceTypes(),
     { ref, inView } = useInView<HTMLDivElement>({ rootMargin: '120px', triggerOnce: true })
   const q = useQuery({ ...appDeviceSummaryQuery(cid, site.id), enabled: inView }),
     s = q.data
-  const percent = s?.onlineKnown && s.deviceCount ? (s.onlineCount / s.deviceCount) * 100 : 0
+  const { onlineCount } = adjustSummaryOnlineStats(s, types.nameOf)
+  const percent = s?.onlineKnown && s.deviceCount ? (onlineCount / s.deviceCount) * 100 : 0
   return (
     <div ref={ref}>
       <Link className="h5-site-card" to={`/h5/${cid}/sites/${site.id}`}>
@@ -25,7 +29,7 @@ export function SitePreview({ site }: { site: SiteView }) {
             {q.isError
               ? '统计暂不可用'
               : s
-                ? `在线 ${s.onlineKnown ? `${s.onlineCount} / ${s.deviceCount}` : '状态未知'}`
+                ? `在线 ${s.onlineKnown ? `${onlineCount} / ${s.deviceCount}` : '状态未知'}`
                 : '正在加载设备统计'}
           </small>
           <ProgressBar percent={percent} style={{ '--track-width': '4px' }} />

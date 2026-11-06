@@ -3,6 +3,7 @@ import { appDeviceSummaryQuery } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
 import { queryClient } from '@shared/queryClient'
+import { adjustSummaryOnlineStats } from '@shared/telemetry/lib/realtime'
 import { useQuery } from '@tanstack/react-query'
 import { Button, PullToRefresh } from 'antd-mobile'
 import { useState } from 'react'
@@ -33,6 +34,7 @@ export default function HomePage() {
   const stats = summary.data,
     total = stats?.deviceCount ?? 0
   const distribution = [...(stats?.deviceTypes ?? [])].sort((a, b) => b.count - a.count)
+  const { onlineCount, offlineCount } = adjustSummaryOnlineStats(stats, types.nameOf)
   return (
     <>
       <Page
@@ -77,7 +79,7 @@ export default function HomePage() {
                   {summary.isError && <Notice tone="warning">刷新失败，显示上次数据</Notice>}
                   <div className="h5-row">
                     <StatRing
-                      value={stats.onlineKnown && total ? (stats.onlineCount / total) * 100 : null}
+                      value={stats.onlineKnown && total ? (onlineCount / total) * 100 : null}
                       label="设备在线率"
                     />
                     <div>
@@ -85,7 +87,7 @@ export default function HomePage() {
                       <h3>每一台设备，尽在掌握</h3>
                       <small className="h5-muted">
                         {stats.onlineKnown
-                          ? `在线 ${stats.onlineCount} · 离线 ${stats.offlineCount}`
+                          ? `在线 ${onlineCount} · 离线 ${offlineCount}`
                           : `在线状态未知 ${stats.unknownCount} 台`}
                       </small>
                     </div>
@@ -96,12 +98,12 @@ export default function HomePage() {
                       { label: '设备', value: total, to: `${base}/devices` },
                       {
                         label: '在线',
-                        value: stats.onlineKnown ? stats.onlineCount : '—',
+                        value: stats.onlineKnown ? onlineCount : '—',
                         to: `${base}/devices?online=true`,
                       },
                       {
                         label: '离线',
-                        value: stats.onlineKnown ? stats.offlineCount : '—',
+                        value: stats.onlineKnown ? offlineCount : '—',
                         to: `${base}/devices?online=false`,
                       },
                     ]}

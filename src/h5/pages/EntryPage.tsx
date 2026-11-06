@@ -2,6 +2,7 @@ import { logout } from '@shared/api/auth'
 import { appDeviceSummaryQuery } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { resetCompanyCache } from '@shared/queryClient'
+import { adjustSummaryOnlineStats } from '@shared/telemetry/lib/realtime'
 import { useQuery } from '@tanstack/react-query'
 import { Button, ErrorBlock, List, NavBar, Popup } from 'antd-mobile'
 import { useEffect, useState } from 'react'
@@ -21,6 +22,7 @@ export default function MobileEntryPage() {
     resetCompanyCache('app', id)
   }, [id])
   const stats = summary.data
+  const { onlineCount, offlineCount } = adjustSummaryOnlineStats(stats, types.nameOf)
   return (
     <div className="mobile-page">
       <div className="mobile-topbar">
@@ -57,8 +59,8 @@ export default function MobileEntryPage() {
                 {[
                   ['园区', stats.siteCount],
                   ['设备', stats.deviceCount],
-                  ['在线', stats.onlineKnown ? stats.onlineCount : '—'],
-                  ['离线', stats.onlineKnown ? stats.offlineCount : '—'],
+                  ['在线', stats.onlineKnown ? onlineCount : '—'],
+                  ['离线', stats.onlineKnown ? offlineCount : '—'],
                 ].map(([label, value]) => (
                   <div className="mobile-stat" key={label}>
                     <span>{label}</span>

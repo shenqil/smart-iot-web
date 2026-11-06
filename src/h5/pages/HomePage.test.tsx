@@ -32,10 +32,14 @@ vi.mock('@shared/api/alarm', () => ({
   scopedUnprocessedCountQuery: () => ({ queryKey: ['count'], queryFn: async () => ({ count: 2, capped: false }) }),
   alarmsQuery: () => ({ queryKey: ['alarms'], queryFn: async () => ({ records: [], hasMore: false }) }),
 }))
+let mockTypeName: (id: number) => string = (id: number) => (id === 1 ? '气象站' : '土壤站')
 vi.mock('@shared/api/dict', () => ({
-  useDeviceTypes: () => ({ nameOf: (id: number) => (id === 1 ? '气象站' : '土壤站') }),
+  useDeviceTypes: () => ({ nameOf: (id: number) => mockTypeName(id) }),
 }))
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  mockTypeName = (id: number) => (id === 1 ? '气象站' : '土壤站')
+})
 function setup() {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -95,5 +99,11 @@ describe('H5 首页', () => {
     })
     expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
+  })
+  it('视频监控设备默认计入在线且从离线中扣除', async () => {
+    mockTypeName = (id: number) => (id === 1 ? '气象站' : '视频监控')
+    setup()
+    expect(await screen.findByText('100.0%')).toBeInTheDocument()
+    expect(screen.getByText('在线 100 · 离线 0')).toBeInTheDocument()
   })
 })

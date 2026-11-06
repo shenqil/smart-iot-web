@@ -91,7 +91,7 @@ export function DeviceReading({ device, typeName }: { device: AppDevice; typeNam
       refetchInterval: 30_000,
     }),
     reading = !isVideo && sensor ? readSensor(sensor, q.data?.sensors) : null,
-    online = deviceOnline(device, q.data)
+    online = isVideo ? true : deviceOnline(device, q.data)
   return (
     <div ref={ref} className="h5-row-reading">
       {reading ? (
