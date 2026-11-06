@@ -8,6 +8,8 @@ import { handleGlobalError } from '@/app/queryClient'
 import { OnlineTag } from '@/components/StatusTag'
 import { tenantDeviceConfigApi } from '@/features/device/config/api'
 import { tenantDeviceApi } from '@/features/device/tenant/api'
+import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId, useCurrentCompany, useMe } from '@/hooks/session'
 import { BIZ_TZ, bizNow } from '@/lib/time'
 import { exportChannels, safeFileName, TIME_HEADER } from '../lib/exportData'
@@ -39,6 +41,7 @@ export default function DataExportPage() {
   const cid = useCompanyId()
   const me = useMe()
   const company = useCurrentCompany()
+  const types = useDeviceTypes()
   const [params, setParams] = useSearchParams()
   const deviceId = Number(params.get('deviceId')) || null
   const [keyword, setKeyword] = useState('')
@@ -131,7 +134,9 @@ export default function DataExportPage() {
   }
 
   // 已选设备不在搜索结果中时补进选项，保证显示名称
-  const options = (devices.data?.records ?? []).map((d) => ({ value: d.id, d }))
+  const options = (devices.data?.records ?? [])
+    .filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
+    .map((d) => ({ value: d.id, d }))
   if (device && !options.some((o) => o.value === device.id)) options.unshift({ value: device.id, d: device })
 
   const percent =

@@ -4,7 +4,9 @@ import { Link } from 'react-router'
 import { FormDrawer } from '@/components/form/FormDrawer'
 import { fromLngLat, type LngLat } from '@/components/map/LocationPicker'
 import { SITE_STATUS } from '@/components/StatusTag'
+import { useDeviceTypes } from '@/features/dict/api'
 import { tenantSitesAllQuery } from '@/features/site/tenant/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { invalidateTenant } from '@/lib/tenant'
 import { BasicFields } from '../config/BasicFields'
@@ -31,12 +33,20 @@ export function DeviceCreateDrawer({
 }) {
   const cid = useCompanyId()
   const qc = useQueryClient()
+  const [form] = Form.useForm<FormValues>()
+  const types = useDeviceTypes()
+  const deviceTypeId = Form.useWatch('deviceTypeId', form)
+  const isVideo = isVideoDeviceType(deviceTypeId != null ? types.byId.get(deviceTypeId)?.name : undefined)
+
   const sites = useQuery({ ...tenantSitesAllQuery(cid), enabled: open })
   const noSite = sites.isSuccess && sites.data.length === 0
 
   const submit = async ({ location, ...v }: FormValues) => {
     const d = await tenantDeviceApi(cid).create({
       ...v,
+      sensorChannels: v.sensorChannels ?? 16,
+      relayChannels: v.relayChannels ?? 32,
+      readInterval: v.readInterval ?? 60,
       deviceSn: v.deviceSn.trim(),
       name: v.name.trim(),
       ...fromLngLat(location),
@@ -47,6 +57,7 @@ export function DeviceCreateDrawer({
 
   return (
     <FormDrawer<FormValues>
+      form={form}
       open={open}
       title="登记设备"
       width={600}
@@ -75,7 +86,7 @@ export function DeviceCreateDrawer({
           title="设备登记后自动归属本企业并挂载到所选园区。如提示 SN 已登记，说明设备已在平台入库，请联系平台管理员分配。"
         />
       )}
-      <SpecFields />
+      <SpecFields isVideo={isVideo} />
       <Form.Item
         name="siteIds"
         label="挂载园区"
@@ -96,7 +107,7 @@ export function DeviceCreateDrawer({
           }))}
         />
       </Form.Item>
-      <BasicFields />
+      <BasicFields isVideo={isVideo} />
     </FormDrawer>
   )
 }

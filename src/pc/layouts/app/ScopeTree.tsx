@@ -4,7 +4,9 @@ import { Empty, Input, Segmented, Spin, Tooltip, Tree, type TreeDataNode } from 
 import { useState } from 'react'
 import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
+import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { usePref } from '@/stores/pref'
 import { useScope } from './useScope'
@@ -43,6 +45,7 @@ function AlarmBadge({ count }: { count: number | string }) {
  */
 export function ScopeTree() {
   const companyId = useCompanyId()
+  const types = useDeviceTypes()
   const { siteId, deviceId, select } = useScope()
   const [expanded, setExpanded] = useState<number[]>(() => (siteId ? [siteId] : []))
   const [favOpen, setFavOpen] = useState(true)
@@ -79,12 +82,17 @@ export function ScopeTree() {
   })
 
   const kw = keyword.trim().toLowerCase()
-  const match = (d: AppDevice) =>
-    (filter === 'all' ||
-      (filter === 'online' && d.online) ||
-      (filter === 'offline' && !d.online) ||
-      (filter === 'alarm' && (deviceAlarm.get(d.id) ?? 0) > 0)) &&
-    (!kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw))
+  const match = (d: AppDevice) => {
+    const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
+    if (isVideo && filter !== 'all') return false
+    return (
+      (filter === 'all' ||
+        (filter === 'online' && d.online) ||
+        (filter === 'offline' && !d.online) ||
+        (filter === 'alarm' && (deviceAlarm.get(d.id) ?? 0) > 0)) &&
+      (!kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw))
+    )
+  }
 
   const isFav = (sid: number, did: number) => favorites.some((f) => f.siteId === sid && f.deviceId === did)
   const star = (sid: number, d: { id: number; name: string }) => {
@@ -108,17 +116,19 @@ export function ScopeTree() {
   }
 
   const deviceTitle = (sid: number, d: AppDevice) => {
+    const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
     const n = deviceAlarm.get(d.id) ?? 0
     return (
       <span className="group flex items-center gap-2">
-        <OnlineDot online={d.online} />
+        {!isVideo && <OnlineDot online={d.online} />}
         <span className="truncate">{d.name}</span>
         <span className="ml-auto flex items-center">
-          {n > 0 ? (
-            <AlarmBadge count={n} />
-          ) : cappedSites.has(sid) ? (
-            <span className="text-fg-tertiary text-xs">…</span>
-          ) : null}
+          {!isVideo &&
+            (n > 0 ? (
+              <AlarmBadge count={n} />
+            ) : cappedSites.has(sid) ? (
+              <span className="text-fg-tertiary text-xs">…</span>
+            ) : null)}
           {star(sid, d)}
         </span>
       </span>
@@ -131,7 +141,8 @@ export function ScopeTree() {
     if (filter === 'alarm' && alarm && alarm.count === 0) return []
     const devices = (all ?? []).filter(match)
     if (kw && all && !devices.length && !s.name.toLowerCase().includes(kw)) return []
-    const online = all?.filter((d) => d.online).length
+    const nonVideo = (all ?? []).filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
+    const online = nonVideo.filter((d) => d.online).length
     return [
       {
         key: `s:${s.id}`,
@@ -144,7 +155,7 @@ export function ScopeTree() {
               {alarm && alarm.count > 0 && <AlarmBadge count={alarm.capped ? '999+' : alarm.count} />}
               {all && (
                 <span className="text-fg-tertiary text-xs">
-                  {online}/{all.length}
+                  {online}/{nonVideo.length}
                 </span>
               )}
             </span>

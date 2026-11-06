@@ -13,6 +13,7 @@ import {
   agoText,
   byChannel,
   channelName,
+  isVideoDeviceType,
   opDisplayStatus,
   type Realtime,
   readSensor,
@@ -107,9 +108,13 @@ export function DeviceInfoCard({
                 {device.name}
               </div>
               <div className="mt-1 flex gap-3 text-[13px]">
-                <span className={online ? 'text-[#22d3ee]' : 'text-[#cbd5e1]'}>{online ? '● 在线' : '○ 离线'}</span>
+                {!isVideoDeviceType(typeName) && (
+                  <span className={online ? 'text-[#22d3ee]' : 'text-[#cbd5e1]'}>{online ? '● 在线' : '○ 离线'}</span>
+                )}
                 {updated && <span className="text-[var(--sc-text-2)]">{agoText(updated, now)}更新</span>}
-                {alarms > 0 && <span className="text-[#fca5a5]">⚠ {alarms} 条告警</span>}
+                {!isVideoDeviceType(typeName) && alarms > 0 && (
+                  <span className="text-[#fca5a5]">⚠ {alarms} 条告警</span>
+                )}
               </div>
             </div>
           </div>
@@ -122,22 +127,32 @@ export function DeviceInfoCard({
             <span className="truncate">{typeName}</span>
             <span className="text-[var(--sc-text-3)]">所属园区</span>
             <span className="truncate">{siteName}</span>
-            <span className="text-[var(--sc-text-3)]">采集间隔</span>
-            <span>{device.readInterval} 秒</span>
+            {!isVideoDeviceType(typeName) && (
+              <>
+                <span className="text-[var(--sc-text-3)]">采集间隔</span>
+                <span>{device.readInterval} 秒</span>
+              </>
+            )}
             <span className="text-[var(--sc-text-3)]">设备状态</span>
             <span>{DEVICE_STATUS[device.status] ?? device.status}</span>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-[12px]">
-            <span className="w-16 text-[var(--sc-text-3)]">已配置通道</span>
-            <span className={`rounded-[3px] border border-solid px-2 py-0.5 ${tag(sensors > 0)}`}>
-              传感器 {sensors}
-            </span>
-            <span className={`rounded-[3px] border border-solid px-2 py-0.5 ${tag(relays > 0)}`}>继电器 {relays}</span>
-          </div>
-          {sensors === 0 && relays === 0 && (
-            <div className="mt-2.5 rounded border border-[rgb(245_158_11/0.4)] border-solid bg-[rgb(245_158_11/0.1)] px-2.5 py-2 text-[#fde68a] text-[12px] leading-normal">
-              该设备还没有配置传感器和继电器通道，暂无实时数据。可在管理后台 › 设备配置中设置。
-            </div>
+          {!isVideoDeviceType(typeName) && (
+            <>
+              <div className="mt-3 flex items-center gap-2 text-[12px]">
+                <span className="w-16 text-[var(--sc-text-3)]">已配置通道</span>
+                <span className={`rounded-[3px] border border-solid px-2 py-0.5 ${tag(sensors > 0)}`}>
+                  传感器 {sensors}
+                </span>
+                <span className={`rounded-[3px] border border-solid px-2 py-0.5 ${tag(relays > 0)}`}>
+                  继电器 {relays}
+                </span>
+              </div>
+              {sensors === 0 && relays === 0 && (
+                <div className="mt-2.5 rounded border border-[rgb(245_158_11/0.4)] border-solid bg-[rgb(245_158_11/0.1)] px-2.5 py-2 text-[#fde68a] text-[12px] leading-normal">
+                  该设备还没有配置传感器和继电器通道，暂无实时数据。可在管理后台 › 设备配置中设置。
+                </div>
+              )}
+            </>
           )}
         </>
       )}

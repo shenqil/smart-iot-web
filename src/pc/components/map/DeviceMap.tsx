@@ -26,6 +26,7 @@ export function deviceClusterItem(
   opts: { selected?: boolean; theme: 'light' | 'dark'; kind?: DeviceGlyphKind; onClick?: () => void },
 ): ClusterItem {
   const kind = opts.kind ?? deviceGlyphKind(d.typeName)
+  const isCamera = kind === 'camera'
   return {
     id: d.id,
     lat: d.latitude,
@@ -39,10 +40,10 @@ export function deviceClusterItem(
       selected: opts.selected,
       theme: opts.theme,
     }),
-    title: deviceMarkerTitle(d),
+    title: deviceMarkerTitle({ ...d, kind }),
     sig: `${d.name}|${d.online}|${d.alarms}|${kind}|${d.iconUrl ?? ''}|${opts.selected ? 1 : 0}`,
-    alarm: d.alarms > 0,
-    zIndexOffset: opts.selected ? 2000 : d.alarms > 0 ? 1000 : 0,
+    alarm: !isCamera && d.alarms > 0,
+    zIndexOffset: opts.selected ? 2000 : !isCamera && d.alarms > 0 ? 1000 : 0,
     onClick: opts.onClick,
   }
 }

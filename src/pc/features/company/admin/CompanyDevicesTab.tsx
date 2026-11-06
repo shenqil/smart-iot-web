@@ -10,6 +10,7 @@ import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { RelationModal } from '@/components/table/RelationModal'
 import { deviceColumns } from '@/features/device/columns'
 import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { confirmAction } from '@/lib/confirm'
 import { companyApi, companyKeys, type DeviceRow } from './api'
 
@@ -104,7 +105,16 @@ export function CompanyDevicesTab({ companyId }: { companyId: number }) {
           { title: 'SN', dataIndex: 'deviceSn', render: (v) => <span className="font-mono">{v}</span> },
           { title: '名称', dataIndex: 'name' },
           { title: '类型', dataIndex: 'deviceTypeId', render: (v) => types.nameOf(v) },
-          { title: '在线', dataIndex: 'online', render: (v) => <OnlineTag online={v} /> },
+          {
+            title: '在线',
+            dataIndex: 'online',
+            render: (v, r) =>
+              isVideoDeviceType(types.nameOf(r.deviceTypeId)) ? (
+                <span className="text-fg-tertiary">-</span>
+              ) : (
+                <OnlineTag online={v} />
+              ),
+          },
         ]}
         okText="授权"
         onConfirm={async (items) => {

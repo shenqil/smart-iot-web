@@ -1,6 +1,7 @@
 import { authKeys, logout } from '@shared/api/auth'
+import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
-import { channelName } from '@shared/telemetry/lib/realtime'
+import { channelName, isVideoDeviceType } from '@shared/telemetry/lib/realtime'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, Button, Form, Input, List, ProgressBar } from 'antd-mobile'
 import { useEffect, useRef, useState } from 'react'
@@ -331,10 +332,12 @@ function CompanyInfo() {
 }
 function DeviceInfo() {
   const cid = useCompanyId(),
+    types = useDeviceTypes(),
     [params] = useSearchParams(),
     id = positiveId(params.get('deviceId')),
     q = useQuery({ ...mobileDeviceQuery(cid, id ?? 0), enabled: !!id }),
     d = q.data
+  const isVideo = isVideoDeviceType(types.nameOf(d?.deviceTypeId))
   return (
     <Page title="设备资料">
       {!id ? (
@@ -349,16 +352,16 @@ function DeviceInfo() {
             <List>
               <List.Item extra={d.deviceSn}>设备 SN</List.Item>
               <List.Item extra={d.status}>状态</List.Item>
-              <List.Item extra={`${d.readInterval} 秒`}>采集周期</List.Item>
-              <List.Item extra={`${d.sensors.length} 路`}>传感器</List.Item>
-              <List.Item extra={`${d.relays.length} 路`}>继电器</List.Item>
-              <List.Item extra={d.hasCamera ? '已配置' : '未配置'}>摄像头</List.Item>
+              {!isVideo && <List.Item extra={`${d.readInterval} 秒`}>采集周期</List.Item>}
+              {!isVideo && <List.Item extra={`${d.sensors.length} 路`}>传感器</List.Item>}
+              {!isVideo && <List.Item extra={`${d.relays.length} 路`}>继电器</List.Item>}
+              {isVideo && <List.Item extra={d.hasCamera ? '已配置' : '未配置'}>摄像头</List.Item>}
               <List.Item extra={d.longitude != null && d.latitude != null ? `${d.longitude}, ${d.latitude}` : '未配置'}>
                 位置
               </List.Item>
             </List>
             <p>{d.description || '暂无设备介绍'}</p>
-            {!!d.sensors.length && (
+            {!isVideo && !!d.sensors.length && (
               <>
                 <h3>传感器通道</h3>
                 {d.sensors.map((sensor) => (
@@ -372,7 +375,7 @@ function DeviceInfo() {
                 ))}
               </>
             )}
-            {!!d.relays.length && (
+            {!isVideo && !!d.relays.length && (
               <>
                 <h3>继电器通道</h3>
                 {d.relays.map((relay) => (

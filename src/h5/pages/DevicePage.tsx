@@ -1,6 +1,6 @@
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
-import { agoText, byChannel } from '@shared/telemetry/lib/realtime'
+import { agoText, byChannel, isVideoDeviceType } from '@shared/telemetry/lib/realtime'
 import { realtimeQuery } from '@shared/telemetry/realtime/api'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from 'antd-mobile'
@@ -29,18 +29,20 @@ export default function DevicePage({ id }: { id: number }) {
     visible = useVisible(),
     device = useQuery({ ...mobileDeviceQuery(cid, id, siteId), enabled: visible, refetchInterval: 30_000 }),
     d = device.data
+  const sites = useQuery(appSitesQuery(cid)),
+    types = useDeviceTypes(),
+    [switching, setSwitching] = useState(false)
+  const isVideo = isVideoDeviceType(types.nameOf(d?.deviceTypeId))
   const rt = useQuery({
       ...realtimeQuery(cid, id),
       enabled:
         visible &&
+        !isVideo &&
         !['history', 'comparison'].includes(params.get('tab') ?? '') &&
         !!d &&
         !!(d.sensors.length || d.relays.length),
     }),
     now = useNow(10_000)
-  const sites = useQuery(appSitesQuery(cid)),
-    types = useDeviceTypes(),
-    [switching, setSwitching] = useState(false)
   const prefs = useMobilePreferences(),
     entry = prefs.entries[preferenceKey(me.id, cid)],
     fav = entry?.favorites.some((x) => x.id === id),
@@ -66,26 +68,28 @@ export default function DevicePage({ id }: { id: number }) {
       d &&
       now - Date.parse(rt.data.sensorsAt) > Math.max(60, d.readInterval * 3) * 1000
     )
-  const tabItems = [
-    ...(d?.sensors.length || d?.relays.length
-      ? [
-          { key: 'realtime', title: '实时监控' },
-          ...(d.sensors.length
-            ? [
-                { key: 'history', title: '历史曲线' },
-                { key: 'comparison', title: '日 / 月环比' },
-              ]
-            : []),
-        ]
-      : []),
-    ...(d?.hasCamera && (d.sensors.length || d.relays.length) ? [{ key: 'video', title: '视频' }] : []),
-  ]
+  const tabItems = isVideo
+    ? []
+    : [
+        ...(d?.sensors.length || d?.relays.length
+          ? [
+              { key: 'realtime', title: '实时监控' },
+              ...(d.sensors.length
+                ? [
+                    { key: 'history', title: '历史曲线' },
+                    { key: 'comparison', title: '日 / 月环比' },
+                  ]
+                : []),
+            ]
+          : []),
+        ...(d?.hasCamera && (d.sensors.length || d.relays.length) ? [{ key: 'video', title: '视频' }] : []),
+      ]
   return (
     <Page
       title={
         <>
           <span className="h5-title-label">{d?.name ?? '设备'}</span>
-          <DeviceStatus online={online} />
+          {!isVideo && <DeviceStatus online={online} />}
         </>
       }
       titleClick={() => setSwitching(true)}
@@ -127,9 +131,10 @@ export default function DevicePage({ id }: { id: number }) {
                 {d.status === 'active' ? '启用' : d.status === 'inactive' ? '停用' : '故障'}
               </p>
               <p>
-                SN {d.deviceSn} · 采集周期 {d.readInterval} 秒
+                SN {d.deviceSn}
+                {!isVideo && ` · 采集周期 ${d.readInterval} 秒`}
               </p>
-              <p>数据更新 {fmtDateTime(rt.data?.sensorsAt ?? rt.data?.relaysAt)}</p>
+              {!isVideo && <p>数据更新 {fmtDateTime(rt.data?.sensorsAt ?? rt.data?.relaysAt)}</p>}
             </div>
             <div className="h5-row">
               <Button
@@ -141,16 +146,16 @@ export default function DevicePage({ id }: { id: number }) {
               </Button>
               <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
             </div>
-            {active === 'history' || active === 'comparison' ? (
-              <LocalErrorBoundary fallbackTitle="图表组件加载异常">
-                <Suspense fallback={<Loading />}>
-                  <Analysis key={d.id} device={d} mode={active} />
-                </Suspense>
-              </LocalErrorBoundary>
-            ) : active === 'video' || (d.hasCamera && !d.sensors.length && !d.relays.length) ? (
+            {isVideo || active === 'video' || (d.hasCamera && !d.sensors.length && !d.relays.length) ? (
               <LocalErrorBoundary fallbackTitle="视频监控加载异常">
                 <Suspense fallback={<Loading />}>
                   <Video key={d.id} device={d} />
+                </Suspense>
+              </LocalErrorBoundary>
+            ) : active === 'history' || active === 'comparison' ? (
+              <LocalErrorBoundary fallbackTitle="图表组件加载异常">
+                <Suspense fallback={<Loading />}>
+                  <Analysis key={d.id} device={d} mode={active} />
                 </Suspense>
               </LocalErrorBoundary>
             ) : (

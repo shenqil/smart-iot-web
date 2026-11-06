@@ -1,7 +1,7 @@
 import { Form, Input, InputNumber } from 'antd'
 
 /** 登记设备时才填写的规格：SN 与通道数 (登记后不可修改)，平台与企业登记共用 */
-export function SpecFields() {
+export function SpecFields({ isVideo = false }: { isVideo?: boolean }) {
   return (
     <>
       <Form.Item
@@ -15,14 +15,16 @@ export function SpecFields() {
       >
         <Input className="font-mono" />
       </Form.Item>
-      <div className="grid grid-cols-2 gap-x-4">
-        <Form.Item name="sensorChannels" label="传感器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
-          <InputNumber className="w-full" min={1} max={4096} precision={0} />
-        </Form.Item>
-        <Form.Item name="relayChannels" label="继电器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
-          <InputNumber className="w-full" min={1} max={4096} precision={0} />
-        </Form.Item>
-      </div>
+      {!isVideo && (
+        <div className="grid grid-cols-2 gap-x-4">
+          <Form.Item name="sensorChannels" label="传感器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
+            <InputNumber className="w-full" min={1} max={4096} precision={0} />
+          </Form.Item>
+          <Form.Item name="relayChannels" label="继电器通道数" tooltip="登记后不可修改" rules={[{ required: true }]}>
+            <InputNumber className="w-full" min={1} max={4096} precision={0} />
+          </Form.Item>
+        </div>
+      )}
     </>
   )
 }

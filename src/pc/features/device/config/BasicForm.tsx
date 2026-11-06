@@ -30,11 +30,15 @@ export function BasicForm({
   saving,
   onSave,
   onDirtyChange,
+  isVideo = false,
+  onDeviceTypeChange,
 }: {
   device: DeviceDetail
   saving: boolean
   onSave: (b: DeviceUpdateBody) => Promise<unknown>
   onDirtyChange?: (dirty: boolean) => void
+  isVideo?: boolean
+  onDeviceTypeChange?: (id: number | null | undefined) => void
 }) {
   const [form] = Form.useForm<FormValues>()
   useEffect(() => {
@@ -49,10 +53,16 @@ export function BasicForm({
         layout="vertical"
         className="max-w-2xl"
         requiredMark="optional"
-        onValuesChange={() => onDirtyChange?.(true)}
+        onValuesChange={(changed) => {
+          onDirtyChange?.(true)
+          if ('deviceTypeId' in changed) {
+            onDeviceTypeChange?.(changed.deviceTypeId)
+          }
+        }}
         onFinish={async ({ location, status, ...v }) => {
           await onSave({
             ...v,
+            readInterval: v.readInterval ?? device.readInterval ?? 60,
             // 损坏 (fault) 只能由系统设置：未改为启用 / 停用时不提交状态
             ...(status === 'fault' ? {} : { status }),
             name: v.name.trim(),
@@ -71,7 +81,7 @@ export function BasicForm({
             description="设备上报的传感器 / 继电器路数少于登记的通道数，已断开且不能接入 (详情见告警记录)。通道数登记后不可修改：请更换为相符的设备，或删除后按实际规格重新登记；处理后把状态改为「启用」并保存，设备重连即可上线。"
           />
         )}
-        <BasicFields showFault={device.status === 'fault'} />
+        <BasicFields showFault={device.status === 'fault'} isVideo={isVideo} onDeviceTypeChange={onDeviceTypeChange} />
         <Button type="primary" htmlType="submit" loading={saving}>
           保存基本信息
         </Button>
@@ -80,8 +90,8 @@ export function BasicForm({
         <Descriptions.Item label="设备 SN">
           <span className="font-mono">{device.deviceSn}</span>
         </Descriptions.Item>
-        <Descriptions.Item label="传感器通道数">{device.sensorChannels}</Descriptions.Item>
-        <Descriptions.Item label="继电器通道数">{device.relayChannels}</Descriptions.Item>
+        {!isVideo && <Descriptions.Item label="传感器通道数">{device.sensorChannels}</Descriptions.Item>}
+        {!isVideo && <Descriptions.Item label="继电器通道数">{device.relayChannels}</Descriptions.Item>}
         <Descriptions.Item label="创建时间">{fmtDateTime(device.createdAt)}</Descriptions.Item>
         <Descriptions.Item label="更新时间">{fmtDateTime(device.updatedAt)}</Descriptions.Item>
       </Descriptions>

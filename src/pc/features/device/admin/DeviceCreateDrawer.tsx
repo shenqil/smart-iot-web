@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Alert } from 'antd'
+import { Alert, Form } from 'antd'
 import { FormDrawer } from '@/components/form/FormDrawer'
 import { fromLngLat, type LngLat } from '@/components/map/LocationPicker'
+import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { BasicFields } from '../config/BasicFields'
 import { SPEC_DEFAULTS, SpecFields } from '../config/SpecFields'
 import { adminDeviceApi, adminDeviceKeys, type DeviceCreateBody } from './api'
@@ -19,9 +21,17 @@ export function DeviceCreateDrawer({
   onSaved: (id: number) => void
 }) {
   const qc = useQueryClient()
+  const [form] = Form.useForm<FormValues>()
+  const types = useDeviceTypes()
+  const deviceTypeId = Form.useWatch('deviceTypeId', form)
+  const isVideo = isVideoDeviceType(deviceTypeId != null ? types.byId.get(deviceTypeId)?.name : undefined)
+
   const submit = async ({ location, ...v }: FormValues) => {
     const d = await adminDeviceApi.create({
       ...v,
+      sensorChannels: v.sensorChannels ?? 16,
+      relayChannels: v.relayChannels ?? 32,
+      readInterval: v.readInterval ?? 60,
       deviceSn: v.deviceSn.trim(),
       name: v.name.trim(),
       ...fromLngLat(location),
@@ -31,6 +41,7 @@ export function DeviceCreateDrawer({
   }
   return (
     <FormDrawer<FormValues>
+      form={form}
       open={open}
       title="登记设备"
       width={600}
@@ -45,8 +56,8 @@ export function DeviceCreateDrawer({
         showIcon
         title="平台登记的设备进入公海 (不属于任何企业)，可在设备详情中授权给企业。"
       />
-      <SpecFields />
-      <BasicFields />
+      <SpecFields isVideo={isVideo} />
+      <BasicFields isVideo={isVideo} />
     </FormDrawer>
   )
 }

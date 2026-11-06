@@ -4,7 +4,9 @@ import { Card, Empty, Skeleton } from 'antd'
 import { EnumTag, SITE_STATUS } from '@/components/StatusTag'
 import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { appSiteDevicesQuery } from '@/features/device/api'
+import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { useScope } from '@/layouts/app/useScope'
 
@@ -22,6 +24,7 @@ export function CompanyOverview() {
     queries: list.slice(0, 20).map((s) => appSiteDevicesQuery(companyId, s.id)),
   })
 
+  const types = useDeviceTypes()
   return (
     <Card variant="borderless" title="园区" extra={<span className="text-fg-tertiary text-sm">选择园区查看设备</span>}>
       {sites.isPending ? (
@@ -33,7 +36,8 @@ export function CompanyOverview() {
           {list.map((s, i) => {
             const c = counts[i]?.data
             const devices = deviceLists[i]?.data
-            const online = devices?.filter((d) => d.online).length ?? 0
+            const nonVideo = devices?.filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId))) ?? []
+            const online = nonVideo.filter((d) => d.online).length
             const address = [s.city, s.district, s.address].filter(Boolean).join(' ')
             return (
               <button
@@ -63,19 +67,19 @@ export function CompanyOverview() {
                     <EnvironmentOutlined className="mr-1" />
                     {address || '未填写地址'}
                   </div>
-                  {devices && (
+                  {nonVideo.length > 0 && (
                     <div className="mt-3 flex items-center gap-3 text-xs">
                       <span className="text-fg-secondary">
-                        在线 <b className="text-fg tabular-nums">{online}</b> / {devices.length}
+                        在线 <b className="text-fg tabular-nums">{online}</b> / {nonVideo.length}
                       </span>
                       <span className="h-1 flex-1 overflow-hidden rounded-full bg-line">
                         <span
                           className="block h-full rounded-full bg-success"
-                          style={{ width: `${devices.length ? (online / devices.length) * 100 : 0}%` }}
+                          style={{ width: `${(online / nonVideo.length) * 100}%` }}
                         />
                       </span>
                       <span className="text-fg-tertiary tabular-nums">
-                        {devices.length ? Math.round((online / devices.length) * 100) : 0}%
+                        {Math.round((online / nonVideo.length) * 100)}%
                       </span>
                     </div>
                   )}

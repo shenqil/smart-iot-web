@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import type { Schemas } from '@/api/client'
 import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import type { PageColumn } from '@/components/table/PageTable'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { fmtDateTime } from '@/lib/time'
 
 export type DeviceRow = Schemas['DeviceView']
@@ -24,14 +25,27 @@ export function deviceColumns(
     },
     { title: '名称', dataIndex: 'name', sortField: 'name' },
     { title: '类型', dataIndex: 'deviceTypeId', render: (v) => nameOf(v) },
-    { title: '在线', dataIndex: 'online', width: 90, render: (v) => <OnlineTag online={v} /> },
+    {
+      title: '在线',
+      dataIndex: 'online',
+      width: 90,
+      render: (v, r) =>
+        isVideoDeviceType(nameOf(r.deviceTypeId)) ? (
+          <span className="text-fg-tertiary">-</span>
+        ) : (
+          <OnlineTag online={v} />
+        ),
+    },
     {
       title: '通道 (传感器 / 继电器)',
-      render: (_, r) => (
-        <span className="text-fg-secondary">
-          {r.sensorChannels} / {r.relayChannels}
-        </span>
-      ),
+      render: (_, r) =>
+        isVideoDeviceType(nameOf(r.deviceTypeId)) ? (
+          <span className="text-fg-tertiary">-</span>
+        ) : (
+          <span className="text-fg-secondary">
+            {r.sensorChannels} / {r.relayChannels}
+          </span>
+        ),
     },
     {
       title: '状态',

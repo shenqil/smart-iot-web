@@ -45,8 +45,8 @@ export function deviceGlyphKind(typeName: string | null | undefined): DeviceGlyp
 
 export type DeviceMarkerState = 'online' | 'offline' | 'alarm'
 
-export const deviceMarkerState = (d: { online: boolean; alarms: number }): DeviceMarkerState =>
-  d.alarms > 0 ? 'alarm' : d.online ? 'online' : 'offline'
+export const deviceMarkerState = (d: { online: boolean; alarms: number; kind?: DeviceGlyphKind }): DeviceMarkerState =>
+  d.kind === 'camera' ? 'online' : d.alarms > 0 ? 'alarm' : d.online ? 'online' : 'offline'
 
 const STATE_TEXT: Record<DeviceMarkerState, string> = { online: '在线', offline: '离线', alarm: '告警' }
 
@@ -63,28 +63,32 @@ export interface DeviceMarkerOptions {
 }
 
 /** 标点悬浮提示 / 读屏文字：名称 + 状态 */
-export const deviceMarkerTitle = (o: Pick<DeviceMarkerOptions, 'name' | 'online' | 'alarms'>) => {
+export const deviceMarkerTitle = (
+  o: Pick<DeviceMarkerOptions, 'name' | 'online' | 'alarms'> & { kind?: DeviceGlyphKind },
+) => {
+  if (o.kind === 'camera') return o.name
   const s = deviceMarkerState(o)
   return `${o.name} · ${s === 'alarm' ? `${o.alarms} 条未处理告警` : STATE_TEXT[s]}`
 }
 
 /** 设备定位针：锚点在针尖；告警、选中时名称常驻，其余在缩放 ≥ 15 级时显示 (见 ZoomLabels) */
 export function deviceMarkerIcon(o: DeviceMarkerOptions): DivIcon {
-  const state = deviceMarkerState(o)
+  const isCamera = o.kind === 'camera'
+  const state = isCamera ? 'online' : deviceMarkerState(o)
   const cls = ['siot-mk', `siot-mk--${o.theme}`, `is-${state}`, o.selected ? 'is-sel' : ''].filter(Boolean).join(' ')
   const glyph = o.iconUrl ? `<img src="${escapeHtml(o.iconUrl)}" alt="">` : svg(o.kind, o.selected ? 22 : 18)
   const rings = o.selected
     ? '<span class="siot-mk__ring is-gold"></span><span class="siot-mk__ring is-gold is-late"></span>'
-    : state === 'alarm'
+    : !isCamera && state === 'alarm'
       ? '<span class="siot-mk__ring"></span><span class="siot-mk__ring is-late"></span>'
       : ''
   const badge =
-    state === 'alarm'
+    !isCamera && state === 'alarm'
       ? `<span class="siot-mk__badge">${o.alarms > 99 ? '99+' : o.alarms}</span>`
-      : state === 'offline'
+      : !isCamera && state === 'offline'
         ? '<span class="siot-mk__badge is-off">○</span>'
         : ''
-  const st = state === 'online' ? '' : `<span class="siot-mk__st">${STATE_TEXT[state]}</span>`
+  const st = isCamera || state === 'online' ? '' : `<span class="siot-mk__st">${STATE_TEXT[state]}</span>`
   return divIcon({
     className: cls,
     html: `${rings}<span class="siot-mk__gnd"></span><span class="siot-mk__pin"><span class="siot-mk__glyph">${glyph}</span></span>${badge}<span class="siot-mk__lbl">${escapeHtml(o.name)}${st}</span>`,

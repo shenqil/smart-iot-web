@@ -5,6 +5,8 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { notify } from '@/app/notify'
 import { OnlineTag } from '@/components/StatusTag'
+import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { confirmDisconnect } from './actions'
 import { type DeviceConfigApi, type DeviceDetail, deviceDetailKey, linkageKeys, schedulesKey } from './api'
 import { BasicForm } from './BasicForm'
@@ -53,9 +55,30 @@ export function DeviceConfigPage({
   const key = deviceDetailKey(cfg, id)
   const { data: d, isPending } = useQuery({ queryKey: key, queryFn: () => cfg.detail(id) })
 
+  const types = useDeviceTypes()
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (d) {
+      setSelectedTypeId(d.deviceTypeId)
+    }
+  }, [d])
+
+  const currentTypeId = selectedTypeId !== undefined ? selectedTypeId : d?.deviceTypeId
+  const isVideo = isVideoDeviceType(currentTypeId != null ? types.byId.get(currentTypeId)?.name : undefined)
+
+  useEffect(() => {
+    if (isVideo && ['sensors', 'relays', 'linkage', 'schedules'].includes(tab)) {
+      setParams({}, { replace: true })
+    } else if (!isVideo && tab === 'camera') {
+      setParams({}, { replace: true })
+    }
+  }, [isVideo, tab, setParams])
+
   const saved = (next: DeviceDetail) => {
     qc.setQueryData(key, next)
     qc.invalidateQueries({ queryKey: [...cfg.keyPrefix, 'list'] })
+    setSelectedTypeId(next.deviceTypeId)
     setDirty(false)
   }
   const basic = useMutation({
@@ -152,78 +175,107 @@ export function DeviceConfigPage({
                     onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
                   />
                   <span className="font-semibold text-fg text-sm">{d.name}</span>
-                  <OnlineTag online={d.online} />
+                  {!isVideo && <OnlineTag online={d.online} />}
                 </Space>
               ),
               right: (
                 <Space size="small">
-                  <Tooltip title={d.online ? '断开后设备会自动重连' : '设备当前离线'}>
-                    <Button size="small" icon={<DisconnectOutlined />} onClick={() => confirmDisconnect(cfg, id)}>
-                      断开连接
-                    </Button>
-                  </Tooltip>
+                  {!isVideo && (
+                    <Tooltip title={d.online ? '断开后设备会自动重连' : '设备当前离线'}>
+                      <Button size="small" icon={<DisconnectOutlined />} onClick={() => confirmDisconnect(cfg, id)}>
+                        断开连接
+                      </Button>
+                    </Tooltip>
+                  )}
                   {headerExtra?.(d)}
                 </Space>
               ),
             }}
-            items={[
-              {
-                key: 'basic',
-                label: '基本信息',
-                children: (
-                  <BasicForm device={d} saving={basic.isPending} onSave={basic.mutateAsync} onDirtyChange={markDirty} />
-                ),
-              },
-              {
-                key: 'sensors',
-                label: `传感器配置 (${sensorCount})`,
-                children: (
-                  <SensorsEditor
-                    sensors={d.sensors}
-                    maxChannels={d.sensorChannels}
-                    saving={sensors.isPending}
-                    onSave={sensors.mutateAsync}
-                    onDirtyChange={markDirty}
-                  />
-                ),
-              },
-              {
-                key: 'relays',
-                label: `继电器配置 (${relayCount})`,
-                children: (
-                  <RelaysEditor
-                    relays={d.relays}
-                    maxChannels={d.relayChannels}
-                    saving={relays.isPending}
-                    onSave={relays.mutateAsync}
-                    onDirtyChange={markDirty}
-                  />
-                ),
-              },
-              {
-                key: 'linkage',
-                label: '告警联动',
-                children: <LinkageEditor cfg={cfg} deviceId={d.id} />,
-              },
-              {
-                key: 'schedules',
-                label: '定时开关',
-                children: <SchedulesEditor cfg={cfg} device={d} />,
-              },
-              {
-                key: 'camera',
-                label: '摄像头',
-                children: (
-                  <CameraForm
-                    camera={d.camera}
-                    saving={camera.isPending}
-                    onSave={camera.mutateAsync}
-                    onDirtyChange={markDirty}
-                  />
-                ),
-              },
-              ...extraTabs,
-            ]}
+            items={
+              isVideo
+                ? [
+                    {
+                      key: 'basic',
+                      label: '基本信息',
+                      children: (
+                        <BasicForm
+                          device={d}
+                          saving={basic.isPending}
+                          onSave={basic.mutateAsync}
+                          onDirtyChange={markDirty}
+                          isVideo={isVideo}
+                          onDeviceTypeChange={setSelectedTypeId}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'camera',
+                      label: '摄像头',
+                      children: (
+                        <CameraForm
+                          camera={d.camera}
+                          saving={camera.isPending}
+                          onSave={camera.mutateAsync}
+                          onDirtyChange={markDirty}
+                        />
+                      ),
+                    },
+                    ...extraTabs,
+                  ]
+                : [
+                    {
+                      key: 'basic',
+                      label: '基本信息',
+                      children: (
+                        <BasicForm
+                          device={d}
+                          saving={basic.isPending}
+                          onSave={basic.mutateAsync}
+                          onDirtyChange={markDirty}
+                          isVideo={isVideo}
+                          onDeviceTypeChange={setSelectedTypeId}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'sensors',
+                      label: `传感器配置 (${sensorCount})`,
+                      children: (
+                        <SensorsEditor
+                          sensors={d.sensors}
+                          maxChannels={d.sensorChannels}
+                          saving={sensors.isPending}
+                          onSave={sensors.mutateAsync}
+                          onDirtyChange={markDirty}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'relays',
+                      label: `继电器配置 (${relayCount})`,
+                      children: (
+                        <RelaysEditor
+                          relays={d.relays}
+                          maxChannels={d.relayChannels}
+                          saving={relays.isPending}
+                          onSave={relays.mutateAsync}
+                          onDirtyChange={markDirty}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'linkage',
+                      label: '告警联动',
+                      children: <LinkageEditor cfg={cfg} deviceId={d.id} />,
+                    },
+                    {
+                      key: 'schedules',
+                      label: '定时开关',
+                      children: <SchedulesEditor cfg={cfg} device={d} />,
+                    },
+                    ...extraTabs,
+                  ]
+            }
           />
         )}
       </Card>

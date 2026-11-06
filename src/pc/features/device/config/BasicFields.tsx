@@ -5,7 +5,15 @@ import { useDeviceTypes } from '@/features/dict/api'
 
 /** 设备基本信息字段 (登记与修改共用；SN 与通道数只在登记时填写) */
 /** showFault：设备已被系统标记为损坏时显示 (不可选) 的"损坏"选项，人工只能改为启用 / 停用 */
-export function BasicFields({ showFault = false }: { showFault?: boolean }) {
+export function BasicFields({
+  showFault = false,
+  isVideo = false,
+  onDeviceTypeChange,
+}: {
+  showFault?: boolean
+  isVideo?: boolean
+  onDeviceTypeChange?: (id: number | null | undefined) => void
+}) {
   const types = useDeviceTypes()
   return (
     <>
@@ -18,16 +26,25 @@ export function BasicFields({ showFault = false }: { showFault?: boolean }) {
       </Form.Item>
       <div className="grid grid-cols-2 gap-x-4">
         <Form.Item name="deviceTypeId" label="设备类型">
-          <Select allowClear placeholder="未分类" options={types.options} showSearch optionFilterProp="label" />
+          <Select
+            allowClear
+            placeholder="未分类"
+            options={types.options}
+            showSearch
+            optionFilterProp="label"
+            onChange={onDeviceTypeChange}
+          />
         </Form.Item>
-        <Form.Item
-          name="readInterval"
-          label="采集间隔 (秒)"
-          tooltip="1~3600 秒；保存后立即生效"
-          rules={[{ required: true, message: '请输入采集间隔' }]}
-        >
-          <InputNumber className="w-full" min={1} max={3600} precision={0} />
-        </Form.Item>
+        {!isVideo && (
+          <Form.Item
+            name="readInterval"
+            label="采集间隔 (秒)"
+            tooltip="1~3600 秒；保存后立即生效"
+            rules={[{ required: true, message: '请输入采集间隔' }]}
+          >
+            <InputNumber className="w-full" min={1} max={3600} precision={0} />
+          </Form.Item>
+        )}
       </div>
       <Form.Item name="location" label="安装位置">
         <LocationPicker />

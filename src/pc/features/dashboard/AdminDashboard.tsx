@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import { api, unwrap } from '@/api/client'
 import { ExpireTag, OnlineTag } from '@/components/StatusTag'
 import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { dayjs, fmtDateTime } from '@/lib/time'
 
 interface StatDef {
@@ -180,7 +181,7 @@ export default function AdminDashboard() {
                 <div className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <Link to={`/admin/devices/${d.id}`}>{d.name}</Link>
-                    <OnlineTag online={d.online} />
+                    {!isVideoDeviceType(types.nameOf(d.deviceTypeId)) && <OnlineTag online={d.online} />}
                   </span>
                   <div className="text-fg-tertiary text-sm">
                     <span className="font-mono">{d.deviceSn}</span>{' '}

@@ -41,7 +41,8 @@ export function SiteOverview({ siteId }: { siteId: number }) {
   }).data
   const types = useDeviceTypes()
   const list = devices.data ?? []
-  const online = list.filter((d) => d.online).length
+  const nonVideo = list.filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
+  const online = nonVideo.filter((d) => d.online).length
   const address = site && [site.province, site.city, site.district, site.address].filter(Boolean).join(' ')
   const alarmsOf = new Map<number, number>()
   for (const a of unprocessed?.records ?? []) alarmsOf.set(a.deviceId, (alarmsOf.get(a.deviceId) ?? 0) + 1)
@@ -117,7 +118,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
         </div>
         <Stat label="设备" value={devices.data ? list.length : '…'} />
         <Stat label="在线" value={devices.data ? online : '…'} tone="success" />
-        <Stat label="离线" value={devices.data ? list.length - online : '…'} />
+        <Stat label="离线" value={devices.data ? nonVideo.length - online : '…'} />
         <Link to={alarmsLink} className="no-underline">
           <Stat
             label="未处理告警"
@@ -220,20 +221,26 @@ function DeviceTile({
     >
       <span className="flex w-full items-center gap-3">
         <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-md ${d.online ? 'bg-primary-bg text-primary' : 'bg-layout text-fg-tertiary'}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-md ${video || d.online ? 'bg-primary-bg text-primary' : 'bg-layout text-fg-tertiary'}`}
         >
           {icon ? (
-            <img src={icon} alt="" className={`size-6 object-contain ${d.online ? '' : 'opacity-50 grayscale'}`} />
+            <img
+              src={icon}
+              alt=""
+              className={`size-6 object-contain ${video || d.online ? '' : 'opacity-50 grayscale'}`}
+            />
           ) : (
             <AppstoreOutlined />
           )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
-            <span
-              className={`inline-block size-2 shrink-0 rounded-full ${d.online ? 'bg-success' : 'border border-fg-tertiary border-solid'}`}
-              title={d.online ? '在线' : '离线'}
-            />
+            {!video && (
+              <span
+                className={`inline-block size-2 shrink-0 rounded-full ${d.online ? 'bg-success' : 'border border-fg-tertiary border-solid'}`}
+                title={d.online ? '在线' : '离线'}
+              />
+            )}
             <span className="truncate font-medium text-fg">{d.name}</span>
             {d.status !== 'active' && <EnumTag value={d.status} defs={DEVICE_STATUS} />}
           </span>
@@ -242,7 +249,7 @@ function DeviceTile({
             {parts.length > 0 && `，${parts.join('，')}`}
           </span>
         </span>
-        {alarms > 0 && (
+        {!video && alarms > 0 && (
           <span className="shrink-0 rounded-full bg-danger/10 px-2 text-danger text-xs leading-5">⚠ {alarms}</span>
         )}
       </span>
