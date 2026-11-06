@@ -11,7 +11,7 @@ import { fmtDateTime } from '@/lib/time'
 import { TimeFilter } from '../components/TimeRangeFilter'
 import { positiveId } from '../filters'
 import { useUrlFilters } from '../hooks/useUrlFilters'
-import { Card, Choice, Empty, Failure, Icon, Loading, Notice, Page, Pagination, Sheet, StatusTag } from '../ui'
+import { Card, Choice, Icon, MobileListView, Notice, Page, Pagination, Sheet, StatusTag } from '../ui'
 
 const SOURCES: Record<string, string> = {
   manual: '手动',
@@ -64,19 +64,20 @@ export default function OperationsPage() {
     >
       <Notice>同一设备的操作记录在授权范围内共享 · 保留当月与上月</Notice>
       <SearchBar placeholder="设备 SN、操作人" value={search} onChange={setSearch} />
-      {query.isPending || query.isPlaceholderData ? (
-        <Loading />
-      ) : query.isError ? (
-        <Failure
-          error={query.error}
-          retry={() => {
-            void query.refetch()
-          }}
-        />
-      ) : !query.data?.records.length ? (
-        <Empty title="暂无操作记录" />
-      ) : (
-        query.data.records.map((r) => (
+      <MobileListView
+        items={query.data?.records ?? []}
+        keyExtractor={(r) => r.id}
+        isPending={query.isPending || query.isPlaceholderData}
+        isError={query.isError}
+        error={query.error}
+        onRetry={() => {
+          void query.refetch()
+        }}
+        onRefresh={async () => {
+          await query.refetch()
+        }}
+        emptyTitle="暂无操作记录"
+        renderItem={(r) => (
           <Card key={r.id} className="h5-record-card">
             <div className="h5-tags">
               <span className="h5-chip">{SOURCES[r.source] ?? r.source}</span>
@@ -114,13 +115,15 @@ export default function OperationsPage() {
             {r.errorMessage && <p className="h5-warning">{r.errorMessage}</p>}
             <Link to={`/h5/${cid}/devices?deviceId=${r.deviceId}`}>关联设备 ›</Link>
           </Card>
-        ))
-      )}
-      <Pagination
-        page={page}
-        hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
-        busy={query.isFetching}
-        onChange={goPage}
+        )}
+        footer={
+          <Pagination
+            page={page}
+            hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+            busy={query.isFetching}
+            onChange={goPage}
+          />
+        }
       />
       <Sheet
         title="记录筛选"

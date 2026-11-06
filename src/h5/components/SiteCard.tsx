@@ -8,7 +8,7 @@ import { useInView } from '@/hooks/useInView'
 import { Icon } from './Icon'
 export function SitePreview({ site }: { site: SiteView }) {
   const cid = useCompanyId(),
-    { ref, inView } = useInView<HTMLDivElement>()
+    { ref, inView } = useInView<HTMLDivElement>({ rootMargin: '120px', triggerOnce: true })
   const q = useQuery({ ...appDeviceSummaryQuery(cid, site.id), enabled: inView }),
     s = q.data
   const percent = s?.onlineKnown && s.deviceCount ? (s.onlineCount / s.deviceCount) * 100 : 0

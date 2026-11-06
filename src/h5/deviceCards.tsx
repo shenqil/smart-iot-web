@@ -3,6 +3,7 @@ import { byChannel, readSensor } from '@shared/telemetry/lib/realtime'
 import { realtimeQuery } from '@shared/telemetry/realtime/api'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from 'antd-mobile'
+import { memo } from 'react'
 import { Link } from 'react-router'
 import { useCompanyId } from '@/hooks/session'
 import { useInView } from '@/hooks/useInView'
@@ -14,7 +15,7 @@ import { Icon, StatusTag, useVisible } from './ui'
 export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
   const cid = useCompanyId(),
     visible = useVisible(),
-    { ref, inView } = useInView<HTMLDivElement>()
+    { ref, inView } = useInView<HTMLDivElement>({ rootMargin: '120px', triggerOnce: true })
   const device = useQuery({
     ...mobileDeviceQuery(cid, bookmark.id, bookmark.siteId),
     enabled: inView && visible,
@@ -76,7 +77,7 @@ export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
 export function DeviceReading({ device }: { device: AppDevice }) {
   const cid = useCompanyId(),
     visible = useVisible(),
-    { ref, inView } = useInView<HTMLDivElement>(),
+    { ref, inView } = useInView<HTMLDivElement>({ rootMargin: '120px', triggerOnce: true }),
     sensor = byChannel(device.sensors)[0]
   const q = useQuery({
       ...realtimeQuery(cid, device.id),
@@ -114,7 +115,7 @@ export function DeviceReading({ device }: { device: AppDevice }) {
     </div>
   )
 }
-export function DeviceListItem({
+export const DeviceListItem = memo(function DeviceListItem({
   device,
   typeName,
   to,
@@ -168,4 +169,4 @@ export function DeviceListItem({
       </Link>
     </article>
   )
-}
+})

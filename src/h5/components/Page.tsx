@@ -42,15 +42,26 @@ export function Page({
       body = content.current
     if (!el || !body) return
     let pending = true,
-      last = positions.get(key) ?? 0
+      userInteracted = false,
+      last = positions.get(key) ?? 0,
+      lastCollapse = -1,
+      rafId = 0
+
     const getScrollY = () =>
       Math.max(
         typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop || 0 : 0,
         el.scrollTop || 0,
       )
-    const collapse = () => el.style.setProperty('--collapse', String(Math.min(1, Math.max(0, getScrollY() / 120))))
+
+    const collapse = () => {
+      const val = Math.min(1, Math.max(0, getScrollY() / 120))
+      if (Math.abs(val - lastCollapse) < 0.005) return
+      lastCollapse = val
+      el.style.setProperty('--collapse', String(val))
+    }
+
     const restore = () => {
-      if (!pending) return
+      if (!pending || userInteracted) return
       const maxScroll = Math.max(
         typeof document !== 'undefined' ? document.documentElement.scrollHeight - window.innerHeight : 0,
         el.scrollHeight - el.clientHeight,
@@ -60,36 +71,54 @@ export function Page({
       collapse()
       if (maxScroll >= last) pending = false
     }
+
     const record = () => {
       if (!pending) last = getScrollY()
-      collapse()
-      onScroll?.(el)
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        collapse()
+        onScroll?.(el)
+      })
     }
+
     const takeOver = () => {
+      userInteracted = true
       pending = false
       last = getScrollY()
     }
+
     restore()
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(restore)
     observer?.observe(body)
+
     window.addEventListener('scroll', record, { passive: true })
     el.addEventListener('scroll', record)
     window.addEventListener('wheel', takeOver, { passive: true })
     window.addEventListener('touchstart', takeOver, { passive: true })
+    window.addEventListener('touchmove', takeOver, { passive: true })
+    window.addEventListener('pointerdown', takeOver, { passive: true })
     window.addEventListener('keydown', takeOver)
     el.addEventListener('wheel', takeOver, { passive: true })
     el.addEventListener('touchstart', takeOver, { passive: true })
+    el.addEventListener('touchmove', takeOver, { passive: true })
+    el.addEventListener('pointerdown', takeOver, { passive: true })
     el.addEventListener('keydown', takeOver)
+
     return () => {
       remember(key, last)
+      if (rafId) cancelAnimationFrame(rafId)
       observer?.disconnect()
       window.removeEventListener('scroll', record)
       el.removeEventListener('scroll', record)
       window.removeEventListener('wheel', takeOver)
       window.removeEventListener('touchstart', takeOver)
+      window.removeEventListener('touchmove', takeOver)
+      window.removeEventListener('pointerdown', takeOver)
       window.removeEventListener('keydown', takeOver)
       el.removeEventListener('wheel', takeOver)
       el.removeEventListener('touchstart', takeOver)
+      el.removeEventListener('touchmove', takeOver)
+      el.removeEventListener('pointerdown', takeOver)
       el.removeEventListener('keydown', takeOver)
     }
   }, [key, onScroll])

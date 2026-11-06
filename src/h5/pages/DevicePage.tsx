@@ -14,7 +14,7 @@ import { DeviceStatus, deviceOnline } from '../components/DeviceStatus'
 import { SensorTile } from '../components/SensorTile'
 import { positiveId } from '../filters'
 import { preferenceKey, useMobilePreferences } from '../preferences'
-import { Card, Choice, Empty, Failure, Loading, Notice, Page, Sheet, useVisible } from '../ui'
+import { Card, Choice, Empty, Failure, Loading, LocalErrorBoundary, Notice, Page, Sheet, useVisible } from '../ui'
 import RelayPanel from './RelayPanel'
 
 const Analysis = lazy(() => import('./AnalysisPanel'))
@@ -142,13 +142,17 @@ export default function DevicePage({ id }: { id: number }) {
               <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
             </div>
             {active === 'history' || active === 'comparison' ? (
-              <Suspense fallback={<Loading />}>
-                <Analysis key={d.id} device={d} mode={active} />
-              </Suspense>
+              <LocalErrorBoundary fallbackTitle="图表组件加载异常">
+                <Suspense fallback={<Loading />}>
+                  <Analysis key={d.id} device={d} mode={active} />
+                </Suspense>
+              </LocalErrorBoundary>
             ) : active === 'video' || (d.hasCamera && !d.sensors.length && !d.relays.length) ? (
-              <Suspense fallback={<Loading />}>
-                <Video key={d.id} device={d} />
-              </Suspense>
+              <LocalErrorBoundary fallbackTitle="视频监控加载异常">
+                <Suspense fallback={<Loading />}>
+                  <Video key={d.id} device={d} />
+                </Suspense>
+              </LocalErrorBoundary>
             ) : (
               <>
                 {online === false && <Notice>设备离线，显示最后一次数据；离线期间不能控制。</Notice>}

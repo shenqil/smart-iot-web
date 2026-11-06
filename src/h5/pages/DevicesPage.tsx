@@ -1,26 +1,44 @@
+import type { AppDevice } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { Button, InfiniteScroll, SearchBar } from 'antd-mobile'
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Button, SearchBar } from 'antd-mobile'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import { useCompanyId, useMe } from '@/hooks/session'
 import { listDevices } from '../api'
 import { DeviceBookmarkCard, DeviceListItem } from '../deviceCards'
 import { positiveId, readDeviceFilters } from '../filters'
 import { preferenceKey, useMobilePreferences } from '../preferences'
-import { Choice, Empty, Failure, Icon, Loading, Page, Sheet } from '../ui'
+import { Choice, Empty, Icon, MobileListView, Page, Sheet } from '../ui'
 import DevicePage from './DevicePage'
+
 export default function DevicesPage() {
   const [params] = useSearchParams()
   const id = positiveId(params.get('deviceId'))
-  return id ? <DevicePage key={id} id={id} /> : <DeviceList />
+  return (
+    <>
+      <div style={{ display: id ? 'none' : 'block' }}>
+        <DeviceList />
+      </div>
+      {id && <DevicePage key={id} id={id} />}
+    </>
+  )
 }
+
 function DeviceList() {
   const cid = useCompanyId(),
     me = useMe(),
+    location = useLocation(),
+    isTabActive = location.pathname.endsWith('/devices') && !new URLSearchParams(location.search).has('deviceId'),
     [params, setParams] = useSearchParams(),
-    filters = readDeviceFilters(params),
+    currentFilters = readDeviceFilters(params)
+
+  const filtersRef = useRef(currentFilters)
+  if (isTabActive) {
+    filtersRef.current = currentFilters
+  }
+  const filters = isTabActive ? currentFilters : filtersRef.current,
     mode = params.get('mode'),
     goal = params.get('goal')
   const [search, setSearch] = useState(params.get('keyword') ?? ''),
@@ -36,14 +54,15 @@ function DeviceList() {
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) => listDevices(cid, { ...filters, page: pageParam, pageSize: 20 }, signal),
     getNextPageParam: (last) => (last.page * last.pageSize < last.totalCount ? last.page + 1 : undefined),
-    enabled: !isBookmarks,
+    enabled: !isBookmarks && isTabActive,
   })
   const keyword = params.get('keyword') ?? ''
   useEffect(() => {
+    if (!isTabActive) return
     setSearch(keyword)
-  }, [keyword])
+  }, [keyword, isTabActive])
   useEffect(() => {
-    if (search === keyword) return
+    if (!isTabActive || search === keyword) return
     const timer = setTimeout(() => {
       setParams(
         (old) => {
@@ -56,7 +75,7 @@ function DeviceList() {
       )
     }, 400)
     return () => clearTimeout(timer)
-  }, [search, keyword, setParams])
+  }, [search, keyword, setParams, isTabActive])
   const setFilter = (key: string, value: string) =>
     setParams((old) => {
       const p = new URLSearchParams(old)
@@ -66,7 +85,18 @@ function DeviceList() {
       if (key === 'unclassified') p.delete('deviceTypeId')
       return p
     })
-  const devices = [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()]
+  const devices = useMemo(
+    () => [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()],
+    [query.data?.pages],
+  )
+  const favoriteIds = useMemo(() => new Set((entry?.favorites ?? []).map((f) => f.id)), [entry?.favorites])
+  const toggleFavorite = useCallback(
+    (d: AppDevice) => {
+      useMobilePreferences.getState().toggle(me.id, cid, { id: d.id, name: d.name, siteId: filters.siteId })
+    },
+    [me.id, cid, filters.siteId],
+  )
+
   const base = `/h5/${cid}`,
     bookmarksFiltered = bookmarks.filter((d) => d.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
   return (
@@ -141,44 +171,29 @@ function DeviceList() {
               清除筛选
             </Button>
           </div>
-          {query.isPending ? (
-            <Loading />
-          ) : query.isError && !devices.length ? (
-            <Failure
-              error={query.error}
-              retry={() => {
-                void query.refetch()
-              }}
-            />
-          ) : devices.length ? (
-            devices.map((d) => (
+          <MobileListView
+            items={devices}
+            renderItem={(d) => (
               <DeviceListItem
-                key={d.id}
                 device={d}
                 typeName={types.nameOf(d.deviceTypeId)}
                 to={`${base}/devices?deviceId=${d.id}${filters.siteId ? `&siteId=${filters.siteId}` : ''}${goal === 'history' && d.sensors.length ? '&tab=history' : ''}`}
-                favorite={!!entry?.favorites.some((f) => f.id === d.id)}
-                onFavorite={() =>
-                  useMobilePreferences.getState().toggle(me.id, cid, { id: d.id, name: d.name, siteId: filters.siteId })
-                }
+                favorite={favoriteIds.has(d.id)}
+                onFavorite={() => toggleFavorite(d)}
               />
-            ))
-          ) : (
-            <Empty title="当前条件下暂无设备" />
-          )}
-          {query.isError && !!devices.length && (
-            <Failure
-              error={query.error}
-              retry={() => {
-                void query.refetch()
-              }}
-            />
-          )}
-          <InfiniteScroll
-            hasMore={!!query.hasNextPage && !query.isError}
+            )}
+            keyExtractor={(d) => d.id}
+            isPending={query.isPending}
+            isError={query.isError}
+            error={query.error}
+            onRetry={() => {
+              void query.refetch()
+            }}
+            hasMore={!!query.hasNextPage}
             loadMore={async () => {
               await query.fetchNextPage()
             }}
+            emptyTitle="当前条件下暂无设备"
           />
         </>
       )}

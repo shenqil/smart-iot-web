@@ -6,7 +6,7 @@
     border-right: 1px solid #dbe7df;
   }
   .h5-scroll {
-    padding: 22px 22px calc(var(--h5-bottom-height, 0px) + 32px + env(safe-area-inset-bottom));
+    padding: 22px 22px calc(var(--h5-bottom-height) + 28px);
   }
   .h5-distribution {
     gap: 40px;
@@ -18,7 +18,7 @@
 }
 @media (max-width: 360px) {
   .h5-scroll {
-    padding: 12px 10px calc(var(--h5-bottom-height, 0px) + 20px + env(safe-area-inset-bottom));
+    padding: 12px 10px calc(var(--h5-bottom-height) + 16px);
   }
   .h5-card {
     border-radius: 16px;

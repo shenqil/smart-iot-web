@@ -15,7 +15,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useCompanyId } from '@/hooks/session'
 import { mapDevicesQuery } from '../api'
 import { positiveId } from '../filters'
-import { Card, Choice, Empty, Failure, Loading, Page, showFailure } from '../ui'
+import { Card, Choice, Empty, Failure, Loading, LocalErrorBoundary, Page, showFailure } from '../ui'
 
 export default function MapPage() {
   const cid = useCompanyId(),
@@ -75,23 +75,25 @@ export default function MapPage() {
           ) : !points.length ? (
             <Empty title="当前范围暂无可定位设备" />
           ) : (
-            <div className="h5-map">
-              <MapContainer center={[points[0].latitude ?? 0, points[0].longitude ?? 0]} zoom={12} attributionControl>
-                <TileLayer
-                  key={`${satellite}:${key}`}
-                  url={tdtTileUrl(satellite ? 'img' : 'vec', key)}
-                  subdomains={TDT_SUBDOMAINS}
-                  attribution="天地图"
-                  eventHandlers={{ tileerror: () => setTileError(true), load: () => setTileError(false) }}
-                />
-                <TileLayer
-                  key={`label:${satellite}:${key}`}
-                  url={tdtTileUrl(satellite ? 'cia' : 'cva', key)}
-                  subdomains={TDT_SUBDOMAINS}
-                />
-                <Markers devices={points} select={select} target={target} />
-              </MapContainer>
-            </div>
+            <LocalErrorBoundary fallbackTitle="地图渲染异常">
+              <div className="h5-map">
+                <MapContainer center={[points[0].latitude ?? 0, points[0].longitude ?? 0]} zoom={12} attributionControl>
+                  <TileLayer
+                    key={`${satellite}:${key}`}
+                    url={tdtTileUrl(satellite ? 'img' : 'vec', key)}
+                    subdomains={TDT_SUBDOMAINS}
+                    attribution="天地图"
+                    eventHandlers={{ tileerror: () => setTileError(true), load: () => setTileError(false) }}
+                  />
+                  <TileLayer
+                    key={`label:${satellite}:${key}`}
+                    url={tdtTileUrl(satellite ? 'cia' : 'cva', key)}
+                    subdomains={TDT_SUBDOMAINS}
+                  />
+                  <Markers devices={points} select={select} target={target} />
+                </MapContainer>
+              </div>
+            </LocalErrorBoundary>
           )}
           {tileError && <p className="h5-warning">地图瓦片加载失败，请检查网络或地图密钥授权；设备列表仍可使用。</p>}
           <div className="h5-row">

@@ -1,20 +1,29 @@
 .h5-app {
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   background: radial-gradient(ellipse at 95% 0, #e3eee1, transparent 35%), var(--h5-background);
   color: var(--h5-text);
   --adm-color-primary: var(--h5-primary);
   --adm-font-size-main: 14px;
+  --h5-bottom-height: env(safe-area-inset-bottom, 0px);
   isolation: isolate;
   width: 100%;
   min-width: 0;
   position: relative;
-  overflow-x: clip;
+}
+
+.h5-app.has-tabbar {
+  --h5-bottom-height: calc(56px + env(safe-area-inset-bottom, 0px));
 }
 
 .h5-app * {
   box-sizing: border-box;
+}
+
+.h5-tab-container,
+.h5-subpage-container {
+  display: contents;
 }
 
 .h5-page {
@@ -69,7 +78,7 @@
 
 .h5-scroll {
   flex: 1;
-  padding: 16px 14px calc(var(--h5-bottom-height, 0px) + 24px + env(safe-area-inset-bottom));
+  padding: 16px 14px calc(var(--h5-bottom-height) + 20px);
   scrollbar-width: none;
   --collapse: 0;
   overflow-wrap: anywhere;

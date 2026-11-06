@@ -1,51 +1,79 @@
 import { resetCompanyCache } from '@shared/queryClient'
 import { TabBar } from 'antd-mobile'
-import { useEffect, useLayoutEffect, useRef } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react'
+import { useLocation, useNavigate, useOutlet } from 'react-router'
 import { useCompanyId } from '@/hooks/session'
-import { Icon } from '../ui'
+import { Icon, OfflineBanner } from '../ui'
 import '../styles/h5.css'
+
+const ROOT_TABS = ['home', 'devices', 'alarms', 'me'] as const
+type RootTab = (typeof ROOT_TABS)[number]
 
 export default function MobileLayout() {
   const cid = useCompanyId(),
     location = useLocation(),
-    navigate = useNavigate()
+    navigate = useNavigate(),
+    outlet = useOutlet()
+
   useEffect(() => {
     resetCompanyCache('app', cid)
   }, [cid])
-  const appRef = useRef<HTMLDivElement>(null),
-    bottomRef = useRef<HTMLDivElement>(null)
+
+  const appRef = useRef<HTMLDivElement>(null)
   const page = location.pathname.split('/').at(-1) ?? 'home'
-  const root =
-    ['home', 'devices', 'alarms', 'me'].includes(page) && !new URLSearchParams(location.search).has('deviceId')
-  // biome-ignore lint/correctness/useExhaustiveDependencies: root and company changes replace the measured navigation element
+  const isRootTab = ROOT_TABS.includes(page as RootTab) && !new URLSearchParams(location.search).has('deviceId')
+
+  // 保活各 Tab 视图节点 (DOM 与查询常驻)
+  const tabsRef = useRef<Partial<Record<RootTab, ReactNode>>>({})
+  // 记录各 Tab 的独立滚动高度，切换时无缝还原
+  const scrollPositions = useRef<Record<string, number>>({})
+
+  if (isRootTab && outlet) {
+    tabsRef.current[page as RootTab] = outlet
+  }
+
+  // 监听用户滚动，实时记录当前活跃 Tab 的偏移量
+  useEffect(() => {
+    if (!isRootTab) return
+    const onScroll = () => {
+      scrollPositions.current[page] = window.scrollY
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isRootTab, page])
+
+  // Tab 切换时在 Paint 前同步还原对应 Tab 的滚动高度，杜绝白屏与二次跳动
   useLayoutEffect(() => {
-    const el = bottomRef.current,
-      app = appRef.current
-    if (!el || !app) {
-      document.documentElement.style.setProperty('--h5-bottom-height', '0px')
-      app?.style.setProperty('--h5-bottom-height', '0px')
-      return
+    if (isRootTab) {
+      const targetScroll = scrollPositions.current[page] ?? 0
+      window.scrollTo(0, targetScroll)
     }
-    const measure = () => {
-      const h = `${el.getBoundingClientRect().height}px`
-      app.style.setProperty('--h5-bottom-height', h)
-      document.documentElement.style.setProperty('--h5-bottom-height', h)
-    }
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(el)
-    return () => {
-      observer.disconnect()
-      document.documentElement.style.setProperty('--h5-bottom-height', '0px')
-      app.style.setProperty('--h5-bottom-height', '0px')
-    }
-  }, [root, cid])
+  }, [isRootTab, page])
+
   return (
-    <div className="h5-app" key={cid} ref={appRef}>
-      <Outlet />
-      {root && (
-        <div className="h5-bottom" ref={bottomRef}>
+    <div className={`h5-app ${isRootTab ? 'has-tabbar' : ''}`} key={cid} ref={appRef}>
+      <OfflineBanner />
+
+      {/* Tab 页面保活渲染区 */}
+      {ROOT_TABS.map((tabKey) => {
+        const content = tabsRef.current[tabKey]
+        if (!content) return null
+        return (
+          <div
+            key={tabKey}
+            className="h5-tab-container"
+            style={{ display: isRootTab && page === tabKey ? 'contents' : 'none' }}
+          >
+            {content}
+          </div>
+        )
+      })}
+
+      {/* 二级页面 / 子路由渲染区 */}
+      {!isRootTab && <div className="h5-subpage-container">{outlet}</div>}
+
+      {isRootTab && (
+        <div className="h5-bottom">
           <TabBar activeKey={page} onChange={(p) => navigate(`/h5/${cid}/${p}`)}>
             {[
               ['home', '首页'],

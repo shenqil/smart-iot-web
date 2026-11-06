@@ -2,9 +2,9 @@ import { type AlarmQuery, alarmDetailQuery, alarmsQuery, processAlarms } from '@
 import { appSitesQuery } from '@shared/api/site'
 import { queryClient } from '@shared/queryClient'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Checkbox, PullToRefresh, SearchBar, TextArea } from 'antd-mobile'
+import { Button, Checkbox, SearchBar, TextArea } from 'antd-mobile'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { useCompanyId, useMe } from '@/hooks/session'
 import { fmtDateTime } from '@/lib/time'
 import { TimeFilter } from '../components/TimeRangeFilter'
@@ -14,10 +14,10 @@ import {
   Card,
   Choice,
   DetailList,
-  Empty,
   Failure,
   Icon,
   Loading,
+  MobileListView,
   Notice,
   Page,
   Pagination,
@@ -41,6 +41,8 @@ export default function AlarmsPage() {
 }
 function AlarmList() {
   const cid = useCompanyId(),
+    location = useLocation(),
+    isTabActive = location.pathname.endsWith('/alarms'),
     { params, setParams, patch, goPage } = useUrlFilters(),
     page = positiveId(params.get('page')) ?? 1,
     processed = ['true', 'all'].includes(params.get('processed') ?? '') ? (params.get('processed') ?? 'false') : 'false'
@@ -55,7 +57,7 @@ function AlarmList() {
     level = Number(params.get('level')),
     type = params.get('type'),
     state = params.get('status')
-  const q: AlarmQuery = {
+  const currentQ: AlarmQuery = {
     siteId: positiveId(params.get('siteId')),
     deviceId: positiveId(params.get('deviceId')),
     level: level >= 1 && level <= 4 ? level : undefined,
@@ -69,20 +71,27 @@ function AlarmList() {
     pageSize: 20,
     sort: '-lastAlarmAt',
   }
-  const query = useQuery(alarmsQuery(cid, q))
+  const qRef = useRef(currentQ)
+  if (isTabActive) {
+    qRef.current = currentQ
+  }
+  const q = isTabActive ? currentQ : qRef.current
+  const query = useQuery({ ...alarmsQuery(cid, q), enabled: isTabActive })
   useEffect(() => {
+    if (!isTabActive) return
     setText(keyword)
-  }, [keyword])
+  }, [keyword, isTabActive])
   // biome-ignore lint/correctness/useExhaustiveDependencies: selection belongs to the exact URL filter and page
   useEffect(() => {
+    if (!isTabActive) return
     setSelected([])
     setMulti(false)
-  }, [signature])
+  }, [signature, isTabActive])
   useEffect(() => {
-    if (text === keyword) return
+    if (!isTabActive || text === keyword) return
     const t = setTimeout(() => patch({ keyword: text.trim() }), 500)
     return () => clearTimeout(t)
-  }, [text, keyword, patch])
+  }, [text, keyword, patch, isTabActive])
   const records = query.isPlaceholderData ? [] : (query.data?.records ?? []),
     base = `/h5/${cid}`
   return (
@@ -124,76 +133,69 @@ function AlarmList() {
           {multi ? '退出多选' : '多选处理'}
         </Button>
       </div>
-      <PullToRefresh
+      <MobileListView
+        items={records}
+        keyExtractor={(a) => a.id}
+        isPending={query.isPending || query.isPlaceholderData}
+        isError={query.isError}
+        error={query.error}
+        onRetry={() => {
+          void query.refetch()
+        }}
         onRefresh={async () => {
           setSelected([])
           await query.refetch()
         }}
-      >
-        <div className="h5-stack">
-          {query.isPending || query.isPlaceholderData ? (
-            <Loading />
-          ) : query.isError ? (
-            <Failure
-              error={query.error}
-              retry={() => {
-                void query.refetch()
-              }}
-            />
-          ) : !records.length ? (
-            <Empty title="暂无匹配告警" />
-          ) : (
-            records.map((a) => (
-              <Card key={a.id} className="h5-record-card">
-                <div className="h5-row">
-                  <div className="h5-tags">
-                    <StatusTag tone={a.level === 1 ? 'danger' : a.level === 2 ? 'warning' : 'info'}>
-                      {LEVELS[a.level] ?? `级别${a.level}`}
-                    </StatusTag>
-                    <StatusTag tone={a.status === 'active' ? 'warning' : 'success'}>
-                      {ALARM_STATES[a.status] ?? a.status}
-                    </StatusTag>
-                    <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
-                  </div>
-                  {multi && !a.processed && (
-                    <Checkbox
-                      checked={selected.includes(a.id)}
-                      onChange={(checked) =>
-                        setSelected((v) => (checked ? [...v, a.id] : v.filter((id) => id !== a.id)))
-                      }
-                      aria-label={`选择${a.description}`}
-                    />
-                  )}
-                </div>
-                <Link className="h5-alarm-title" to={`${base}/alarms/${a.id}`}>
-                  {a.description || '设备告警'} ›
-                </Link>
-                <small>
-                  {a.deviceName} · SN {a.deviceSn} · {TYPES[a.type]}
-                </small>
-                <small className="h5-muted">
-                  最近 {fmtDateTime(a.lastAlarmAt)} · 累计 {a.alarmCount} 次
-                </small>
-                {!a.processed && !multi && (
-                  <Button size="small" fill="outline" onClick={() => setProcessing([a.id])}>
-                    处理
-                  </Button>
-                )}
-                {a.processed && (
-                  <small className="h5-muted">
-                    {a.processorName} · {fmtDateTime(a.processedAt)}
-                  </small>
-                )}
-              </Card>
-            ))
-          )}
-        </div>
-      </PullToRefresh>
-      <Pagination
-        page={page}
-        hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
-        busy={query.isFetching}
-        onChange={goPage}
+        emptyTitle="暂无匹配告警"
+        renderItem={(a) => (
+          <Card key={a.id} className="h5-record-card">
+            <div className="h5-row">
+              <div className="h5-tags">
+                <StatusTag tone={a.level === 1 ? 'danger' : a.level === 2 ? 'warning' : 'info'}>
+                  {LEVELS[a.level] ?? `级别${a.level}`}
+                </StatusTag>
+                <StatusTag tone={a.status === 'active' ? 'warning' : 'success'}>
+                  {ALARM_STATES[a.status] ?? a.status}
+                </StatusTag>
+                <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
+              </div>
+              {multi && !a.processed && (
+                <Checkbox
+                  checked={selected.includes(a.id)}
+                  onChange={(checked) => setSelected((v) => (checked ? [...v, a.id] : v.filter((id) => id !== a.id)))}
+                  aria-label={`选择${a.description}`}
+                />
+              )}
+            </div>
+            <Link className="h5-alarm-title" to={`${base}/alarms/${a.id}`}>
+              {a.description || '设备告警'} ›
+            </Link>
+            <small>
+              {a.deviceName} · SN {a.deviceSn} · {TYPES[a.type]}
+            </small>
+            <small className="h5-muted">
+              最近 {fmtDateTime(a.lastAlarmAt)} · 累计 {a.alarmCount} 次
+            </small>
+            {!a.processed && !multi && (
+              <Button size="small" fill="outline" onClick={() => setProcessing([a.id])}>
+                处理
+              </Button>
+            )}
+            {a.processed && (
+              <small className="h5-muted">
+                {a.processorName} · {fmtDateTime(a.processedAt)}
+              </small>
+            )}
+          </Card>
+        )}
+        footer={
+          <Pagination
+            page={page}
+            hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+            busy={query.isFetching}
+            onChange={goPage}
+          />
+        }
       />
       {multi && (
         <div className="h5-batch-bar">
