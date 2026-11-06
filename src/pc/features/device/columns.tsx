@@ -29,12 +29,7 @@ export function deviceColumns(
       title: '在线',
       dataIndex: 'online',
       width: 90,
-      render: (v, r) =>
-        isVideoDeviceType(nameOf(r.deviceTypeId)) ? (
-          <span className="text-fg-tertiary">-</span>
-        ) : (
-          <OnlineTag online={v} />
-        ),
+      render: (v, r) => <OnlineTag online={isVideoDeviceType(nameOf(r.deviceTypeId)) ? true : v} />,
     },
     {
       title: '通道 (传感器 / 继电器)',

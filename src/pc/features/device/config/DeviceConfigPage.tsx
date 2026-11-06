@@ -175,7 +175,7 @@ export function DeviceConfigPage({
                     onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
                   />
                   <span className="font-semibold text-fg text-sm">{d.name}</span>
-                  {!isVideo && <OnlineTag online={d.online} />}
+                  <OnlineTag online={isVideo ? true : d.online} />
                 </Space>
               ),
               right: (

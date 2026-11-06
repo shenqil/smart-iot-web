@@ -157,7 +157,7 @@ function ScreenBody() {
         ]
       : [],
   )
-  const online = candidates.filter((d) => d.online).length
+  const online = devices.filter((d) => (isVideoDeviceType(typeName(d)) ? true : d.online)).length
   const backTo = `/app/${companyId}/monitor${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
   const recordsLink = `/app/${companyId}/operations${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
   const ctlTop = plan.bottomTop != null ? plan.bottomTop - 50 : plan.height - 20 - 40
@@ -419,23 +419,21 @@ function SiteStage({
 /** 地图气泡 (点击设备后显示)：名称、是否在线、未处理告警数 */
 function Bubble({ point }: { point: ScreenMapPoint }) {
   const isVideo = isVideoDeviceType(point.typeName)
+  const isOnline = isVideo ? true : point.online
   return (
     <div className="min-w-[160px] max-w-[260px]">
       <div className="truncate font-bold text-[14px]" title={point.name}>
         {point.name}
       </div>
-      {!isVideo && (
-        <div className="mt-1.5 flex items-center gap-3 whitespace-nowrap text-[13px]">
-          <span className={point.online ? 'text-[#67e8f9]' : 'text-[#cbd5e1]'}>
-            {point.online ? '● 在线' : '○ 离线'}
-          </span>
-          {point.alarms > 0 ? (
+      <div className="mt-1.5 flex items-center gap-3 whitespace-nowrap text-[13px]">
+        <span className={isOnline ? 'text-[#67e8f9]' : 'text-[#cbd5e1]'}>{isOnline ? '● 在线' : '○ 离线'}</span>
+        {!isVideo &&
+          (point.alarms > 0 ? (
             <span className="text-[#fca5a5]">⚠ {point.alarms} 条告警</span>
           ) : (
             <span className="text-[var(--sc-text-3)]">无告警</span>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
     </div>
   )
 }

@@ -213,12 +213,7 @@ export default function SiteDetailPage() {
           {
             title: '在线',
             dataIndex: 'online',
-            render: (v, r) =>
-              isVideoDeviceType(types.nameOf(r.deviceTypeId)) ? (
-                <span className="text-fg-tertiary">-</span>
-              ) : (
-                <OnlineTag online={v} />
-              ),
+            render: (v, r) => <OnlineTag online={isVideoDeviceType(types.nameOf(r.deviceTypeId)) ? true : v} />,
           },
         ]}
         okText="挂载"

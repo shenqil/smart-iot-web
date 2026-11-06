@@ -108,9 +108,9 @@ export function DeviceInfoCard({
                 {device.name}
               </div>
               <div className="mt-1 flex gap-3 text-[13px]">
-                {!isVideoDeviceType(typeName) && (
-                  <span className={online ? 'text-[#22d3ee]' : 'text-[#cbd5e1]'}>{online ? '● 在线' : '○ 离线'}</span>
-                )}
+                <span className={(isVideoDeviceType(typeName) ? true : online) ? 'text-[#22d3ee]' : 'text-[#cbd5e1]'}>
+                  {(isVideoDeviceType(typeName) ? true : online) ? '● 在线' : '○ 离线'}
+                </span>
                 {updated && <span className="text-[var(--sc-text-2)]">{agoText(updated, now)}更新</span>}
                 {!isVideoDeviceType(typeName) && alarms > 0 && (
                   <span className="text-[#fca5a5]">⚠ {alarms} 条告警</span>

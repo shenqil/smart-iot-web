@@ -59,4 +59,63 @@ describe('PtzPanel', () => {
     })
     expect(calls.map((c) => c.direction)).toEqual([0])
   })
+
+  it('停止间隔 500ms 后没有点击其他方向，补充调用一次 stop', async () => {
+    vi.useFakeTimers()
+    try {
+      setup()
+      const left = screen.getByRole('button', { name: '向左' })
+      await act(async () => {
+        fireEvent.pointerDown(left, { button: 0, pointerId: 1 })
+      })
+      await act(async () => {
+        fireEvent.pointerUp(left, { pointerId: 1 })
+      })
+      expect(calls).toEqual([
+        { action: 'start', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+      ])
+
+      // 快进 500ms
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(calls).toEqual([
+        { action: 'start', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('停止 500ms 内点击了其他方向，取消补充 stop', async () => {
+    vi.useFakeTimers()
+    try {
+      setup()
+      const left = screen.getByRole('button', { name: '向左' })
+      const right = screen.getByRole('button', { name: '向右' })
+      await act(async () => {
+        fireEvent.pointerDown(left, { button: 0, pointerId: 1 })
+        fireEvent.pointerUp(left, { pointerId: 1 })
+      })
+      // 200ms 后点击向右
+      await act(async () => {
+        vi.advanceTimersByTime(200)
+        fireEvent.pointerDown(right, { button: 0, pointerId: 2 })
+      })
+      // 超过 500ms
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(calls).toEqual([
+        { action: 'start', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'start', direction: 3, speed: 1 },
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

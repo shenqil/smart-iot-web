@@ -132,14 +132,15 @@ export default function MapPage() {
               }
             >
               <p>
-                {types.nameOf(selected.deviceTypeId)} · {selected.deviceSn}
-                {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && (
-                  <>
-                    {' · '}
-                    {selected.onlineKnown === false ? '状态未知' : selected.online ? '在线' : '离线'}
-                    {selected.hasAlarm ? ' · 有未处理告警' : ''}
-                  </>
-                )}
+                {types.nameOf(selected.deviceTypeId)} · {selected.deviceSn} ·{' '}
+                {isVideoDeviceType(types.nameOf(selected.deviceTypeId))
+                  ? '在线'
+                  : selected.onlineKnown === false
+                    ? '状态未知'
+                    : selected.online
+                      ? '在线'
+                      : '离线'}
+                {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm ? ' · 有未处理告警' : ''}
               </p>
               {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm && (
                 <Link

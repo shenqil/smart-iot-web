@@ -66,7 +66,7 @@ export interface DeviceMarkerOptions {
 export const deviceMarkerTitle = (
   o: Pick<DeviceMarkerOptions, 'name' | 'online' | 'alarms'> & { kind?: DeviceGlyphKind },
 ) => {
-  if (o.kind === 'camera') return o.name
+  if (o.kind === 'camera') return `${o.name} · 在线`
   const s = deviceMarkerState(o)
   return `${o.name} · ${s === 'alarm' ? `${o.alarms} 条未处理告警` : STATE_TEXT[s]}`
 }

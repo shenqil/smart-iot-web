@@ -40,7 +40,7 @@ export function DeviceHero({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="m-0 truncate font-semibold text-fg text-lg">{device.name}</h2>
-          {!isVideo && <OnlineTag online={online} />}
+          <OnlineTag online={isVideo ? true : online} />
           {device.status !== 'active' && <EnumTag value={device.status} defs={DEVICE_STATUS} />}
           {type && (
             <Tag variant="filled" className="m-0">

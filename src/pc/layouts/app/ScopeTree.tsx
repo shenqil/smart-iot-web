@@ -84,11 +84,12 @@ export function ScopeTree() {
   const kw = keyword.trim().toLowerCase()
   const match = (d: AppDevice) => {
     const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
-    if (isVideo && filter !== 'all') return false
+    const isOnline = isVideo ? true : d.online
+    if (isVideo && filter === 'alarm') return false
     return (
       (filter === 'all' ||
-        (filter === 'online' && d.online) ||
-        (filter === 'offline' && !d.online) ||
+        (filter === 'online' && isOnline) ||
+        (filter === 'offline' && !isOnline) ||
         (filter === 'alarm' && (deviceAlarm.get(d.id) ?? 0) > 0)) &&
       (!kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw))
     )
@@ -117,10 +118,11 @@ export function ScopeTree() {
 
   const deviceTitle = (sid: number, d: AppDevice) => {
     const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
+    const isOnline = isVideo ? true : d.online
     const n = deviceAlarm.get(d.id) ?? 0
     return (
       <span className="group flex items-center gap-2">
-        {!isVideo && <OnlineDot online={d.online} />}
+        <OnlineDot online={isOnline} />
         <span className="truncate">{d.name}</span>
         <span className="ml-auto flex items-center">
           {!isVideo &&
@@ -141,8 +143,7 @@ export function ScopeTree() {
     if (filter === 'alarm' && alarm && alarm.count === 0) return []
     const devices = (all ?? []).filter(match)
     if (kw && all && !devices.length && !s.name.toLowerCase().includes(kw)) return []
-    const nonVideo = (all ?? []).filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
-    const online = nonVideo.filter((d) => d.online).length
+    const online = (all ?? []).filter((d) => (isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online)).length
     return [
       {
         key: `s:${s.id}`,
@@ -155,7 +156,7 @@ export function ScopeTree() {
               {alarm && alarm.count > 0 && <AlarmBadge count={alarm.capped ? '999+' : alarm.count} />}
               {all && (
                 <span className="text-fg-tertiary text-xs">
-                  {online}/{nonVideo.length}
+                  {online}/{all.length}
                 </span>
               )}
             </span>

@@ -181,7 +181,7 @@ export default function AdminDashboard() {
                 <div className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <Link to={`/admin/devices/${d.id}`}>{d.name}</Link>
-                    {!isVideoDeviceType(types.nameOf(d.deviceTypeId)) && <OnlineTag online={d.online} />}
+                    <OnlineTag online={isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online} />
                   </span>
                   <div className="text-fg-tertiary text-sm">
                     <span className="font-mono">{d.deviceSn}</span>{' '}

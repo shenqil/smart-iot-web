@@ -36,8 +36,9 @@ export function CompanyOverview() {
           {list.map((s, i) => {
             const c = counts[i]?.data
             const devices = deviceLists[i]?.data
-            const nonVideo = devices?.filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId))) ?? []
-            const online = nonVideo.filter((d) => d.online).length
+            const online = (devices ?? []).filter((d) =>
+              isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online,
+            ).length
             const address = [s.city, s.district, s.address].filter(Boolean).join(' ')
             return (
               <button
@@ -67,19 +68,19 @@ export function CompanyOverview() {
                     <EnvironmentOutlined className="mr-1" />
                     {address || '未填写地址'}
                   </div>
-                  {nonVideo.length > 0 && (
+                  {devices && (
                     <div className="mt-3 flex items-center gap-3 text-xs">
                       <span className="text-fg-secondary">
-                        在线 <b className="text-fg tabular-nums">{online}</b> / {nonVideo.length}
+                        在线 <b className="text-fg tabular-nums">{online}</b> / {devices.length}
                       </span>
                       <span className="h-1 flex-1 overflow-hidden rounded-full bg-line">
                         <span
                           className="block h-full rounded-full bg-success"
-                          style={{ width: `${(online / nonVideo.length) * 100}%` }}
+                          style={{ width: `${devices.length ? (online / devices.length) * 100 : 0}%` }}
                         />
                       </span>
                       <span className="text-fg-tertiary tabular-nums">
-                        {Math.round((online / nonVideo.length) * 100)}%
+                        {devices.length ? Math.round((online / devices.length) * 100) : 0}%
                       </span>
                     </div>
                   )}

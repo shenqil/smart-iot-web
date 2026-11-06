@@ -19,10 +19,20 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
   const [active, setActive] = useState<number | null>(null)
   const [speed, setSpeed] = useState<Speed>(1)
   const activeRef = useRef<number | null>(null)
+  const speedRef = useRef<Speed>(speed)
+  speedRef.current = speed
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearRetryTimer = () => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
+  }
 
   const send = async (action: 'start' | 'stop', direction: number) => {
     try {
-      const { error } = await controlPTZ(companyId, deviceId, { action, direction, speed })
+      const { error } = await controlPTZ(companyId, deviceId, { action, direction, speed: speedRef.current })
       if (error) throw error
     } catch (e) {
       if (isApiError(e) && (e.status === 401 || COMPANY_DENIED_CODES.has(e.code))) return handleGlobalError(e)
@@ -30,6 +40,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     }
   }
   const start = (dir: number) => {
+    clearRetryTimer()
     if (activeRef.current != null) return
     activeRef.current = dir
     setActive(dir)
@@ -41,6 +52,15 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     activeRef.current = null
     setActive(null)
     send('stop', dir)
+
+    clearRetryTimer()
+    // 停止间隔 500ms 后没有点击其他方向，补充调用一次 stop
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null
+      if (activeRef.current == null) {
+        send('stop', dir)
+      }
+    }, 500)
   }
 
   // 页面失去焦点 / 切走 / 卸载时停止转动
@@ -50,6 +70,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     window.addEventListener('blur', onBlur)
     document.addEventListener('visibilitychange', onBlur)
     return () => {
+      clearRetryTimer()
       window.removeEventListener('blur', onBlur)
       document.removeEventListener('visibilitychange', onBlur)
       stop()

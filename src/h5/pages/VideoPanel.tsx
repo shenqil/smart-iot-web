@@ -137,13 +137,23 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     [uncertain, setUncertain] = useState<number | null>(null)
   const move = useRef<{ direction: number; start: Promise<unknown>; speed: 0 | 1 | 2 } | null>(null),
     alive = useRef(true),
-    stopping = useRef(false)
+    stopping = useRef(false),
+    retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimer.current) {
+      clearTimeout(retryTimer.current)
+      retryTimer.current = null
+    }
+  }, [])
+
   const stop = useCallback(async () => {
     const current = move.current
     if (!current) return
     move.current = null
     stopping.current = true
     if (alive.current) setActive(null)
+    clearRetryTimer()
     try {
       await current.start.catch(() => {})
       const r = await controlPTZ(cid, id, { action: 'stop', direction: current.direction, speed: current.speed })
@@ -155,7 +165,19 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     } finally {
       stopping.current = false
     }
-  }, [cid, id])
+
+    // 停止间隔 500ms 后没有点击其他方向，补充调用一次 stop
+    retryTimer.current = setTimeout(async () => {
+      retryTimer.current = null
+      if (move.current == null && alive.current) {
+        try {
+          await controlPTZ(cid, id, { action: 'stop', direction: current.direction, speed: current.speed })
+        } catch {
+          // 补充 stop 静默处理
+        }
+      }
+    }, 500)
+  }, [cid, id, clearRetryTimer])
   useEffect(() => {
     alive.current = true
     const fn = () => {
@@ -165,12 +187,14 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     document.addEventListener('visibilitychange', fn)
     return () => {
       alive.current = false
+      clearRetryTimer()
       window.removeEventListener('blur', fn)
       document.removeEventListener('visibilitychange', fn)
       void stop()
     }
-  }, [stop])
+  }, [stop, clearRetryTimer])
   const start = (direction: number) => {
+    clearRetryTimer()
     if (move.current || stopping.current || uncertain !== null || document.hidden) return
     const request = controlPTZ(cid, id, { action: 'start', direction, speed })
       .then((r) => {

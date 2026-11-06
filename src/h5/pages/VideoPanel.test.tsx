@@ -66,4 +66,23 @@ describe('移动端云台控制', () => {
     await waitFor(() => expect(button).not.toBeDisabled())
     expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 0, speed: 1 })
   })
+  it('停止间隔 500ms 后没有点击其他方向，补充调用一次 stop', async () => {
+    vi.useFakeTimers()
+    try {
+      setup()
+      const button = screen.getByRole('button', { name: '← 向左' })
+      await act(async () => {
+        fireEvent.keyDown(button, { key: 'Enter' })
+        fireEvent.keyUp(button, { key: 'Enter' })
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(2)
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(3)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 2, speed: 1 })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
