@@ -85,4 +85,61 @@ describe('移动端云台控制', () => {
       vi.useRealTimers()
     }
   })
+  it('松开后所有按钮锁住 600ms 不让点击，600ms 后自动解锁且可正常进行第二次控制', async () => {
+    vi.useFakeTimers()
+    try {
+      setup()
+      const left = screen.getByRole('button', { name: '← 向左' })
+      const right = screen.getByRole('button', { name: '→ 向右' })
+      await act(async () => {
+        fireEvent.pointerDown(left, { button: 0, pointerId: 1 })
+        fireEvent.pointerUp(left, { pointerId: 1 })
+      })
+
+      // 处于锁定状态
+      expect(left).toBeDisabled()
+      expect(right).toBeDisabled()
+
+      // 200ms 尝试点击被拦截
+      await act(async () => {
+        vi.advanceTimersByTime(200)
+        fireEvent.pointerDown(right, { button: 0, pointerId: 2 })
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(2) // 仅第一次的 start 和 stop
+
+      // 500ms 触发第一次补充 stop
+      await act(async () => {
+        vi.advanceTimersByTime(300)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(3)
+
+      // 600ms 解锁
+      await act(async () => {
+        vi.advanceTimersByTime(100)
+      })
+      expect(left).not.toBeDisabled()
+      expect(right).not.toBeDisabled()
+
+      // 第二次点击
+      await act(async () => {
+        fireEvent.pointerDown(right, { button: 0, pointerId: 3 })
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(4)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'start', direction: 3, speed: 1 })
+
+      await act(async () => {
+        fireEvent.pointerUp(right, { pointerId: 3 })
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(5)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 3, speed: 1 })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(6)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 3, speed: 1 })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

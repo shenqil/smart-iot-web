@@ -56,6 +56,14 @@
   touch-action: none;
   user-select: none;
   font: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.h5-ptz:disabled,
+.h5-ptz.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .h5-map {

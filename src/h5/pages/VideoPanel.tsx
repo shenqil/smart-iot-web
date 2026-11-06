@@ -134,11 +134,32 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
   const cid = useCompanyId(),
     [speed, setSpeed] = useState<0 | 1 | 2>(1),
     [active, setActive] = useState<number | null>(null),
-    [uncertain, setUncertain] = useState<number | null>(null)
+    [uncertain, setUncertain] = useState<number | null>(null),
+    [locked, setLocked] = useState(false)
+  const lockedRef = useRef(false)
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const move = useRef<{ direction: number; start: Promise<unknown>; speed: 0 | 1 | 2 } | null>(null),
     alive = useRef(true),
     stopping = useRef(false),
     retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearLockTimer = useCallback(() => {
+    if (lockTimerRef.current) {
+      clearTimeout(lockTimerRef.current)
+      lockTimerRef.current = null
+    }
+  }, [])
+
+  const startLock = useCallback(() => {
+    clearLockTimer()
+    setLocked(true)
+    lockedRef.current = true
+    lockTimerRef.current = setTimeout(() => {
+      lockTimerRef.current = null
+      lockedRef.current = false
+      if (alive.current) setLocked(false)
+    }, 600)
+  }, [clearLockTimer])
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimer.current) {
@@ -153,6 +174,7 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     move.current = null
     stopping.current = true
     if (alive.current) setActive(null)
+    startLock()
     clearRetryTimer()
     try {
       await current.start.catch(() => {})
@@ -177,7 +199,7 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
         }
       }
     }, 500)
-  }, [cid, id, clearRetryTimer])
+  }, [cid, id, clearRetryTimer, startLock])
   useEffect(() => {
     alive.current = true
     const fn = () => {
@@ -188,14 +210,15 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     return () => {
       alive.current = false
       clearRetryTimer()
+      clearLockTimer()
       window.removeEventListener('blur', fn)
       document.removeEventListener('visibilitychange', fn)
       void stop()
     }
-  }, [stop, clearRetryTimer])
+  }, [stop, clearRetryTimer, clearLockTimer])
   const start = (direction: number) => {
+    if (lockedRef.current || move.current || stopping.current || uncertain !== null || document.hidden) return
     clearRetryTimer()
-    if (move.current || stopping.current || uncertain !== null || document.hidden) return
     const request = controlPTZ(cid, id, { action: 'start', direction, speed })
       .then((r) => {
         if (r.error) throw r.error
@@ -209,22 +232,22 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
   const button = (direction: number, label: string) => (
     <button
       type="button"
-      className={active === direction ? 'h5-ptz active' : 'h5-ptz'}
+      className={active === direction ? 'h5-ptz active' : locked ? 'h5-ptz locked' : 'h5-ptz'}
       key={direction}
       aria-label={label}
-      disabled={uncertain !== null}
+      disabled={locked || uncertain !== null}
       onPointerDown={(e) => {
-        if (e.button !== 0) return
+        if (lockedRef.current || e.button !== 0) return
         e.preventDefault()
-        e.currentTarget.setPointerCapture(e.pointerId)
+        e.currentTarget.setPointerCapture?.(e.pointerId)
         start(direction)
       }}
       onPointerUp={() => void stop()}
       onPointerCancel={() => void stop()}
       onLostPointerCapture={() => void stop()}
-      onBlur={() => void stop()}
       onContextMenu={(e) => e.preventDefault()}
       onKeyDown={(e) => {
+        if (lockedRef.current) return
         if (['Enter', ' '].includes(e.key) && !e.repeat) {
           e.preventDefault()
           start(direction)
@@ -252,7 +275,7 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
         </div>
       )}
       <Selector
-        disabled={active !== null}
+        disabled={active !== null || locked}
         options={[
           { label: '慢', value: 0 },
           { label: '中', value: 1 },
@@ -261,6 +284,9 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
         value={[speed]}
         onChange={(v) => setSpeed((v[0] ?? 1) as 0 | 1 | 2)}
       />
+      <p className="h5-muted" style={{ textAlign: 'center', fontSize: 12, marginTop: 10, marginBottom: 0 }}>
+        {locked ? '云台调整中，稍候可继续控制…' : '按住按钮转动，松开停止'}
+      </p>
       {uncertain !== null && (
         <>
           <p className="h5-warning">停止指令未确认，请重试停止并检查摄像头。</p>

@@ -17,17 +17,38 @@ type Speed = 0 | 1 | 2
 export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boolean; zoom: boolean }) {
   const companyId = useCompanyId()
   const [active, setActive] = useState<number | null>(null)
+  const [locked, setLocked] = useState(false)
   const [speed, setSpeed] = useState<Speed>(1)
   const activeRef = useRef<number | null>(null)
+  const lockedRef = useRef(false)
   const speedRef = useRef<Speed>(speed)
   speedRef.current = speed
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearRetryTimer = () => {
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current)
       retryTimerRef.current = null
     }
+  }
+
+  const clearLockTimer = () => {
+    if (lockTimerRef.current) {
+      clearTimeout(lockTimerRef.current)
+      lockTimerRef.current = null
+    }
+  }
+
+  const startLock = () => {
+    clearLockTimer()
+    setLocked(true)
+    lockedRef.current = true
+    lockTimerRef.current = setTimeout(() => {
+      lockTimerRef.current = null
+      lockedRef.current = false
+      setLocked(false)
+    }, 600)
   }
 
   const send = async (action: 'start' | 'stop', direction: number) => {
@@ -40,6 +61,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     }
   }
   const start = (dir: number) => {
+    if (lockedRef.current) return
     clearRetryTimer()
     if (activeRef.current != null) return
     activeRef.current = dir
@@ -52,6 +74,9 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     activeRef.current = null
     setActive(null)
     send('stop', dir)
+
+    // 松开后所有按钮锁住 600ms
+    startLock()
 
     clearRetryTimer()
     // 停止间隔 500ms 后没有点击其他方向，补充调用一次 stop
@@ -71,6 +96,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     document.addEventListener('visibilitychange', onBlur)
     return () => {
       clearRetryTimer()
+      clearLockTimer()
       window.removeEventListener('blur', onBlur)
       document.removeEventListener('visibilitychange', onBlur)
       stop()
@@ -79,7 +105,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
 
   const hold = (dir: number) => ({
     onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
-      if (e.button !== 0) return
+      if (lockedRef.current || e.button !== 0) return
       e.currentTarget.setPointerCapture?.(e.pointerId)
       start(dir)
     },
@@ -87,6 +113,7 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     onPointerCancel: stop,
     onLostPointerCapture: stop,
     onKeyDown: (e: React.KeyboardEvent) => {
+      if (lockedRef.current) return
       if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
         e.preventDefault()
         start(dir)
@@ -95,7 +122,6 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     onKeyUp: (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') stop()
     },
-    onBlur: stop,
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   })
 
@@ -103,11 +129,14 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     <button
       type="button"
       aria-label={label}
-      title={`按住${label}`}
-      className={`absolute ${pos} flex size-12 cursor-pointer touch-none select-none items-center justify-center rounded-full border border-solid text-base transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
-        active === dir
-          ? 'border-primary bg-primary text-white'
-          : 'border-line bg-container text-fg-secondary hover:border-primary hover:text-primary'
+      disabled={locked}
+      title={locked ? '云台调整中…' : `按住${label}`}
+      className={`absolute ${pos} flex size-12 select-none items-center justify-center rounded-full border border-solid text-base transition-colors ${
+        locked
+          ? 'cursor-not-allowed border-line bg-container/50 text-fg-tertiary opacity-50'
+          : active === dir
+            ? 'cursor-pointer touch-none border-primary bg-primary text-white focus-visible:outline-2 focus-visible:outline-primary'
+            : 'cursor-pointer touch-none border-line bg-container text-fg-secondary hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary'
       }`}
       {...hold(dir)}
     >
@@ -119,10 +148,14 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
     <button
       type="button"
       aria-label={label}
-      className={`flex h-10 flex-1 cursor-pointer touch-none select-none items-center justify-center gap-1.5 rounded-md border border-solid text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
-        active === dir
-          ? 'border-primary bg-primary text-white'
-          : 'border-line bg-container text-fg hover:border-primary hover:text-primary'
+      disabled={locked}
+      title={locked ? '云台调整中…' : undefined}
+      className={`flex h-10 flex-1 select-none items-center justify-center gap-1.5 rounded-md border border-solid text-sm transition-colors ${
+        locked
+          ? 'cursor-not-allowed border-line bg-container/50 text-fg-tertiary opacity-50'
+          : active === dir
+            ? 'cursor-pointer touch-none border-primary bg-primary text-white focus-visible:outline-2 focus-visible:outline-primary'
+            : 'cursor-pointer touch-none border-line bg-container text-fg hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary'
       }`}
       {...hold(dir)}
     >
@@ -165,7 +198,9 @@ export function PtzPanel({ deviceId, ptz, zoom }: { deviceId: number; ptz: boole
           ]}
         />
       </div>
-      <p className="m-0 text-center text-fg-tertiary text-xs">按住方向键转动，松开停止</p>
+      <p className="m-0 text-center text-fg-tertiary text-xs">
+        {locked ? '云台调整中，稍候可继续控制…' : '按住方向键转动，松开停止'}
+      </p>
     </div>
   )
 }
