@@ -16,6 +16,9 @@ server {
     add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://*.tianditu.gov.cn https://*.aliyuncs.com https://*.ys7.com; connect-src 'self' https://*.aliyuncs.com https://*.ys7.com https://*.ys7.com:* wss://*.ys7.com:*; style-src 'self' 'unsafe-inline' https://openstatic.ys7.com; script-src 'self' 'wasm-unsafe-eval' https://openstatic.ys7.com; worker-src 'self' blob: https://openstatic.ys7.com; media-src 'self' blob:; font-src 'self' data: https://openstatic.ys7.com" always;
 
     # 静态资源缓存策略
+    location = /version.txt {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
     location = /index.html {
         add_header Cache-Control "no-cache";
     }

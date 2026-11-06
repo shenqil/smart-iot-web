@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router'
 import { FullPageSpinner } from '@/shared/components/FullPageSpinner'
 import { queryClient } from '@/shared/queryClient'
 import { SessionWatcher } from '@/shared/SessionWatcher'
+import { VersionUpdateDialog } from './components/VersionUpdateDialog'
 import DesktopProviders from './Providers'
 import { router } from './router'
 
@@ -16,6 +17,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <DesktopProviders>
         <SessionWatcher />
+        <VersionUpdateDialog />
         {state.initialized ? <RouterProvider router={router} /> : <FullPageSpinner />}
       </DesktopProviders>
     </QueryClientProvider>

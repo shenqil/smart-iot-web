@@ -3,6 +3,7 @@ import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { versionPlugin } from './vite-plugin-version.ts'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -14,6 +15,7 @@ export default defineConfig(({ mode }) => {
       react(),
       babel({ presets: [reactCompilerPreset()] }),
       tailwindcss(),
+      versionPlugin(),
       {
         name: 'h5-history-fallback',
         configureServer(server) {
