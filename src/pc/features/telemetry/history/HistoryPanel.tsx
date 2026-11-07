@@ -1,18 +1,18 @@
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, DatePicker, Empty, Segmented, Spin, Tooltip } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { notify } from '@/app/notify'
 import { handleGlobalError } from '@/app/queryClient'
 import type { AppDevice } from '@/features/device/api'
 import { useCompanyId } from '@/hooks/session'
-import { type ECharts, type ECOption, echarts, useECharts } from '@/hooks/useECharts'
+import { type ECharts, type ECOption, useECharts } from '@/hooks/useECharts'
 import { decimalsOf } from '@/lib/resolution'
 import { BIZ_TZ, bizNow, dayjs } from '@/lib/time'
 import { ChannelPicker } from '../ChannelPicker'
 import { saveBlob } from '../export/runExport'
 import { bizToPicker, earliestDate, MAX_RANGE_DAYS, pickerToBiz, type Range } from '../export/timeRange'
 import { downloadHistory } from '../history'
-import { channelColor, groupByUnit } from '../lib/channelColor'
+import { channelColor } from '../lib/channelColor'
 import { type AppSensor, byChannel, channelName } from '../lib/realtime'
 import { HistoryWorker } from './historyWorker'
 
@@ -54,10 +54,13 @@ type Series = Map<number, [number, number][]>
 const toPairs = (a: Float64Array) =>
   Array.from({ length: a.length / 2 }, (_, i) => [a[i * 2], a[i * 2 + 1]] as [number, number])
 
+const sameWindow = (a: [number, number] | null, b: [number, number] | null) =>
+  a === b || Boolean(a && b && Math.abs(a[0] - b[0]) < 1000 && Math.abs(a[1] - b[1]) < 1000)
+
 /**
  * 历史曲线 (FRONTEND_DESIGN §5.3)
  * - fetch 流式下载显示进度、可取消；Worker 解析 JSON 并 LTTB 降采样 (约 2,000 点 / 通道)
- * - 按单位分组，一组一张图 (不用双 Y 轴)，多张图联动缩放；缩放后 Worker 按新区间重新降采样
+ * - 每个通道独立卡片展现，单独滚动缩放，各带数据缩放滑块与指标统计
  * - 导出 CSV 在 Worker 内生成
  */
 export function HistoryPanel({
@@ -76,7 +79,6 @@ export function HistoryPanel({
   const [custom, setCustom] = useState<Range | null>(null)
   const [status, setStatus] = useState<Status>({ kind: 'loading', received: 0, parsing: false })
   const [series, setSeries] = useState<Series>(new Map())
-  const [zoom, setZoom] = useState<[number, number] | null>(null)
   const [exporting, setExporting] = useState(false)
   const workerRef = useRef<HistoryWorker | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -92,7 +94,6 @@ export function HistoryPanel({
     workerRef.current = worker
     setStatus({ kind: 'loading', received: 0, parsing: false })
     setSeries(new Map())
-    setZoom(null)
     ;(async () => {
       try {
         const bytes = await downloadHistory({
@@ -120,14 +121,14 @@ export function HistoryPanel({
     }
   }, [companyId, device.id, range, allChannels, reloadKey])
 
-  // 降采样：数据就绪、通道或缩放窗口变化时
+  // 初始全量降采样：数据就绪或通道变化时为每个通道采样概览数据
   const channelKey = channels.join(',')
   useEffect(() => {
     const worker = workerRef.current
     if (status.kind !== 'ready' || !status.count || !worker || !channelKey) return
     let stale = false
     worker
-      .sample(channelKey.split(',').map(Number), POINTS, zoom?.[0], zoom?.[1])
+      .sample(channelKey.split(',').map(Number), POINTS)
       .then((r) => {
         if (!stale) setSeries(new Map(r.series.map((s) => [s.channel, toPairs(s.data)])))
       })
@@ -135,7 +136,16 @@ export function HistoryPanel({
     return () => {
       stale = true
     }
-  }, [status, channelKey, zoom])
+  }, [status, channelKey])
+
+  // 单通道独立缩放时的细粒度降采样接口
+  const sampleChannel = useCallback(async (channel: number, from?: number, to?: number) => {
+    const worker = workerRef.current
+    if (!worker) return []
+    const r = await worker.sample([channel], POINTS, from, to)
+    const found = r.series.find((s) => s.channel === channel)
+    return found ? toPairs(found.data) : []
+  }, [])
 
   const choosePreset = (p: Preset) => {
     setPreset(p)
@@ -171,8 +181,6 @@ export function HistoryPanel({
   const earliest = bizToPicker(earliestDate())
   const today = bizToPicker(bizNow().endOf('day'))
   const selected = sensors.filter((s) => channels.includes(s.channel))
-  const groups = groupByUnit(selected)
-  const group = `history-${device.id}`
 
   return (
     <div className="flex flex-col gap-4">
@@ -220,8 +228,8 @@ export function HistoryPanel({
         <ChannelPicker sensors={sensors} value={channels} onChange={onChannelsChange} />
       </div>
 
-      <div className="rounded-lg bg-container px-5 py-4">
-        {status.kind === 'loading' ? (
+      {status.kind === 'loading' ? (
+        <div className="rounded-lg bg-container px-5 py-4">
           <div className="flex h-72 flex-col items-center justify-center gap-3 text-fg-secondary">
             <Spin />
             <span>{status.parsing ? '正在处理数据…' : `正在下载数据… 已接收 ${fmtMB(status.received)}`}</span>
@@ -235,11 +243,15 @@ export function HistoryPanel({
               取消
             </Button>
           </div>
-        ) : status.kind === 'canceled' ? (
-          <Empty className="py-12" description="已取消加载">
+        </div>
+      ) : status.kind === 'canceled' ? (
+        <div className="rounded-lg bg-container py-12">
+          <Empty description="已取消加载">
             <Button onClick={() => setReloadKey((k) => k + 1)}>重新加载</Button>
           </Empty>
-        ) : status.kind === 'error' ? (
+        </div>
+      ) : status.kind === 'error' ? (
+        <div className="rounded-lg bg-container p-5">
           <Alert
             type="error"
             showIcon
@@ -251,85 +263,114 @@ export function HistoryPanel({
               </Button>
             }
           />
-        ) : status.count === 0 ? (
-          <Empty className="py-12" description="该时间段没有数据" />
-        ) : (
-          <>
-            <div className="mb-2 flex items-center justify-between text-fg-tertiary text-xs">
-              <span>
-                共 {status.count.toLocaleString()} 帧
-                {status.count > POINTS && '，曲线已按形状抽稀；拖动下方滑块或滚轮缩放查看细节'}
-              </span>
-              {zoom && (
-                <Button type="link" size="small" className="px-0" onClick={() => setZoom(null)}>
-                  重置缩放
-                </Button>
-              )}
-            </div>
-            {groups.map((g, i) => (
-              <UnitChart
-                key={g.unit || '-'}
-                group={group}
-                unit={g.unit}
-                sensors={g.sensors}
+        </div>
+      ) : status.count === 0 ? (
+        <div className="rounded-lg bg-container py-12">
+          <Empty description="该时间段没有数据" />
+        </div>
+      ) : selected.length === 0 ? (
+        <div className="rounded-lg bg-container py-12">
+          <Empty description="请在上方选择需要查看的传感器通道" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between px-1 text-fg-tertiary text-xs">
+            <span>
+              共 {status.count.toLocaleString()} 帧
+              {status.count > POINTS && '，曲线已按形状抽稀；拖动各通道下方滑块或滚轮可单独缩放查看细节'}
+            </span>
+          </div>
+          <div className="flex flex-col gap-4">
+            {selected.map((sensor) => (
+              <ChannelHistoryCard
+                key={sensor.channel}
+                sensor={sensor}
                 allSensors={sensors}
-                series={series}
                 range={range}
-                zoom={zoom}
-                slider={i === groups.length - 1}
-                onZoom={(z) => setZoom((prev) => (sameWindow(prev, z) ? prev : z))}
+                initialData={series.get(sensor.channel) ?? []}
+                onSample={(from, to) => sampleChannel(sensor.channel, from, to)}
               />
             ))}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-const sameWindow = (a: [number, number] | null, b: [number, number] | null) =>
-  a === b || Boolean(a && b && Math.abs(a[0] - b[0]) < 1000 && Math.abs(a[1] - b[1]) < 1000)
-
-/** 一种单位一张图；同组图表联动缩放，最后一张带缩放滑块 */
-function UnitChart({
-  group,
-  unit,
-  sensors,
+/** 单通道独立卡片：单独图表、独立滚动与缩放、自带数据缩放滑块及指标统计 */
+function ChannelHistoryCard({
+  sensor,
   allSensors,
-  series,
   range,
-  zoom,
-  slider,
-  onZoom,
+  initialData,
+  onSample,
 }: {
-  group: string
-  unit: string
-  sensors: AppSensor[]
+  sensor: AppSensor
   allSensors: AppSensor[]
-  series: Series
   range: [number, number]
-  zoom: [number, number] | null
-  slider: boolean
-  onZoom: (z: [number, number] | null) => void
+  initialData: [number, number][]
+  onSample: (from?: number, to?: number) => Promise<[number, number][]>
 }) {
-  const decimals = Math.max(...sensors.map((s) => decimalsOf(s.resolution)))
-  const sensorsKey = sensors.map((s) => `${s.channel}:${channelName(s)}`).join('|')
-  // 只在数据、范围、缩放变化时重建图表配置 (避免父组件每秒刷新时重置提示框)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: sensors 以 sensorsKey 代表
+  const [data, setData] = useState<[number, number][]>(initialData)
+  const [zoom, setZoom] = useState<[number, number] | null>(null)
+  const zoomRef = useRef(zoom)
+  zoomRef.current = zoom
+  const onSampleRef = useRef(onSample)
+  onSampleRef.current = onSample
+  const rangeRef = useRef(range)
+  rangeRef.current = range
+  const initialDataRef = useRef(initialData)
+  initialDataRef.current = initialData
+
+  // 外部全量数据或范围变更时重置
+  useEffect(() => {
+    setData(initialData)
+    setZoom(null)
+  }, [initialData])
+
+  const decimals = decimalsOf(sensor.resolution)
+  const color = channelColor(allSensors, sensor.channel)
+  const unit = sensor.unit?.trim()
+
+  // 统计指标：最新值、最大值、最小值、平均值 (当前视窗范围)
+  const stats = useMemo(() => {
+    if (!data.length) return null
+    const [wStart, wEnd] = zoom ?? range
+    let min = Number.POSITIVE_INFINITY
+    let max = Number.NEGATIVE_INFINITY
+    let sum = 0
+    let count = 0
+    let latestTime = -1
+    let latestVal: number | null = null
+
+    for (let i = 0; i < data.length; i++) {
+      const [t, v] = data[i]
+      if (t >= wStart && t <= wEnd && typeof v === 'number' && !Number.isNaN(v)) {
+        if (v < min) min = v
+        if (v > max) max = v
+        sum += v
+        count++
+        if (t > latestTime) {
+          latestTime = t
+          latestVal = v
+        }
+      }
+    }
+    if (count === 0) return null
+    return {
+      min: min.toFixed(decimals),
+      max: max.toFixed(decimals),
+      avg: (sum / count).toFixed(decimals),
+      latest: latestVal != null ? latestVal.toFixed(decimals) : '—',
+    }
+  }, [data, decimals, zoom, range])
+
   const option = useMemo<ECOption>(
     () => ({
       animation: false,
-      color: sensors.map((s) => channelColor(allSensors, s.channel)),
-      grid: { left: 8, right: 16, top: 36, bottom: slider ? 56 : 8, containLabel: true },
-      legend: {
-        top: 0,
-        left: 0,
-        icon: 'roundRect',
-        itemWidth: 12,
-        itemHeight: 3,
-        textStyle: { color: '#475569' },
-        formatter: (name: string) => (unit ? `${name} (${unit})` : name),
-      },
+      color: [color],
+      grid: { left: 8, right: 16, top: 16, bottom: 44, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'line', lineStyle: { color: '#94a3b8' } },
@@ -351,53 +392,111 @@ function UnitChart({
       },
       dataZoom: [
         { type: 'inside', filterMode: 'none', startValue: zoom?.[0], endValue: zoom?.[1] },
-        ...(slider
-          ? [
-              {
-                type: 'slider' as const,
-                filterMode: 'none' as const,
-                height: 24,
-                bottom: 8,
-                startValue: zoom?.[0],
-                endValue: zoom?.[1],
-              },
-            ]
-          : []),
+        {
+          type: 'slider',
+          filterMode: 'none',
+          height: 20,
+          bottom: 4,
+          startValue: zoom?.[0],
+          endValue: zoom?.[1],
+        },
       ],
-      series: sensors.map((s) => ({
-        type: 'line' as const,
-        name: channelName(s),
-        showSymbol: false,
-        sampling: undefined,
-        lineStyle: { width: 2 },
-        emphasis: { disabled: true },
-        data: series.get(s.channel) ?? [],
-      })),
+      series: [
+        {
+          type: 'line',
+          name: channelName(sensor),
+          showSymbol: false,
+          sampling: undefined,
+          lineStyle: { width: 2 },
+          areaStyle: { opacity: 0.06 },
+          emphasis: { disabled: true },
+          data,
+        },
+      ],
     }),
-    [sensorsKey, unit, decimals, series, range, zoom, slider],
+    [color, decimals, unit, range, zoom, sensor, data],
   )
 
-  const onZoomRef = useRef(onZoom)
-  onZoomRef.current = onZoom
-  const rangeRef = useRef(range)
-  rangeRef.current = range
-  const { ref } = useECharts(option, (chart: ECharts) => {
-    chart.group = group
-    echarts.connect(group)
+  const { ref, chart: chartRef } = useECharts(option, (chart: ECharts) => {
     let timer: ReturnType<typeof setTimeout> | undefined
     chart.on('datazoom', () => {
       clearTimeout(timer)
-      timer = setTimeout(() => {
+      timer = setTimeout(async () => {
         const dz = (chart.getOption().dataZoom as { start?: number; end?: number }[] | undefined)?.[0]
         const [a, b] = rangeRef.current
         const start = dz?.start ?? 0
         const end = dz?.end ?? 100
-        if (start <= 0.01 && end >= 99.99) onZoomRef.current(null)
-        else onZoomRef.current([a + ((b - a) * start) / 100, a + ((b - a) * end) / 100])
+        if (start <= 0.01 && end >= 99.99) {
+          if (zoomRef.current !== null) {
+            setZoom(null)
+            setData(initialDataRef.current)
+          }
+        } else {
+          const from = a + ((b - a) * start) / 100
+          const to = a + ((b - a) * end) / 100
+          const nextZoom: [number, number] = [from, to]
+          if (!sameWindow(zoomRef.current, nextZoom)) {
+            setZoom(nextZoom)
+            try {
+              const sampled = await onSampleRef.current(from, to)
+              if (sampled.length > 0) setData(sampled)
+            } catch {}
+          }
+        }
       }, 250)
     })
     return () => clearTimeout(timer)
   })
 
-  return <div ref={ref} style={{ height: slider ? 300 : 248 }} className="w-full" />
+  const handleResetZoom = () => {
+    setZoom(null)
+    setData(initialDataRef.current)
+    chartRef.current?.dispatchAction({
+      type: 'dataZoom',
+      start: 0,
+      end: 100,
+    })
+  }
+
+  return (
+    <div className="rounded-lg bg-container px-5 py-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-line border-b border-solid pb-3">
+        <div className="flex items-baseline gap-2">
+          <span className="font-semibold text-base text-fg-primary">{channelName(sensor)}</span>
+          {unit && <span className="text-fg-tertiary text-xs">({unit})</span>}
+          <span className="rounded bg-fill-tertiary px-1.5 py-0.5 text-fg-tertiary text-xs">通道 {sensor.channel}</span>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          {stats ? (
+            <div className="flex flex-wrap items-center gap-3 text-fg-tertiary">
+              <span>
+                最新 <strong className="font-medium text-fg-primary">{stats.latest}</strong>
+                {unit && <span className="ml-0.5 opacity-80">{unit}</span>}
+              </span>
+              <span>
+                最高 <strong className="font-medium text-fg-primary">{stats.max}</strong>
+                {unit && <span className="ml-0.5 opacity-80">{unit}</span>}
+              </span>
+              <span>
+                最低 <strong className="font-medium text-fg-primary">{stats.min}</strong>
+                {unit && <span className="ml-0.5 opacity-80">{unit}</span>}
+              </span>
+              <span>
+                平均 <strong className="font-medium text-fg-primary">{stats.avg}</strong>
+                {unit && <span className="ml-0.5 opacity-80">{unit}</span>}
+              </span>
+            </div>
+          ) : (
+            <span className="text-fg-tertiary">该通道暂无数据</span>
+          )}
+          {zoom && (
+            <Button type="link" size="small" className="h-auto p-0 text-xs" onClick={handleResetZoom}>
+              重置缩放
+            </Button>
+          )}
+        </div>
+      </div>
+      <div ref={ref} className="h-64 w-full" />
+    </div>
+  )
 }

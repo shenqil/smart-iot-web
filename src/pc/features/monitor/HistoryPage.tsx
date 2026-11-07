@@ -9,7 +9,7 @@ import { useScope } from '@/layouts/app/useScope'
 
 function HistoryContent({ device }: { device: AppDevice }) {
   const sensors = byChannel(device.sensors)
-  const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channel))
+  const [channels, setChannels] = useState(() => sensors.map((s) => s.channel))
   return <HistoryPanel device={device} channels={channels} onChannelsChange={setChannels} />
 }
 
