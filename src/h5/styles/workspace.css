@@ -38,24 +38,53 @@
   background: #122a25;
   border-radius: 14px;
   overflow: hidden;
-  min-height: 170px;
-  margin: 12px 0;
+  min-height: 150px;
+  max-height: 28vh;
+  margin: 6px 0 8px 0;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.h5-video > div,
+.h5-video video {
+  width: 100%;
+  max-height: 28vh;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
 }
 
 .h5-ptz-panel {
-  padding-top: 18px;
+  padding-top: 6px;
+}
+
+.h5-ptz-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.h5-ptz-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: space-between;
 }
 
 .h5-ptz {
-  min-height: 50px;
-  border-radius: 12px;
+  font: inherit;
+  min-height: 38px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
   border: 1px solid #d9e9df;
   background: #f4faf5;
   color: #3f775e;
   touch-action: none;
   user-select: none;
-  font: inherit;
   transition: opacity 0.2s ease;
 }
 

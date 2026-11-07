@@ -1,9 +1,10 @@
-import { cameraLiveQuery, controlPTZ, PTZ } from '@shared/api/camera'
+import { cameraLiveQuery, PTZ } from '@shared/api/camera'
 import type { AppDevice } from '@shared/api/device'
+import { usePtzControl } from '@shared/hooks/usePtzControl'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Selector } from 'antd-mobile'
 import type { EZUIKitPlayer } from 'ezuikit-js'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useCompanyId } from '@/hooks/session'
 import { Card, Failure, Loading, showFailure, useVisible } from '../ui'
 
@@ -17,15 +18,26 @@ export default function VideoPanel({ device }: { device: AppDevice }) {
     <Card
       title="实时视频"
       extra={
-        <Button
-          size="mini"
-          fill="none"
-          onClick={() => {
-            void qc.resetQueries({ queryKey: cameraLiveQuery(cid, device.id).queryKey })
-          }}
-        >
-          重新连接
-        </Button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <Button
+            size="mini"
+            fill="none"
+            onClick={() => {
+              void qc.resetQueries({ queryKey: cameraLiveQuery(cid, device.id).queryKey })
+            }}
+          >
+            重新连接
+          </Button>
+          <Button
+            size="mini"
+            fill="outline"
+            onClick={() => {
+              box.current?.requestFullscreen?.().catch(showFailure)
+            }}
+          >
+            全屏播放
+          </Button>
+        </div>
       }
     >
       {q.isPending ? (
@@ -58,25 +70,16 @@ export default function VideoPanel({ device }: { device: AppDevice }) {
                 <p>页面已隐藏，暂停视频取流</p>
               )}
             </div>
-            <Button
-              block
-              fill="outline"
-              onClick={() => {
-                box.current?.requestFullscreen?.().catch(showFailure)
-              }}
-            >
-              全屏播放
-            </Button>
             {(q.data.ptz || q.data.zoom) && (
               <Ptz key={`${cid}:${device.id}`} id={device.id} ptz={q.data.ptz} zoom={q.data.zoom} />
             )}
           </>
         )
       )}
-      <p className="h5-muted">视频需要稳定网络。云台按住转动，松开停止；控制失败时请检查摄像头状态。</p>
     </Card>
   )
 }
+
 function Ezviz({ url, token }: { url: string; token: string }) {
   const id = `mobile-video-${useId().replace(/[^\w-]/g, '')}`,
     ref = useRef<HTMLDivElement>(null),
@@ -130,105 +133,16 @@ function Ezviz({ url, token }: { url: string; token: string }) {
     </div>
   )
 }
+
 export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean }) {
-  const cid = useCompanyId(),
-    [speed, setSpeed] = useState<0 | 1 | 2>(1),
-    [active, setActive] = useState<number | null>(null),
-    [uncertain, setUncertain] = useState<number | null>(null),
-    [locked, setLocked] = useState(false)
-  const lockedRef = useRef(false)
-  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const move = useRef<{ direction: number; start: Promise<unknown>; speed: 0 | 1 | 2 } | null>(null),
-    alive = useRef(true),
-    stopping = useRef(false),
-    retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cid = useCompanyId()
+  const { active, locked, speed, setSpeed, uncertain, retryStop, bindDirection } = usePtzControl({
+    companyId: cid,
+    deviceId: id,
+    initialSpeed: 1,
+    onError: showFailure,
+  })
 
-  const clearLockTimer = useCallback(() => {
-    if (lockTimerRef.current) {
-      clearTimeout(lockTimerRef.current)
-      lockTimerRef.current = null
-    }
-  }, [])
-
-  const startLock = useCallback(() => {
-    clearLockTimer()
-    setLocked(true)
-    lockedRef.current = true
-    lockTimerRef.current = setTimeout(() => {
-      lockTimerRef.current = null
-      lockedRef.current = false
-      if (alive.current) setLocked(false)
-    }, 600)
-  }, [clearLockTimer])
-
-  const clearRetryTimer = useCallback(() => {
-    if (retryTimer.current) {
-      clearTimeout(retryTimer.current)
-      retryTimer.current = null
-    }
-  }, [])
-
-  const stop = useCallback(async () => {
-    const current = move.current
-    if (!current) return
-    move.current = null
-    stopping.current = true
-    if (alive.current) setActive(null)
-    startLock()
-    clearRetryTimer()
-    try {
-      await current.start.catch(() => {})
-      const r = await controlPTZ(cid, id, { action: 'stop', direction: current.direction, speed: current.speed })
-      if (r.error) throw r.error
-      if (alive.current) setUncertain(null)
-    } catch (e) {
-      if (alive.current) setUncertain(current.direction)
-      showFailure(e)
-    } finally {
-      stopping.current = false
-    }
-
-    // 停止间隔 500ms 后没有点击其他方向，补充调用一次 stop
-    retryTimer.current = setTimeout(async () => {
-      retryTimer.current = null
-      if (move.current == null && alive.current) {
-        try {
-          await controlPTZ(cid, id, { action: 'stop', direction: current.direction, speed: current.speed })
-        } catch {
-          // 补充 stop 静默处理
-        }
-      }
-    }, 500)
-  }, [cid, id, clearRetryTimer, startLock])
-  useEffect(() => {
-    alive.current = true
-    const fn = () => {
-      void stop()
-    }
-    window.addEventListener('blur', fn)
-    document.addEventListener('visibilitychange', fn)
-    return () => {
-      alive.current = false
-      clearRetryTimer()
-      clearLockTimer()
-      window.removeEventListener('blur', fn)
-      document.removeEventListener('visibilitychange', fn)
-      void stop()
-    }
-  }, [stop, clearRetryTimer, clearLockTimer])
-  const start = (direction: number) => {
-    if (lockedRef.current || move.current || stopping.current || uncertain !== null || document.hidden) return
-    clearRetryTimer()
-    const request = controlPTZ(cid, id, { action: 'start', direction, speed })
-      .then((r) => {
-        if (r.error) throw r.error
-      })
-      .catch((e) => {
-        showFailure(e)
-      })
-    move.current = { direction, start: request, speed }
-    setActive(direction)
-  }
   const button = (direction: number, label: string) => (
     <button
       type="button"
@@ -236,76 +150,56 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
       key={direction}
       aria-label={label}
       disabled={locked || uncertain !== null}
-      onPointerDown={(e) => {
-        if (lockedRef.current || e.button !== 0) return
-        e.preventDefault()
-        e.currentTarget.setPointerCapture?.(e.pointerId)
-        start(direction)
-      }}
-      onPointerUp={() => void stop()}
-      onPointerCancel={() => void stop()}
-      onLostPointerCapture={() => void stop()}
-      onContextMenu={(e) => e.preventDefault()}
-      onKeyDown={(e) => {
-        if (lockedRef.current) return
-        if (['Enter', ' '].includes(e.key) && !e.repeat) {
-          e.preventDefault()
-          start(direction)
-        }
-      }}
-      onKeyUp={() => void stop()}
+      {...bindDirection(direction)}
     >
       {label}
     </button>
   )
+
   return (
     <div className="h5-ptz-panel">
-      {ptz && (
-        <div className="h5-grid-two">
-          {button(PTZ.UP, '↑ 向上')}
-          {button(PTZ.DOWN, '↓ 向下')}
-          {button(PTZ.LEFT, '← 向左')}
-          {button(PTZ.RIGHT, '→ 向右')}
+      <div className="h5-ptz-compact">
+        {ptz && (
+          <div className="h5-ptz-col">
+            <div className="h5-grid-two">
+              {button(PTZ.UP, '↑ 向上')}
+              {button(PTZ.DOWN, '↓ 向下')}
+              {button(PTZ.LEFT, '← 向左')}
+              {button(PTZ.RIGHT, '→ 向右')}
+            </div>
+          </div>
+        )}
+        <div className="h5-ptz-col">
+          {zoom && (
+            <div className="h5-grid-two">
+              {button(PTZ.ZOOM_IN, '＋ 放大')}
+              {button(PTZ.ZOOM_OUT, '－ 缩小')}
+            </div>
+          )}
+          <Selector
+            disabled={active !== null || locked}
+            options={[
+              { label: '慢', value: 0 },
+              { label: '中', value: 1 },
+              { label: '快', value: 2 },
+            ]}
+            value={[speed]}
+            onChange={(v) => setSpeed((v[0] ?? 1) as 0 | 1 | 2)}
+          />
         </div>
-      )}
-      {zoom && (
-        <div className="h5-grid-two">
-          {button(PTZ.ZOOM_IN, '＋ 放大')}
-          {button(PTZ.ZOOM_OUT, '－ 缩小')}
-        </div>
-      )}
-      <Selector
-        disabled={active !== null || locked}
-        options={[
-          { label: '慢', value: 0 },
-          { label: '中', value: 1 },
-          { label: '快', value: 2 },
-        ]}
-        value={[speed]}
-        onChange={(v) => setSpeed((v[0] ?? 1) as 0 | 1 | 2)}
-      />
-      <p className="h5-muted" style={{ textAlign: 'center', fontSize: 12, marginTop: 10, marginBottom: 0 }}>
+      </div>
+      <p className="h5-muted" style={{ textAlign: 'center', fontSize: 11, marginTop: 6, marginBottom: 0 }}>
         {locked ? '云台调整中，稍候可继续控制…' : '按住按钮转动，松开停止'}
       </p>
       {uncertain !== null && (
-        <>
-          <p className="h5-warning">停止指令未确认，请重试停止并检查摄像头。</p>
-          <Button
-            color="danger"
-            block
-            onClick={async () => {
-              try {
-                const r = await controlPTZ(cid, id, { action: 'stop', direction: uncertain, speed })
-                if (r.error) throw r.error
-                setUncertain(null)
-              } catch (e) {
-                showFailure(e)
-              }
-            }}
-          >
+        <div style={{ marginTop: 6 }}>
+          <p className="h5-warning" style={{ margin: '0 0 6px 0', fontSize: 12 }}>
+            停止指令未确认，请重试停止并检查摄像头。
+          </p>
+          <Button color="danger" block size="small" onClick={() => void retryStop()}>
             重试停止
           </Button>
-        </>
+        </div>
       )}
     </div>
   )

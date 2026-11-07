@@ -66,7 +66,7 @@ describe('移动端云台控制', () => {
     await waitFor(() => expect(button).not.toBeDisabled())
     expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 0, speed: 1 })
   })
-  it('停止间隔 500ms 后没有点击其他方向，补充调用一次 stop', async () => {
+  it('停止间隔 500ms 和 900ms 分别补充调用两次 stop', async () => {
     vi.useFakeTimers()
     try {
       setup()
@@ -81,11 +81,17 @@ describe('移动端云台控制', () => {
       })
       expect(controlPTZ).toHaveBeenCalledTimes(3)
       expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 2, speed: 1 })
+
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(4)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 2, speed: 1 })
     } finally {
       vi.useRealTimers()
     }
   })
-  it('松开后所有按钮锁住 600ms 不让点击，600ms 后自动解锁且可正常进行第二次控制', async () => {
+  it('松开后所有按钮锁住 1s 不让点击，1s 后自动解锁且可正常进行第二次控制', async () => {
     vi.useFakeTimers()
     try {
       setup()
@@ -113,7 +119,13 @@ describe('移动端云台控制', () => {
       })
       expect(controlPTZ).toHaveBeenCalledTimes(3)
 
-      // 600ms 解锁
+      // 900ms 触发第二次补充 stop
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(4)
+
+      // 1000ms 解锁
       await act(async () => {
         vi.advanceTimersByTime(100)
       })
@@ -124,19 +136,25 @@ describe('移动端云台控制', () => {
       await act(async () => {
         fireEvent.pointerDown(right, { button: 0, pointerId: 3 })
       })
-      expect(controlPTZ).toHaveBeenCalledTimes(4)
+      expect(controlPTZ).toHaveBeenCalledTimes(5)
       expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'start', direction: 3, speed: 1 })
 
       await act(async () => {
         fireEvent.pointerUp(right, { pointerId: 3 })
       })
-      expect(controlPTZ).toHaveBeenCalledTimes(5)
+      expect(controlPTZ).toHaveBeenCalledTimes(6)
       expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 3, speed: 1 })
 
       await act(async () => {
         vi.advanceTimersByTime(500)
       })
-      expect(controlPTZ).toHaveBeenCalledTimes(6)
+      expect(controlPTZ).toHaveBeenCalledTimes(7)
+      expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 3, speed: 1 })
+
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(controlPTZ).toHaveBeenCalledTimes(8)
       expect(controlPTZ).toHaveBeenLastCalledWith(3, 7, { action: 'stop', direction: 3, speed: 1 })
     } finally {
       vi.useRealTimers()

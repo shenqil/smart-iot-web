@@ -60,7 +60,7 @@ describe('PtzPanel', () => {
     expect(calls.map((c) => c.direction)).toEqual([0])
   })
 
-  it('停止间隔 500ms 后补充调用一次 stop', async () => {
+  it('停止间隔 500ms 和 900ms 分别补充调用两次 stop', async () => {
     vi.useFakeTimers()
     try {
       setup()
@@ -85,12 +85,23 @@ describe('PtzPanel', () => {
         { action: 'stop', direction: 2, speed: 1 },
         { action: 'stop', direction: 2, speed: 1 },
       ])
+
+      // 快进 400ms (到 900ms)
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(calls).toEqual([
+        { action: 'start', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+      ])
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it('松开后所有按钮锁住 600ms 不让点击，600ms 后自动解锁且可正常进行第二次控制', async () => {
+  it('松开后所有按钮锁住 1s 不让点击，1s 后自动解锁且可正常进行第二次控制', async () => {
     vi.useFakeTimers()
     try {
       setup()
@@ -119,7 +130,7 @@ describe('PtzPanel', () => {
         { action: 'stop', direction: 2, speed: 1 },
       ])
 
-      // 推进到 500ms，触发第一次操作的补充 stop
+      // 推进到 500ms，触发第一次操作的第 1 次补充 stop
       await act(async () => {
         vi.advanceTimersByTime(300)
       })
@@ -129,7 +140,18 @@ describe('PtzPanel', () => {
         { action: 'stop', direction: 2, speed: 1 },
       ])
 
-      // 推进到 600ms，解锁
+      // 推进到 900ms，触发第 2 次补充 stop
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(calls).toEqual([
+        { action: 'start', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
+      ])
+
+      // 推进到 1000ms，解锁
       await act(async () => {
         vi.advanceTimersByTime(100)
       })
@@ -145,6 +167,7 @@ describe('PtzPanel', () => {
         { action: 'start', direction: 2, speed: 1 },
         { action: 'stop', direction: 2, speed: 1 },
         { action: 'stop', direction: 2, speed: 1 },
+        { action: 'stop', direction: 2, speed: 1 },
         { action: 'start', direction: 3, speed: 1 },
       ])
 
@@ -154,18 +177,15 @@ describe('PtzPanel', () => {
       })
       expect(calls.at(-1)).toEqual({ action: 'stop', direction: 3, speed: 1 })
 
-      // 第二次点击的 500ms 补充 stop
+      // 第二次点击的 500ms 和 900ms 补充 stop
       await act(async () => {
         vi.advanceTimersByTime(500)
       })
-      expect(calls).toEqual([
-        { action: 'start', direction: 2, speed: 1 },
-        { action: 'stop', direction: 2, speed: 1 },
-        { action: 'stop', direction: 2, speed: 1 },
-        { action: 'start', direction: 3, speed: 1 },
-        { action: 'stop', direction: 3, speed: 1 },
-        { action: 'stop', direction: 3, speed: 1 },
-      ])
+      expect(calls.at(-1)).toEqual({ action: 'stop', direction: 3, speed: 1 })
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(calls.at(-1)).toEqual({ action: 'stop', direction: 3, speed: 1 })
     } finally {
       vi.useRealTimers()
     }

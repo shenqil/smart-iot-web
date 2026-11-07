@@ -55,7 +55,10 @@ export function LiveView({ device }: { device: AppDevice }) {
   return null
 }
 
-/** 视频监控设备：实时画面 + 云台控制 */
+/**
+ * 视频监控设备：实时画面 + 云台控制
+ * 优化高度与自适应网格，使画面与控制面板在桌面端完整同屏展示，避免页面产生垂直滚动条
+ */
 export function VideoPanel({ device }: { device: AppDevice }) {
   const companyId = useCompanyId()
   // 与 LiveView 共用同一个查询 (缓存)，这里只读取云台能力
@@ -63,14 +66,16 @@ export function VideoPanel({ device }: { device: AppDevice }) {
   const controls = v?.provider === 'ezviz' && (v.ptz || v.zoom)
 
   return (
-    <Card variant="borderless" title="实时画面">
-      <div className={controls ? 'grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_260px]' : ''}>
-        <div className="mx-auto w-full max-w-[calc(72vh*16/9)]">
-          <LiveView device={device} />
+    <Card variant="borderless" title="实时画面" className="shadow-none">
+      <div className={controls ? 'grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_260px]' : ''}>
+        <div className="mx-auto flex w-full max-w-[calc((100vh-270px)*16/9)] items-center justify-center">
+          <div className="aspect-video w-full max-h-[calc(100vh-270px)]">
+            <LiveView device={device} />
+          </div>
         </div>
         {controls && v && (
-          <div className="rounded-lg border border-line border-solid px-4 py-5">
-            <div className="mb-4 font-medium">云台控制</div>
+          <div className="flex flex-col justify-center rounded-lg border border-line border-solid bg-container px-3 py-3.5">
+            <div className="mb-2.5 text-center font-medium text-fg text-sm">云台控制</div>
             <PtzPanel deviceId={device.id} ptz={v.ptz} zoom={v.zoom} />
           </div>
         )}
