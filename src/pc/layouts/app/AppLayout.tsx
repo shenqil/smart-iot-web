@@ -1,8 +1,8 @@
 import { FullscreenOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Badge, Button, Drawer, Grid, Layout, Tooltip } from 'antd'
-import { Suspense, useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { BrandMark } from '@/components/Brand'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { unprocessedAlarmCountQuery } from '@/features/alarm/api'
@@ -46,6 +46,23 @@ export function AppLayout() {
     { to: `${base}/alarms`, label: '告警', count: alarmCount },
     { to: `${base}/operations`, label: '记录' },
   ]
+
+  const location = useLocation()
+  const contentRef = useRef<HTMLElement>(null)
+  // 切换设备、园区或页面时，内容区域滚动条回到顶部
+  useLayoutEffect(() => {
+    const el = contentRef.current
+    if (el) {
+      el.scrollTop = 0
+    }
+    window.scrollTo(0, 0)
+    const id = requestAnimationFrame(() => {
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [deviceId, siteId, location.pathname])
 
   return (
     <Layout className="h-full">
@@ -120,7 +137,7 @@ export function AppLayout() {
               onClick={() => setCollapsed(!collapsed)}
             />
           </Tooltip>
-          <Layout.Content className="page-content min-h-0 flex-1 overflow-auto py-4 pr-4 pl-10">
+          <Layout.Content ref={contentRef} className="page-content min-h-0 flex-1 overflow-auto py-4 pr-4 pl-10">
             <Suspense fallback={<FullPageSpinner />}>
               <Outlet />
             </Suspense>
