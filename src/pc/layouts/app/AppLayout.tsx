@@ -1,11 +1,14 @@
 import { FullscreenOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Badge, Button, Drawer, Grid, Layout, Tooltip } from 'antd'
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark } from '@/components/Brand'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { unprocessedAlarmCountQuery } from '@/features/alarm/api'
+import { appSiteDevicesQuery } from '@/features/device/api'
+import { useDeviceTypes } from '@/features/dict/api'
+import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId, useCurrentCompany, useMe } from '@/hooks/session'
 import { usePref } from '@/stores/pref'
 import { CompanySwitcher } from '../CompanySwitcher'
@@ -42,13 +45,57 @@ export function AppLayout() {
 
   const base = `/app/${companyId}`
   const manageTo = company?.manageable ? `/tenant/${companyId}` : me.systemRole === 'admin' ? '/admin' : null
-  const nav = [
-    { to: `${base}/monitor`, label: '监测' },
-    { to: `${base}/alarms`, label: '告警', count: alarmCount },
-    { to: `${base}/operations`, label: '记录' },
+  const navigate = useNavigate()
+  const location = useLocation()
+  const types = useDeviceTypes()
+  const devices = useQuery({
+    ...appSiteDevicesQuery(companyId, siteId ?? 0),
+    enabled: Boolean(siteId && deviceId),
+  })
+  const currentDevice = devices.data?.find((d) => d.id === deviceId)
+  const isVideo = isVideoDeviceType(
+    currentDevice?.deviceTypeId != null ? types.byId.get(currentDevice.deviceTypeId)?.name : undefined,
+  )
+  const isDevice = Boolean(deviceId)
+
+  const allNav = [
+    { key: 'monitor', to: `${base}/monitor`, label: '监测' },
+    { key: 'alarms', to: `${base}/alarms`, label: '告警', count: alarmCount },
+    { key: 'operations', to: `${base}/operations`, label: '记录' },
+    { key: 'history', to: `${base}/history`, label: '历史曲线' },
+    { key: 'comparison', to: `${base}/comparison`, label: '日 / 月环比' },
   ]
 
-  const location = useLocation()
+  const nav = allNav.filter((n) => {
+    // 监控设备：只展示 [监测]
+    if (isDevice && isVideo) return n.key === 'monitor'
+    // 园区或企业：只展示 [监测] , [告警] , [记录]
+    if (!isDevice) return n.key === 'monitor' || n.key === 'alarms' || n.key === 'operations'
+    // 普通设备：展示 [监测] , [告警] , [记录] , 历史曲线, 日 / 月环比
+    return true
+  })
+
+  // 计算当前作用域允许访问的 tab 集合
+  const allowedTabs = useMemo(() => {
+    if (isDevice && isVideo) return ['monitor']
+    if (!isDevice) return ['monitor', 'alarms', 'operations']
+    return ['monitor', 'alarms', 'operations', 'history', 'comparison']
+  }, [isDevice, isVideo])
+
+  // 当前所处的 tab (根据 URL 路径末尾判断)
+  const pathParts = location.pathname.split('/').filter(Boolean)
+  const currentTab = pathParts[pathParts.length - 1] || 'monitor'
+
+  // 如果切换到新的设备或园区后没有对应 tab，自动切换到 [监测] tab
+  useLayoutEffect(() => {
+    // 若选择了设备且设备列表仍在加载，等待加载完成判定设备类型后再决定是否重定向
+    if (isDevice && devices.isPending) return
+
+    if (!allowedTabs.includes(currentTab)) {
+      navigate({ pathname: `${base}/monitor`, search: location.search }, { replace: true })
+    }
+  }, [allowedTabs, currentTab, isDevice, devices.isPending, base, location.search, navigate])
+
   const contentRef = useRef<HTMLElement>(null)
   const [heroVisible, setHeroVisible] = useState(true)
 
@@ -99,9 +146,13 @@ export function AppLayout() {
                 }`
               }
             >
-              <Badge count={n.count} size="small" offset={[8, -2]} overflowCount={99}>
+              {n.count != null ? (
+                <Badge count={n.count} size="small" offset={[8, -2]} overflowCount={99}>
+                  <span className="text-inherit">{n.label}</span>
+                </Badge>
+              ) : (
                 <span className="text-inherit">{n.label}</span>
-              </Badge>
+              )}
             </NavLink>
           ))}
         </nav>

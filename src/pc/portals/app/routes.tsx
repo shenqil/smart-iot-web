@@ -17,4 +17,14 @@ export const appRoutes: RouteObject[] = [
     handle: { crumb: '记录' },
     lazy: async () => ({ Component: (await import('@/features/monitor/OperationsPage')).default }),
   },
+  {
+    path: 'history',
+    handle: { crumb: '历史曲线' },
+    lazy: async () => ({ Component: (await import('@/features/monitor/HistoryPage')).default }),
+  },
+  {
+    path: 'comparison',
+    handle: { crumb: '日 / 月环比' },
+    lazy: async () => ({ Component: (await import('@/features/monitor/ComparisonPage')).default }),
+  },
 ]

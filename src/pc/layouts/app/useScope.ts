@@ -15,7 +15,7 @@ export function useScope() {
       (prev) => {
         const p = new URLSearchParams(prev)
         // 范围变化时清掉分页等页面参数，只保留范围
-        for (const k of [...p.keys()]) if (k !== 'tab') p.delete(k)
+        for (const k of [...p.keys()]) p.delete(k)
         if (next.siteId) p.set('siteId', String(next.siteId))
         if (next.siteId && next.deviceId) p.set('deviceId', String(next.deviceId))
         return p

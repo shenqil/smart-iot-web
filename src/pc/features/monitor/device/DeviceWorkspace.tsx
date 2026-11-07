@@ -1,13 +1,9 @@
 import { DisconnectOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Card, Empty, Result, Skeleton, Tabs } from 'antd'
-import { useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Alert, Card, Empty, Result, Skeleton } from 'antd'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { type DeviceType, useDeviceTypes } from '@/features/dict/api'
 import { RelayPanel } from '@/features/relay/RelayPanel'
-import { ComparisonPanel } from '@/features/telemetry/comparison/ComparisonPanel'
-import { HistoryPanel } from '@/features/telemetry/history/HistoryPanel'
 import { agoText, byChannel, isVideoDeviceType, readSensor } from '@/features/telemetry/lib/realtime'
 import { realtimeQuery } from '@/features/telemetry/realtime/api'
 import { SensorCard } from '@/features/telemetry/realtime/SensorCard'
@@ -51,9 +47,6 @@ export function DeviceWorkspace({ siteId, deviceId }: { siteId: number; deviceId
   return <TelemetryWorkspace key={device.id} device={device} type={type} />
 }
 
-const TABS = ['realtime', 'history', 'comparison'] as const
-type WorkspaceTab = (typeof TABS)[number]
-
 function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceType | undefined }) {
   const companyId = useCompanyId()
   const now = useNow()
@@ -62,23 +55,6 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
   const online = realtime?.online ?? device.online
   const sensors = byChannel(device.sensors)
   const relays = byChannel(device.relays)
-  const [params, setParams] = useSearchParams()
-  const tab: WorkspaceTab =
-    sensors.length && TABS.includes(params.get('tab') as WorkspaceTab)
-      ? (params.get('tab') as WorkspaceTab)
-      : 'realtime'
-  const setTab = (t: WorkspaceTab) =>
-    setParams(
-      (prev) => {
-        const p = new URLSearchParams(prev)
-        if (t === 'realtime') p.delete('tab')
-        else p.set('tab', t)
-        return p
-      },
-      { replace: true },
-    )
-  // 历史曲线与环比共用的通道选择 (默认前两个通道)
-  const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channel))
   const trail = useReadingTrail(realtime?.sensors, realtime?.sensorsAt)
   const readings = sensors.map((c) => readSensor(c, realtime?.sensors))
   const outOfRange = readings.filter((r) => r.state === 'over' || r.state === 'under').length
@@ -166,25 +142,7 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
   return (
     <div className="flex flex-col gap-4">
       <DeviceHero device={device} type={type} online={online} meta={meta} />
-      {sensors.length > 0 && (
-        <Tabs
-          activeKey={tab}
-          onChange={(k) => setTab(k as WorkspaceTab)}
-          className="-mb-4"
-          items={[
-            { key: 'realtime', label: '实时监控' },
-            { key: 'history', label: '历史曲线' },
-            { key: 'comparison', label: '日 / 月环比' },
-          ]}
-        />
-      )}
-      {tab === 'history' ? (
-        <HistoryPanel device={device} channels={channels} onChannelsChange={setChannels} />
-      ) : tab === 'comparison' ? (
-        <ComparisonPanel device={device} channels={channels} onChannelsChange={setChannels} />
-      ) : (
-        realtimeContent
-      )}
+      {realtimeContent}
     </div>
   )
 }
