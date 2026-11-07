@@ -1,6 +1,6 @@
 import { SearchOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { Empty, Input, Segmented, Spin, Tooltip, Tree, type TreeDataNode } from 'antd'
+import { Empty, Input, Spin, Tooltip, Tree, type TreeDataNode } from 'antd'
 import { useState } from 'react'
 import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
@@ -10,8 +10,6 @@ import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { usePref } from '@/stores/pref'
 import { useScope } from './useScope'
-
-type Filter = 'all' | 'online' | 'offline' | 'alarm'
 
 const SITE_STATUS: Record<string, string> = { inactive: '停用', under_construction: '建设中' }
 const FAV_KEY = 'fav'
@@ -39,7 +37,7 @@ function AlarmBadge({ count }: { count: number | string }) {
 
 /**
  * 园区设备树：数据端的范围选择器 (FRONTEND_DESIGN §5.1)
- * - 园区 / 设备两层；搜索 (已加载的设备)、在线 / 离线 / 有告警筛选
+ * - 园区 / 设备两层；搜索 (已加载的设备)
  * - 未处理告警数：园区级用 unprocessed-count，设备级取该园区前 200 条未处理告警按设备计数 (超出显示"…")
  * - 我的关注：星标设备置顶 (本机保存)
  */
@@ -50,7 +48,6 @@ export function ScopeTree() {
   const [expanded, setExpanded] = useState<number[]>(() => (siteId ? [siteId] : []))
   const [favOpen, setFavOpen] = useState(true)
   const [keyword, setKeyword] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
   const favorites = usePref((s) => s.favorites[companyId]) ?? []
   const toggleFavorite = usePref((s) => s.toggleFavorite)
 
@@ -82,18 +79,8 @@ export function ScopeTree() {
   })
 
   const kw = keyword.trim().toLowerCase()
-  const match = (d: AppDevice) => {
-    const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
-    const isOnline = d.online
-    if (isVideo && filter === 'alarm') return false
-    return (
-      (filter === 'all' ||
-        (filter === 'online' && isOnline) ||
-        (filter === 'offline' && !isOnline) ||
-        (filter === 'alarm' && (deviceAlarm.get(d.id) ?? 0) > 0)) &&
-      (!kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw))
-    )
-  }
+  const match = (d: AppDevice) =>
+    !kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw)
 
   const isFav = (sid: number, did: number) => favorites.some((f) => f.siteId === sid && f.deviceId === did)
   const star = (sid: number, d: { id: number; name: string }) => {
@@ -140,7 +127,6 @@ export function ScopeTree() {
   const siteNodes: TreeDataNode[] = siteList.flatMap((s) => {
     const all = devicesBySite.get(s.id)
     const alarm = siteAlarm.get(s.id)
-    if (filter === 'alarm' && alarm && alarm.count === 0) return []
     const devices = (all ?? []).filter(match)
     if (kw && all && !devices.length && !s.name.toLowerCase().includes(kw)) return []
     const online = (all ?? []).filter((d) => d.online).length
@@ -228,15 +214,6 @@ export function ScopeTree() {
     deviceId && siteId ? [`d:${siteId}:${deviceId}`, `f:${siteId}:${deviceId}`] : siteId ? [`s:${siteId}`] : []
   const expandedKeys = [...(favOpen && favorites.length ? [FAV_KEY] : []), ...expanded.map((id) => `s:${id}`)]
 
-  const chooseFilter = (f: Filter) => {
-    setFilter(f)
-    // 看告警时自动展开有告警的园区
-    if (f === 'alarm') {
-      const withAlarm = siteList.filter((s) => (siteAlarm.get(s.id)?.count ?? 0) > 0).map((s) => s.id)
-      setExpanded((e) => [...new Set([...e, ...withAlarm])])
-    }
-  }
-
   return (
     <div className="flex h-full flex-col gap-2 p-3">
       <Input
@@ -249,18 +226,6 @@ export function ScopeTree() {
           // 搜索时展开全部园区，以便在所有设备中匹配
           if (e.target.value.trim()) setExpanded(siteList.map((s) => s.id))
         }}
-      />
-      <Segmented<Filter>
-        block
-        size="small"
-        value={filter}
-        onChange={chooseFilter}
-        options={[
-          { value: 'all', label: '全部' },
-          { value: 'online', label: '在线' },
-          { value: 'offline', label: '离线' },
-          { value: 'alarm', label: '告警' },
-        ]}
       />
       <div className="scope-tree min-h-0 flex-1 overflow-auto">
         {sites.isPending ? (
