@@ -1084,7 +1084,7 @@ export interface paths {
         };
         /**
          * 操作记录 (分页)
-         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、操作人；可排序字段：createdAt。siteId 按设备当前的园区挂载筛选。
+         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、设备名称、操作人；可排序字段：createdAt。siteId 按设备当前的园区挂载筛选。
          */
         get: operations["app-list-operations"];
         put?: never;
@@ -3330,6 +3330,8 @@ export interface components {
             createdAt: string;
             /** Format: int64 */
             deviceId: number;
+            /** @description 设备名称 (快照) */
+            deviceName: string;
             deviceSn: string;
             /**
              * Format: int64

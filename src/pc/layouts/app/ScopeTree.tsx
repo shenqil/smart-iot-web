@@ -79,8 +79,7 @@ export function ScopeTree() {
   })
 
   const kw = keyword.trim().toLowerCase()
-  const match = (d: AppDevice) =>
-    !kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw)
+  const match = (d: AppDevice) => !kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw)
 
   const isFav = (sid: number, did: number) => favorites.some((f) => f.siteId === sid && f.deviceId === did)
   const star = (sid: number, d: { id: number; name: string }) => {

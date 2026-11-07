@@ -264,7 +264,7 @@ export function AlarmTable({
               allowClear
               className="w-56"
               prefix={<SearchOutlined className="text-fg-tertiary" />}
-              placeholder="设备 SN / 名称、描述"
+              placeholder={deviceId ? '告警描述' : '设备 SN / 名称、描述'}
               value={kwInput}
               onChange={(e) => {
                 setKwInput(e.target.value)

@@ -3,11 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Card, Empty, Result, Skeleton, Tabs } from 'antd'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { RowsScroller } from '@/components/RowsScroller'
-import { AlarmTable } from '@/features/alarm/AlarmTable'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { type DeviceType, useDeviceTypes } from '@/features/dict/api'
-import { OperationTable } from '@/features/relay/OperationTable'
 import { RelayPanel } from '@/features/relay/RelayPanel'
 import { ComparisonPanel } from '@/features/telemetry/comparison/ComparisonPanel'
 import { HistoryPanel } from '@/features/telemetry/history/HistoryPanel'
@@ -24,8 +21,7 @@ import { VideoPanel } from './VideoPanel'
 /**
  * 设备工作区 (FRONTEND_DESIGN §5.3)
  * - 视频监控类型：只展示视频
- * - 有传感器通道 → 实时数据；有继电器通道 → 继电器控制 + 操作记录；两者都有时并排
- * - 最后是该设备的告警记录
+ * - 有传感器通道 → 实时数据；有继电器通道 → 继电器控制
  */
 export function DeviceWorkspace({ siteId, deviceId }: { siteId: number; deviceId: number }) {
   const companyId = useCompanyId()
@@ -83,8 +79,6 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
     )
   // 历史曲线与环比共用的通道选择 (默认前两个通道)
   const [channels, setChannels] = useState(() => sensors.slice(0, 2).map((s) => s.channel))
-  // 实时数据最多显示三行卡片，继电器列表与之等高，超出部分各自在内部滚动
-  const [sensorAreaHeight, setSensorAreaHeight] = useState<number>()
   const trail = useReadingTrail(realtime?.sensors, realtime?.sensorsAt)
   const readings = sensors.map((c) => readSensor(c, realtime?.sensors))
   const outOfRange = readings.filter((r) => r.state === 'over' || r.state === 'under').length
@@ -117,13 +111,11 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
       {rt.isError && !realtime ? (
         <Alert type="error" showIcon title="实时数据获取失败，正在重试" />
       ) : (
-        <RowsScroller rows={3} onHeight={setSensorAreaHeight}>
-          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
-            {readings.map((r) => (
-              <SensorCard key={r.config.channel} reading={r} trail={trail[r.config.channel] ?? []} offline={!online} />
-            ))}
-          </div>
-        </RowsScroller>
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
+          {readings.map((r) => (
+            <SensorCard key={r.config.channel} reading={r} trail={trail[r.config.channel] ?? []} offline={!online} />
+          ))}
+        </div>
       )}
     </Card>
   )
@@ -145,9 +137,7 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
         )
       }
     >
-      <RowsScroller rows={3} height={sensors.length ? sensorAreaHeight : undefined}>
-        <RelayPanel device={device} realtime={realtime} layout={sensors.length ? 'list' : 'grid'} />
-      </RowsScroller>
+      <RelayPanel device={device} realtime={realtime} layout="grid" />
     </Card>
   )
 
@@ -162,30 +152,14 @@ function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceT
         />
       )}
 
-      {sensorSection && relaySection ? (
-        <div className="grid items-start gap-4 min-[1440px]:grid-cols-[minmax(0,1fr)_360px]">
-          {sensorSection}
-          {relaySection}
-        </div>
-      ) : (
-        sensorSection || relaySection
-      )}
+      {sensorSection}
+      {relaySection}
 
       {!sensors.length && !relays.length && (
         <Card variant="borderless">
           <Empty description="该设备还没有配置传感器或继电器通道，请联系企业管理员在设备配置中添加" />
         </Card>
       )}
-
-      {relays.length > 0 && (
-        <Card variant="borderless" title="操作记录">
-          <OperationTable deviceId={device.id} variant="compact" pageSize={10} deviceOf={() => device} />
-        </Card>
-      )}
-
-      <Card variant="borderless" title="告警记录" id="device-alarms" className="scroll-mt-4">
-        <AlarmTable deviceId={device.id} variant="compact" pageSize={10} />
-      </Card>
     </>
   )
 

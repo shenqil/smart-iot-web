@@ -18,8 +18,8 @@ export interface OperationTableProps {
   deviceId?: number
   variant?: 'full' | 'compact'
   pageSize?: number
-  /** 设备 ID → 设备 (含继电器配置，用于显示设备名与继电器名称)；查不到时只显示 SN 与"通道 N" */
-  deviceOf: (deviceId: number) => AppDevice | undefined
+  /** 设备 ID → 设备 (含继电器配置，用于显示继电器自定义名称)；不传或查不到时显示快照设备名与"通道 N" */
+  deviceOf?: (deviceId: number) => AppDevice | undefined
 }
 
 /** 继电器操作记录 (FRONTEND_DESIGN §5.5)：包含其他企业成员对同一设备的操作；不返回总数，简单分页 */
@@ -78,7 +78,7 @@ export function OperationTable({
             key: 'device',
             render: (_: unknown, r: RelayOp) => (
               <div>
-                <div>{deviceOf(r.deviceId)?.name ?? '—'}</div>
+                <div>{r.deviceName || deviceOf?.(r.deviceId)?.name || '—'}</div>
                 <div className="font-mono text-fg-tertiary text-xs">{r.deviceSn}</div>
               </div>
             ),
@@ -88,7 +88,7 @@ export function OperationTable({
       title: '继电器',
       key: 'relay',
       render: (_, r) => {
-        const relay = deviceOf(r.deviceId)?.relays?.find((x) => x.channel === r.channel)
+        const relay = deviceOf?.(r.deviceId)?.relays?.find((x) => x.channel === r.channel)
         return relay ? (
           <span className="whitespace-nowrap">
             {channelName(relay)}
@@ -170,7 +170,7 @@ export function OperationTable({
               allowClear
               className="w-56"
               prefix={<SearchOutlined className="text-fg-tertiary" />}
-              placeholder="设备 SN / 操作人"
+              placeholder={deviceId ? '操作人 / 触发规则' : '设备 SN / 名称、操作人'}
               value={kwInput}
               onChange={(e) => {
                 setKwInput(e.target.value)

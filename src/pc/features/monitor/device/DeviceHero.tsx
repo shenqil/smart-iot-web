@@ -1,12 +1,14 @@
 import { AlertOutlined, AppstoreOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Tag } from 'antd'
+import { Link } from 'react-router'
 import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
 import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import type { AppDevice } from '@/features/device/api'
 import type { DeviceType } from '@/features/dict/api'
 import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
+import { useScope } from '@/layouts/app/useScope'
 
 /** 设备工作区页头：身份 (名称、类型、SN) + 状态 (在线、启用) + 未处理告警 (点击跳到告警记录) */
 export function DeviceHero({
@@ -25,15 +27,17 @@ export function DeviceHero({
   hideInterval?: boolean
 }) {
   const companyId = useCompanyId()
+  const { siteId } = useScope()
   const isVideo = isVideoDeviceType(type?.name)
   const { data: alarm } = useQuery({
     ...scopedUnprocessedCountQuery(companyId, { deviceId: device.id }),
     enabled: !isVideo,
   })
   const alarmCount = !isVideo && alarm ? (alarm.capped ? '999+' : String(alarm.count)) : null
+  const alarmsLink = `/app/${companyId}/alarms?deviceId=${device.id}${siteId ? `&siteId=${siteId}` : ''}`
 
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-lg bg-container px-5 py-4">
+    <div id="device-hero" className="flex flex-wrap items-center gap-4 rounded-lg bg-container px-5 py-4">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary-bg text-primary text-xl">
         {type?.iconUrl ? <img src={type.iconUrl} alt="" className="size-7 object-contain" /> : <AppstoreOutlined />}
       </span>
@@ -57,8 +61,9 @@ export function DeviceHero({
         </div>
       </div>
       {!isVideo && alarmCount != null && (
-        <a
-          href="#device-alarms"
+        <Link
+          to={alarmsLink}
+          title="点击查看设备告警"
           className={`flex items-center gap-2 rounded-lg px-3 py-2 no-underline ${
             alarm?.count ? 'bg-danger/10 text-danger hover:bg-danger/15' : 'text-fg-tertiary hover:text-fg-secondary'
           }`}
@@ -71,7 +76,7 @@ export function DeviceHero({
           ) : (
             <span>暂无未处理告警</span>
           )}
-        </a>
+        </Link>
       )}
     </div>
   )

@@ -10,6 +10,7 @@ import { useCompanyId, useCurrentCompany, useMe } from '@/hooks/session'
 import { usePref } from '@/stores/pref'
 import { CompanySwitcher } from '../CompanySwitcher'
 import { UserMenu } from '../UserMenu'
+import { ScopeHeader } from './ScopeHeader'
 import { ScopeTree } from './ScopeTree'
 import { useScope } from './useScope'
 
@@ -49,13 +50,17 @@ export function AppLayout() {
 
   const location = useLocation()
   const contentRef = useRef<HTMLElement>(null)
-  // 切换设备、园区或页面时，内容区域滚动条回到顶部
+  const [heroVisible, setHeroVisible] = useState(true)
+
+  // 切换设备、园区或页面时，内容区域滚动条回到顶部，并重置 hero 卡片可见状态
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 切换设备、园区或页面时重置滚动位置与状态
   useLayoutEffect(() => {
     const el = contentRef.current
     if (el) {
       el.scrollTop = 0
     }
     window.scrollTo(0, 0)
+    setHeroVisible(true)
     const id = requestAnimationFrame(() => {
       if (contentRef.current) {
         contentRef.current.scrollTop = 0
@@ -63,6 +68,18 @@ export function AppLayout() {
     })
     return () => cancelAnimationFrame(id)
   }, [deviceId, siteId, location.pathname])
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const hero = document.getElementById('device-hero')
+    if (hero) {
+      const heroRect = hero.getBoundingClientRect()
+      const containerRect = e.currentTarget.getBoundingClientRect()
+      // 当设备信息卡片底部滚出容器顶部时判定为已消失
+      setHeroVisible(heroRect.bottom > containerRect.top)
+    } else {
+      setHeroVisible(true)
+    }
+  }
 
   return (
     <Layout className="h-full">
@@ -127,17 +144,27 @@ export function AppLayout() {
             <ScopeTree />
           </Layout.Sider>
         )}
-        {/* 收起按钮放在不滚动的外层，页面滚动时停在原位 */}
-        <div className="relative flex min-w-0 flex-1 flex-col">
-          <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
-            <Button
-              size="small"
-              className="absolute top-4 left-0 z-10 rounded-l-none!"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
+        {/* 顶部固定条：折叠按钮 + ScopeHeader (面包屑 + 滚动时右侧浮现简要信息) */}
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="relative z-10 flex min-h-[46px] shrink-0 items-center justify-between border-line border-b border-solid bg-container py-2.5 pr-4 pl-10">
+            <Tooltip title={collapsed ? '展开园区设备树' : '收起园区设备树'} placement="right">
+              <Button
+                size="small"
+                className="absolute top-2.5 left-0 z-10 rounded-l-none!"
+                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setCollapsed(!collapsed)}
+              />
+            </Tooltip>
+            <ScopeHeader
+              heroVisible={heroVisible}
+              onScrollToTop={() => contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
             />
-          </Tooltip>
-          <Layout.Content ref={contentRef} className="page-content min-h-0 flex-1 overflow-auto py-4 pr-4 pl-10">
+          </div>
+          <Layout.Content
+            ref={contentRef}
+            onScroll={handleScroll}
+            className="page-content min-h-0 flex-1 overflow-auto py-4 pr-4 pl-10"
+          >
             <Suspense fallback={<FullPageSpinner />}>
               <Outlet />
             </Suspense>
