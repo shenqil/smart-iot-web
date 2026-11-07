@@ -10,4 +10,5 @@ export const mobileToast = {
 }
 export const mobileDialog = {
   confirm: (props: Parameters<typeof Dialog.confirm>[0]) => Dialog.confirm({ ...props, getContainer: mobileContainer }),
+  alert: (props: Parameters<typeof Dialog.alert>[0]) => Dialog.alert({ ...props, getContainer: mobileContainer }),
 }

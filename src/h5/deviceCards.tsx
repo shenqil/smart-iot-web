@@ -21,14 +21,14 @@ export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
   const device = useQuery({
     ...mobileDeviceQuery(cid, bookmark.id, bookmark.siteId),
     enabled: inView && visible,
-    refetchInterval: 30_000,
+    refetchInterval: false,
   })
   const d = device.isError ? undefined : device.data
   const isVideo = isVideoDeviceType(types.nameOf(d?.deviceTypeId))
   const rt = useQuery({
     ...realtimeQuery(cid, bookmark.id),
     enabled: inView && visible && !isVideo && !!d?.sensors.length,
-    refetchInterval: 30_000,
+    refetchInterval: false,
   })
   const sensor = d ? byChannel(d.sensors)[0] : undefined,
     reading = !isVideo && sensor ? readSensor(sensor, rt.data?.sensors) : null,
@@ -88,7 +88,7 @@ export function DeviceReading({ device, typeName }: { device: AppDevice; typeNam
   const q = useQuery({
       ...realtimeQuery(cid, device.id),
       enabled: !isVideo && !!sensor && visible && inView,
-      refetchInterval: 30_000,
+      refetchInterval: false,
     }),
     reading = !isVideo && sensor ? readSensor(sensor, q.data?.sensors) : null,
     online = deviceOnline(device, q.data)

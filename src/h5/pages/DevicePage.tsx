@@ -1,7 +1,8 @@
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
-import { agoText, byChannel, isVideoDeviceType } from '@shared/telemetry/lib/realtime'
+import { agoText, byChannel, isVideoDeviceType, readSensor } from '@shared/telemetry/lib/realtime'
 import { realtimeQuery } from '@shared/telemetry/realtime/api'
+import { useReadingTrail } from '@shared/telemetry/realtime/useReadingTrail'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from 'antd-mobile'
 import { lazy, Suspense, useEffect, useState } from 'react'
@@ -33,20 +34,6 @@ export default function DevicePage({ id }: { id: number }) {
     types = useDeviceTypes(),
     [switching, setSwitching] = useState(false)
   const isVideo = isVideoDeviceType(types.nameOf(d?.deviceTypeId))
-  const rt = useQuery({
-      ...realtimeQuery(cid, id),
-      enabled:
-        visible &&
-        !isVideo &&
-        !['history', 'comparison'].includes(params.get('tab') ?? '') &&
-        !!d &&
-        !!(d.sensors.length || d.relays.length),
-    }),
-    now = useNow(10_000)
-  const prefs = useMobilePreferences(),
-    entry = prefs.entries[preferenceKey(me.id, cid)],
-    fav = entry?.favorites.some((x) => x.id === id),
-    base = `/h5/${cid}`
   const tab = params.get('tab') ?? 'realtime',
     active =
       ['history', 'comparison'].includes(tab) && d?.sensors.length
@@ -54,6 +41,15 @@ export default function DevicePage({ id }: { id: number }) {
         : tab === 'video' && d?.hasCamera
           ? 'video'
           : 'realtime'
+  const rt = useQuery({
+      ...realtimeQuery(cid, id),
+      enabled: visible && !isVideo && active === 'realtime' && !!d && !!(d.sensors.length || d.relays.length),
+    }),
+    now = useNow(10_000)
+  const prefs = useMobilePreferences(),
+    entry = prefs.entries[preferenceKey(me.id, cid)],
+    fav = entry?.favorites.some((x) => x.id === id),
+    base = `/h5/${cid}`
   const visitedId = device.data?.id,
     visitedName = device.data?.name
   useEffect(() => {
@@ -68,6 +64,10 @@ export default function DevicePage({ id }: { id: number }) {
       d &&
       now - Date.parse(rt.data.sensorsAt) > Math.max(60, d.readInterval * 3) * 1000
     )
+  const sensors = byChannel(d?.sensors ?? [])
+  const trail = useReadingTrail(rt.data?.sensors, rt.data?.sensorsAt)
+  const readings = sensors.map((c) => readSensor(c, rt.data?.sensors))
+  const outOfRange = readings.filter((r) => r.state === 'over' || r.state === 'under').length
   const tabItems = isVideo
     ? []
     : [
@@ -163,27 +163,43 @@ export default function DevicePage({ id }: { id: number }) {
                 {online === false && <Notice>设备离线，显示最后一次数据；离线期间不能控制。</Notice>}
                 {!known && <Notice tone="warning">在线服务暂不可用，设备状态未知；请稍后刷新。</Notice>}
                 {stale && <Notice tone="warning">设备仍在线，但传感器数据已超过三个采集周期未更新。</Notice>}
-                {!!d.sensors.length && (
+                {!!sensors.length && (
                   <Card
-                    title="实时数据"
+                    title={
+                      <span className="flex items-center gap-1.5">
+                        实时数据
+                        <span className="text-xs font-normal text-muted">{sensors.length} 个通道</span>
+                      </span>
+                    }
                     extra={
-                      <Button
-                        size="mini"
-                        fill="none"
-                        loading={rt.isFetching}
-                        onClick={async () => {
-                          await rt.refetch()
-                        }}
-                      >
-                        刷新
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {outOfRange > 0 && (
+                          <span className="text-xs font-medium text-amber-600">⚠ {outOfRange} 个超出量程</span>
+                        )}
+                        <Button
+                          size="mini"
+                          fill="none"
+                          loading={rt.isFetching}
+                          onClick={async () => {
+                            await rt.refetch()
+                          }}
+                        >
+                          刷新
+                        </Button>
+                      </div>
                     }
                   >
                     {rt.isError && <p className="h5-warning">刷新失败{rt.data ? '，保留上次读数' : '，请重试'}</p>}
-                    <p className="h5-muted">更新于 {agoText(rt.data?.sensorsAt, now)}</p>
+                    <p className="h5-muted mb-2">更新于 {agoText(rt.data?.sensorsAt, now)}</p>
                     <div className="h5-grid-two">
-                      {byChannel(d.sensors).map((sensor) => (
-                        <SensorTile key={sensor.channel} sensor={sensor} values={rt.data?.sensors} online={online} />
+                      {sensors.map((sensor) => (
+                        <SensorTile
+                          key={sensor.channel}
+                          sensor={sensor}
+                          values={rt.data?.sensors}
+                          trail={trail[sensor.channel] ?? []}
+                          online={online}
+                        />
                       ))}
                     </div>
                   </Card>

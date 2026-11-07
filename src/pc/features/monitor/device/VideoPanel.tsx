@@ -66,10 +66,10 @@ export function VideoPanel({ device }: { device: AppDevice }) {
   const controls = v?.provider === 'ezviz' && (v.ptz || v.zoom)
 
   return (
-    <Card variant="borderless" title="实时画面" className="shadow-none">
+    <Card variant="borderless" className="shadow-none">
       <div className={controls ? 'grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_260px]' : ''}>
-        <div className="mx-auto flex w-full max-w-[calc((100vh-270px)*16/9)] items-center justify-center">
-          <div className="aspect-video w-full max-h-[calc(100vh-270px)]">
+        <div className="mx-auto flex w-full max-w-[calc((100vh-220px)*16/9)] items-center justify-center">
+          <div className="aspect-video w-full max-h-[calc(100vh-220px)]">
             <LiveView device={device} />
           </div>
         </div>

@@ -57,8 +57,8 @@ describe('移动继电器确认与设备回报', () => {
     )
     setup()
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: '开启' }))
-      fireEvent.click(screen.getByRole('button', { name: '开启' }))
+      fireEvent.click(screen.getByRole('switch'))
+      fireEvent.click(screen.getByRole('switch'))
     })
     expect(confirm).toHaveBeenCalledTimes(1)
     await act(async () => answer(false))
@@ -74,7 +74,7 @@ describe('移动继电器确认与设备回报', () => {
         }),
     )
     setup()
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: '开启' })))
+    await act(async () => fireEvent.click(screen.getByRole('switch')))
     expect(screen.getByText('通道 0 · 已关闭')).toBeInTheDocument()
     await act(async () => respond({ status: 'timeout', actualState: null }))
     expect(screen.getByText('通道 0 · 已关闭')).toBeInTheDocument()

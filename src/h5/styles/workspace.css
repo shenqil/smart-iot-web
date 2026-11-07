@@ -1,9 +1,5 @@
 .h5-sensor {
-  background: linear-gradient(135deg, #f3f7eb, #fbfcf9);
-  border: 1px solid #e7efe8;
-  border-radius: 15px;
-  padding: 16px 14px;
-  border-color: #e3ebda;
+  border-radius: 14px;
 }
 
 .h5-out-of-range {
@@ -12,8 +8,7 @@
 }
 
 .h5-relay {
-  border-top: 1px solid #ebf2ec;
-  padding: 18px 0;
+  border-radius: 14px;
 }
 
 .h5-chart {
@@ -121,39 +116,6 @@
   border-radius: 50%;
 }
 
-.h5-sensor > small {
-  font-size: 11px;
-  color: #6e8468;
-  display: block;
-  line-height: 1.6;
-}
-
-.h5-relay strong {
-  font-size: 14px;
-}
-
-.h5-relay small {
-  display: block;
-  margin: 6px 0;
-}
-
-.h5-relay details {
-  font-size: 12px;
-  color: #799183;
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #f5f8f0;
-  border-radius: 12px;
-  border: 1px solid #e6ecdf;
-}
-
-.h5-relay summary {
-  padding: 2px 0;
-  color: #577c59;
-  font-size: 12px;
-  cursor: pointer;
-}
-
 .h5-video video {
   width: 100%;
   display: block;
@@ -197,33 +159,6 @@
   background: #d87a5e;
 }
 
-.h5-sensor .h5-reading {
-  font-size: 29px;
-  margin: 14px 0;
-  font-weight: 550;
-  font-variant-numeric: tabular-nums;
-  color: #437246;
-}
-
-.h5-sensor .adm-progress-bar {
-  margin: 0 0 10px;
-}
-
-.h5-relay .h5-row {
-  align-items: flex-start;
-}
-
-.h5-sensor > small:first-child {
-  font-size: 12px;
-  color: var(--h5-text);
-  min-height: 20px;
-  overflow-wrap: anywhere;
-}
-
 .h5-map-dot.has-alarm.online {
   background: #0f9375;
-}
-
-.h5-relay .h5-row > .h5-row {
-  flex: none;
 }
