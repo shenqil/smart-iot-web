@@ -53,31 +53,9 @@ export function readSensor(config: AppSensor, sensors: Readings | null | undefin
   return { config, name, value: raw, text, state, position }
 }
 
-/** 设备类型是否为视频监控 (只展示视频，按字典名称判断) */
+/** 设备类型是否为视频监控 (用于详情/工作区视图分流) */
 export const isVideoDeviceType = (typeName: string | null | undefined) =>
   Boolean(typeName && /视频|摄像/.test(typeName))
-
-/** 统计设备在线状态修正：视频监控类型设备默认在线，从离线数扣除并补充到在线数 */
-export function adjustSummaryOnlineStats<
-  T extends {
-    onlineCount: number
-    offlineCount: number
-    deviceCount: number
-    deviceTypes?: { deviceTypeId?: number | null; count: number }[]
-  },
->(
-  stats: T | undefined,
-  nameOf: (id: number | null | undefined) => string,
-): { onlineCount: number; offlineCount: number } {
-  if (!stats) return { onlineCount: 0, offlineCount: 0 }
-  const videoCount = (stats.deviceTypes ?? [])
-    .filter((t) => isVideoDeviceType(nameOf(t.deviceTypeId)))
-    .reduce((sum, t) => sum + t.count, 0)
-  return {
-    onlineCount: Math.min(stats.deviceCount, stats.onlineCount + videoCount),
-    offlineCount: Math.max(0, stats.offlineCount - videoCount),
-  }
-}
 
 /** 继电器不可操作的原因 (已确认决策 #8：已配置 + 在线 + 设备启用)；可操作时返回 null */
 export function relayBlockedReason(device: { status: string }, online: boolean): string | null {

@@ -133,13 +133,7 @@ export default function MapPage() {
             >
               <p>
                 {types.nameOf(selected.deviceTypeId)} · {selected.deviceSn} ·{' '}
-                {isVideoDeviceType(types.nameOf(selected.deviceTypeId))
-                  ? '在线'
-                  : selected.onlineKnown === false
-                    ? '状态未知'
-                    : selected.online
-                      ? '在线'
-                      : '离线'}
+                {selected.onlineKnown === false ? '状态未知' : selected.online ? '在线' : '离线'}
                 {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm ? ' · 有未处理告警' : ''}
               </p>
               {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm && (
@@ -212,7 +206,7 @@ function Markers({
       const isVideo = isVideoDeviceType(nameOf(d.deviceTypeId))
       const marker = L.marker([d.latitude ?? 0, d.longitude ?? 0], {
         icon: L.divIcon({
-          html: `<span class="h5-map-dot ${!isVideo && d.hasAlarm ? 'has-alarm' : ''} ${isVideo || d.online ? 'online' : ''}"></span>`,
+          html: `<span class="h5-map-dot ${!isVideo && d.hasAlarm ? 'has-alarm' : ''} ${d.online ? 'online' : ''}"></span>`,
           className: 'h5-marker',
           iconSize: [28, 28],
         }),

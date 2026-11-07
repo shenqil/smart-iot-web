@@ -157,7 +157,7 @@ function ScreenBody() {
         ]
       : [],
   )
-  const online = devices.filter((d) => (isVideoDeviceType(typeName(d)) ? true : d.online)).length
+  const online = devices.filter((d) => d.online).length
   const backTo = `/app/${companyId}/monitor${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
   const recordsLink = `/app/${companyId}/operations${site ? `?siteId=${site.id}${device ? `&deviceId=${device.id}` : ''}` : ''}`
   const ctlTop = plan.bottomTop != null ? plan.bottomTop - 50 : plan.height - 20 - 40
@@ -419,7 +419,7 @@ function SiteStage({
 /** 地图气泡 (点击设备后显示)：名称、是否在线、未处理告警数 */
 function Bubble({ point }: { point: ScreenMapPoint }) {
   const isVideo = isVideoDeviceType(point.typeName)
-  const isOnline = isVideo ? true : point.online
+  const isOnline = point.online
   return (
     <div className="min-w-[160px] max-w-[260px]">
       <div className="truncate font-bold text-[14px]" title={point.name}>

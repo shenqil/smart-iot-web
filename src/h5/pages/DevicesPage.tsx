@@ -1,7 +1,6 @@
 import type { AppDevice } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
-import { isVideoDeviceType } from '@shared/telemetry/lib/realtime'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Button, SearchBar } from 'antd-mobile'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -86,45 +85,10 @@ function DeviceList() {
       if (key === 'unclassified') p.delete('deviceTypeId')
       return p
     })
-  const videoTypeIds = useMemo(() => types.list.filter((t) => isVideoDeviceType(t.name)).map((t) => t.id), [types.list])
-  const isVideoFilterAllowed =
-    !filters.unclassified && (!filters.deviceTypeId || videoTypeIds.includes(filters.deviceTypeId))
-  const videoQuery = useQuery({
-    queryKey: ['app', cid, 'devices', 'video-online', filters.siteId, filters.keyword],
-    queryFn: async ({ signal }) => {
-      const list: AppDevice[] = []
-      for (const tid of videoTypeIds) {
-        const res = await listDevices(
-          cid,
-          { siteId: filters.siteId, deviceTypeId: tid, keyword: filters.keyword, pageSize: 50 },
-          signal,
-        )
-        list.push(...res.records)
-      }
-      return list
-    },
-    enabled: filters.online === 'true' && isTabActive && videoTypeIds.length > 0 && isVideoFilterAllowed,
-  })
-
-  const rawDevices = useMemo(() => {
-    const list = [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()]
-    if (filters.online === 'true' && videoQuery.data?.length) {
-      for (const vd of videoQuery.data) {
-        if (!list.some((d) => d.id === vd.id)) {
-          list.push(vd)
-        }
-      }
-    }
-    return list
-  }, [query.data?.pages, filters.online, videoQuery.data])
-
-  const devices = useMemo(() => {
-    let list = rawDevices
-    if (filters.online === 'false') {
-      list = list.filter((d) => !isVideoDeviceType(types.nameOf(d.deviceTypeId)))
-    }
-    return list.map((d) => (isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? { ...d, online: true } : d))
-  }, [rawDevices, filters.online, types])
+  const devices = useMemo(
+    () => [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()],
+    [query.data?.pages],
+  )
   const favoriteIds = useMemo(() => new Set((entry?.favorites ?? []).map((f) => f.id)), [entry?.favorites])
   const toggleFavorite = useCallback(
     (d: AppDevice) => {
@@ -199,7 +163,6 @@ function DeviceList() {
             <span>
               {filters.deviceTypeId ? types.nameOf(filters.deviceTypeId) : '全部类型'}
               {filters.unclassified ? ' · 未分类' : ''}
-              {filters.online ? ` · ${filters.online === 'true' ? '在线' : '离线'}` : ''}
               {filters.capability ? ` · ${{ sensor: '采集', relay: '控制', camera: '视频' }[filters.capability]}` : ''}
               {filters.hasAlarm ? ' · 有告警' : ''}
             </span>
@@ -261,16 +224,6 @@ function DeviceList() {
             ...types.list.map((t) => ({ label: t.name, value: String(t.id) })),
           ]}
           onChange={(v) => (v === 'none' ? setFilter('unclassified', 'true') : setFilter('deviceTypeId', v))}
-        />
-        <Choice
-          label="在线状态"
-          value={filters.online}
-          options={[
-            { label: '全部', value: '' },
-            { label: '在线', value: 'true' },
-            { label: '离线', value: 'false' },
-          ]}
-          onChange={(v) => setFilter('online', v)}
         />
         <Choice
           label="业务能力"

@@ -17,14 +17,13 @@ describe('H5 URL 与筛选', () => {
     expect(mobileEquivalent('/screen/3', '')).toBeNull()
     expect(mobileEquivalent('/tenant/3', '')).toBeNull()
   })
-  it('拒绝无效 ID、能力、在线参数，保留合法服务端筛选', () => {
+  it('拒绝无效 ID、能力参数，保留合法服务端筛选', () => {
     expect(positiveId('9007199254740993')).toBeUndefined()
     expect(positiveId('-2')).toBeUndefined()
     expect(
-      readDeviceFilters(new URLSearchParams('siteId=2&online=false&capability=relay&hasAlarm=true')),
-    ).toMatchObject({ siteId: 2, online: 'false', capability: 'relay', hasAlarm: true })
-    expect(readDeviceFilters(new URLSearchParams('online=oops&capability=oops'))).toMatchObject({
-      online: undefined,
+      readDeviceFilters(new URLSearchParams('siteId=2&capability=relay&hasAlarm=true')),
+    ).toMatchObject({ siteId: 2, capability: 'relay', hasAlarm: true })
+    expect(readDeviceFilters(new URLSearchParams('capability=oops'))).toMatchObject({
       capability: undefined,
     })
   })

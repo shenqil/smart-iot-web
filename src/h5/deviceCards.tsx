@@ -32,7 +32,7 @@ export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
   })
   const sensor = d ? byChannel(d.sensors)[0] : undefined,
     reading = !isVideo && sensor ? readSensor(sensor, rt.data?.sensors) : null,
-    online = isVideo ? true : deviceOnline(d, rt.data)
+    online = deviceOnline(d, rt.data)
   return (
     <div ref={ref}>
       <Link
@@ -91,7 +91,7 @@ export function DeviceReading({ device, typeName }: { device: AppDevice; typeNam
       refetchInterval: 30_000,
     }),
     reading = !isVideo && sensor ? readSensor(sensor, q.data?.sensors) : null,
-    online = isVideo ? true : deviceOnline(device, q.data)
+    online = deviceOnline(device, q.data)
   return (
     <div ref={ref} className="h5-row-reading">
       {reading ? (
@@ -163,7 +163,7 @@ export const DeviceListItem = memo(function DeviceListItem({
       </div>
       <Link to={to} className="h5-device-item-body">
         <div className="h5-tags">
-          <DeviceStatus online={isVideo ? true : deviceOnline(device, rt.data)} />
+          <DeviceStatus online={deviceOnline(device, rt.data)} />
           {device.status !== 'active' && (
             <StatusTag tone="warning">{device.status === 'fault' ? '故障' : '停用'}</StatusTag>
           )}

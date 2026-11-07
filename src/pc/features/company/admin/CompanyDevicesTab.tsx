@@ -10,7 +10,6 @@ import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { RelationModal } from '@/components/table/RelationModal'
 import { deviceColumns } from '@/features/device/columns'
 import { useDeviceTypes } from '@/features/dict/api'
-import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { confirmAction } from '@/lib/confirm'
 import { companyApi, companyKeys, type DeviceRow } from './api'
 
@@ -108,7 +107,7 @@ export function CompanyDevicesTab({ companyId }: { companyId: number }) {
           {
             title: '在线',
             dataIndex: 'online',
-            render: (v, r) => <OnlineTag online={isVideoDeviceType(types.nameOf(r.deviceTypeId)) ? true : v} />,
+            render: (v) => <OnlineTag online={v} />,
           },
         ]}
         okText="授权"

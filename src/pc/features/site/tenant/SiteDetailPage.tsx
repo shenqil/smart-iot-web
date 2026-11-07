@@ -13,7 +13,6 @@ import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { RelationModal } from '@/components/table/RelationModal'
 import { deviceColumns } from '@/features/device/columns'
 import { useDeviceTypes } from '@/features/dict/api'
-import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { joinAddress } from '@/lib/address'
 import { affectedText, confirmAction } from '@/lib/confirm'
@@ -213,7 +212,7 @@ export default function SiteDetailPage() {
           {
             title: '在线',
             dataIndex: 'online',
-            render: (v, r) => <OnlineTag online={isVideoDeviceType(types.nameOf(r.deviceTypeId)) ? true : v} />,
+            render: (v) => <OnlineTag online={v} />,
           },
         ]}
         okText="挂载"

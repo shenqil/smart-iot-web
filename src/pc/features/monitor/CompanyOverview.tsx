@@ -4,9 +4,7 @@ import { Card, Empty, Skeleton } from 'antd'
 import { EnumTag, SITE_STATUS } from '@/components/StatusTag'
 import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { appSiteDevicesQuery } from '@/features/device/api'
-import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
-import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
 import { useScope } from '@/layouts/app/useScope'
 
@@ -24,7 +22,6 @@ export function CompanyOverview() {
     queries: list.slice(0, 20).map((s) => appSiteDevicesQuery(companyId, s.id)),
   })
 
-  const types = useDeviceTypes()
   return (
     <Card variant="borderless" title="园区" extra={<span className="text-fg-tertiary text-sm">选择园区查看设备</span>}>
       {sites.isPending ? (
@@ -36,9 +33,7 @@ export function CompanyOverview() {
           {list.map((s, i) => {
             const c = counts[i]?.data
             const devices = deviceLists[i]?.data
-            const online = (devices ?? []).filter((d) =>
-              isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online,
-            ).length
+            const online = (devices ?? []).filter((d) => d.online).length
             const address = [s.city, s.district, s.address].filter(Boolean).join(' ')
             return (
               <button

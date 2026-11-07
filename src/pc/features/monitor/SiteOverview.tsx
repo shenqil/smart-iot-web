@@ -41,7 +41,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
   }).data
   const types = useDeviceTypes()
   const list = devices.data ?? []
-  const online = list.filter((d) => (isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online)).length
+  const online = list.filter((d) => d.online).length
   const address = site && [site.province, site.city, site.district, site.address].filter(Boolean).join(' ')
   const alarmsOf = new Map<number, number>()
   for (const a of unprocessed?.records ?? []) alarmsOf.set(a.deviceId, (alarmsOf.get(a.deviceId) ?? 0) + 1)

@@ -9,7 +9,6 @@ export function readDeviceFilters(p: URLSearchParams): DeviceFilters {
     siteId: positiveId(p.get('siteId')),
     deviceTypeId: positiveId(p.get('deviceTypeId')),
     unclassified: p.get('unclassified') === 'true' || undefined,
-    online: ['true', 'false'].includes(p.get('online') ?? '') ? (p.get('online') as 'true' | 'false') : undefined,
     keyword: p.get('keyword')?.trim() || undefined,
     capability: ['sensor', 'relay', 'camera'].includes(cap ?? '') ? (cap as DeviceFilters['capability']) : undefined,
     hasAlarm: p.get('hasAlarm') === 'true' || undefined,

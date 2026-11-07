@@ -1,8 +1,6 @@
 import { alarmsQuery, scopedUnprocessedCountQuery } from '@shared/api/alarm'
 import { appDeviceSummaryQuery } from '@shared/api/device'
-import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery, weatherQuery } from '@shared/api/site'
-import { adjustSummaryOnlineStats } from '@shared/telemetry/lib/realtime'
 import { useQuery } from '@tanstack/react-query'
 import { Button, List } from 'antd-mobile'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -27,10 +25,8 @@ export default function SitesPage() {
     ...alarmsQuery(cid, { siteId: id, processed: 'false', sort: 'level,-lastAlarmAt', page: 1, pageSize: 3 }),
     enabled: !!site,
   })
-  const types = useDeviceTypes()
   const base = `/h5/${cid}`,
     s = summary.data
-  const { onlineCount, offlineCount } = adjustSummaryOnlineStats(s, types.nameOf)
   return (
     <Page title={siteId ? (site?.name ?? '园区') : '我的园区'}>
       {query.isPending ? (
@@ -75,13 +71,13 @@ export default function SitesPage() {
               ) : s ? (
                 <div className="h5-row">
                   <StatRing
-                    value={s.onlineKnown && s.deviceCount ? (onlineCount / s.deviceCount) * 100 : null}
+                    value={s.onlineKnown && s.deviceCount ? (s.onlineCount / s.deviceCount) * 100 : null}
                     label="在线率"
                   />
                   <div className="h5-stack">
                     <span>设备 {s.deviceCount} 台</span>
                     <span>
-                      在线 {s.onlineKnown ? onlineCount : '—'} · 离线 {s.onlineKnown ? offlineCount : '—'}
+                      在线 {s.onlineKnown ? s.onlineCount : '—'} · 离线 {s.onlineKnown ? s.offlineCount : '—'}
                     </span>
                     <Link to={`${base}/alarms?siteId=${id}&processed=false`}>
                       未处理告警 {counts.data ? (counts.data.capped ? '999+' : counts.data.count) : '—'} ›

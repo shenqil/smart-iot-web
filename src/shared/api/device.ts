@@ -36,13 +36,12 @@ export interface AppDeviceFilters {
   siteId?: number
   deviceTypeId?: number
   unclassified?: boolean
-  online?: 'true' | 'false'
   keyword?: string
   page?: number
   pageSize?: number
 }
 
-/** 在线状态由服务在完整范围内筛选后分页，不能对当前页做本地过滤。 */
+/** 列表查询：按设备类型、未分类、园区或关键字筛选 */
 export const appDevicesQuery = (companyId: number, filters: AppDeviceFilters = {}) =>
   queryOptions({
     queryKey: ['app', companyId, 'devices', 'list', filters],

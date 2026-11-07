@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   type AppSensor,
-  adjustSummaryOnlineStats,
   agoText,
   channelName,
   isVideoDeviceType,
@@ -56,20 +55,6 @@ describe('辅助函数', () => {
     expect(isVideoDeviceType('视频监控')).toBe(true)
     expect(isVideoDeviceType('网关')).toBe(false)
     expect(isVideoDeviceType(null)).toBe(false)
-  })
-  it('统计设备在线状态修正：视频监控计入在线并从离线扣除', () => {
-    const nameOf = (id: number | null | undefined) => (id === 1 ? '气象站' : id === 2 ? '视频监控' : '未分类')
-    const stats = {
-      deviceCount: 10,
-      onlineCount: 4,
-      offlineCount: 6,
-      deviceTypes: [
-        { deviceTypeId: 1, count: 7 },
-        { deviceTypeId: 2, count: 3 },
-      ],
-    }
-    const res = adjustSummaryOnlineStats(stats, nameOf)
-    expect(res).toEqual({ onlineCount: 7, offlineCount: 3 })
   })
   it('继电器可操作条件', () => {
     expect(relayBlockedReason({ status: 'active' }, true)).toBeNull()

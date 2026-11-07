@@ -830,7 +830,7 @@ export interface paths {
         };
         /**
          * 设备列表 (分页)
-         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。online 按完整授权范围的在线快照先筛选再分页；Valkey 不可用时该筛选返回 503。unclassified=true 筛选未分类。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
+         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。unclassified=true 筛选未分类。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
          */
         get: operations["app-list-devices"];
         put?: never;
@@ -6402,8 +6402,6 @@ export interface operations {
                 capability?: "sensor" | "relay" | "camera";
                 /** @description 仅有未处理告警的设备 */
                 hasAlarm?: boolean;
-                /** @description 在线/离线；不传表示不限。先筛选完整候选集，再分页 */
-                online?: "true" | "false";
                 /** @description 只看未分类设备；不能与 deviceTypeId 同时使用 */
                 unclassified?: boolean;
             };

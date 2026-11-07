@@ -100,10 +100,4 @@ describe('H5 首页', () => {
     expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
   })
-  it('视频监控设备默认计入在线且从离线中扣除', async () => {
-    mockTypeName = (id: number) => (id === 1 ? '气象站' : '视频监控')
-    setup()
-    expect(await screen.findByText('100.0%')).toBeInTheDocument()
-    expect(screen.getByText('在线 100 · 离线 0')).toBeInTheDocument()
-  })
 })

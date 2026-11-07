@@ -61,7 +61,7 @@ export default function DevicePage({ id }: { id: number }) {
       useMobilePreferences.getState().visit(me.id, cid, { id: visitedId, name: visitedName, siteId })
   }, [visitedId, visitedName, me.id, cid, siteId])
   const known = d?.onlineKnown !== false,
-    online = isVideo ? true : deviceOnline(d, rt.data),
+    online = deviceOnline(d, rt.data),
     stale = !!(
       online &&
       rt.data?.sensorsAt &&

@@ -21,7 +21,7 @@ export function MetricGrid({ items }: { items: { label: string; value: React.Rea
   return (
     <Grid columns={items.length} className="h5-metrics">
       {items.map((item) => (
-        <Grid.Item key={item.to}>
+        <Grid.Item key={item.label}>
           <Link to={item.to}>
             <strong>{item.value}</strong>
             <span>{item.label}</span>

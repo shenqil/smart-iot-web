@@ -84,7 +84,7 @@ export function ScopeTree() {
   const kw = keyword.trim().toLowerCase()
   const match = (d: AppDevice) => {
     const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
-    const isOnline = isVideo ? true : d.online
+    const isOnline = d.online
     if (isVideo && filter === 'alarm') return false
     return (
       (filter === 'all' ||
@@ -118,7 +118,7 @@ export function ScopeTree() {
 
   const deviceTitle = (sid: number, d: AppDevice) => {
     const isVideo = isVideoDeviceType(types.nameOf(d.deviceTypeId))
-    const isOnline = isVideo ? true : d.online
+    const isOnline = d.online
     const n = deviceAlarm.get(d.id) ?? 0
     return (
       <span className="group flex items-center gap-2">
@@ -143,7 +143,7 @@ export function ScopeTree() {
     if (filter === 'alarm' && alarm && alarm.count === 0) return []
     const devices = (all ?? []).filter(match)
     if (kw && all && !devices.length && !s.name.toLowerCase().includes(kw)) return []
-    const online = (all ?? []).filter((d) => (isVideoDeviceType(types.nameOf(d.deviceTypeId)) ? true : d.online)).length
+    const online = (all ?? []).filter((d) => d.online).length
     return [
       {
         key: `s:${s.id}`,
