@@ -129,7 +129,7 @@ function ScreenBody() {
       { replace: true },
     )
 
-  const title = site ? `${site.name}智慧农业监测平台` : '智慧农业监测平台'
+  const title = site ? `${site.name}智慧物联监测平台` : '智慧物联监测平台'
   useEffect(() => {
     document.title = `${title} · 数据大屏`
   }, [title])
