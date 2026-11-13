@@ -3,9 +3,9 @@ import { BIZ_TZ, dayjs } from '@/lib/time'
 import type { RelayLink } from '@/shared/api/relay'
 
 /** 定时开关规则 (docs/RELAY_SCHEDULE.md) */
-export type RelaySchedule = Schemas['RelayScheduleView']
+export type RelaySchedule = Schemas['ScheduleView']
 /** 下一次定时动作 */
-export type NextAction = Schemas['RelayNextAction']
+export type NextAction = Schemas['AppRelayNextAction']
 
 /** 星期选项 (1 = 周一 … 7 = 周日) */
 export const WEEKDAY_OPTIONS = ['一', '二', '三', '四', '五', '六', '日'].map((d, i) => ({

@@ -89,7 +89,7 @@ function ScreenBody() {
   const device = candidates.find((d) => d.id === Number(params.get('deviceId'))) ?? candidates[0]
 
   const alarmsQ = useQuery({
-    ...alarmsQuery(companyId, { siteId, processed: 'false', sort: '-lastAlarmAt', page: 1, pageSize: 200 }),
+    ...alarmsQuery(companyId, { siteId, processed: 'false', sort: '-createdAt', page: 1, pageSize: 200 }),
     enabled: Boolean(site),
     refetchInterval: 30_000,
     meta: { silent: true },
@@ -105,7 +105,7 @@ function ScreenBody() {
   const hasSensors = Boolean(device?.sensors?.length)
   const hasRelays = Boolean(device?.relays?.length)
   const rtQ = useQuery({
-    ...realtimeQuery(companyId, device?.id ?? 0),
+    ...realtimeQuery(companyId, device?.deviceSn ?? ''),
     enabled: Boolean(device) && (hasSensors || hasRelays),
     refetchInterval: 10_000,
   })

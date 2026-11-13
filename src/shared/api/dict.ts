@@ -2,9 +2,9 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 import { api, type Schemas, unwrap } from '@/api/client'
 import { fetchAllPages } from '@/api/page'
 
-export type DeviceType = Schemas['DeviceTypeView']
-export type StandardSensor = Schemas['StandardSensorView']
-export type StandardRelay = Schemas['StandardRelayView']
+export type DeviceType = Schemas['DeviceType']
+export type StandardSensor = Schemas['StandardSensor']
+export type StandardRelay = Schemas['StandardRelay']
 
 const all = <T>(
   path: '/api/v1/common/device-types' | '/api/v1/common/standard-sensors' | '/api/v1/common/standard-relays',

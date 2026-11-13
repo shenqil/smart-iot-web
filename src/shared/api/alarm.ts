@@ -1,9 +1,10 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
+import { currentOperatorName } from '@/lib/operator'
 
-export type AlarmView = Schemas['AlarmView']
+export type AlarmView = Schemas['AppAlarm']
 
-/** 未处理告警数 (顶栏数字，后端最多数到 1000，角标显示 99+)，60s 刷新；失败不打扰用户 */
+/** 未处理告警数 (顶栏数字，后端最多数到 100，超出显示 99+)，60s 刷新；失败不打扰用户 */
 export const unprocessedAlarmCountQuery = (companyId: number) =>
   queryOptions({
     queryKey: ['app', companyId, 'alarms', 'unprocessed-count'],
@@ -41,7 +42,6 @@ export interface AlarmQuery {
   deviceId?: number
   level?: number
   type?: 'threshold' | 'offline' | 'fault' | 'relay_failed'
-  status?: 'active' | 'recovered' | 'closed'
   processed?: 'true' | 'false'
   start?: string
   end?: string
@@ -66,11 +66,11 @@ export const processAlarms = (companyId: number, ids: number[], remark: string) 
   unwrap(
     api.POST('/api/v1/app/alarms/process', {
       params: { header: companyHeader(companyId) },
-      body: { ids, remark: remark || undefined },
+      body: { ids, operatorName: currentOperatorName(50), remark: remark || undefined },
     }),
   )
 
-/** 支持详情刷新/深链接；服务端重新校验当前企业的设备授权。 */
+/** 支持详情刷新/深链接；按当前企业及启用园区定位告警。 */
 export const alarmDetailQuery = (companyId: number, alarmId: number) =>
   queryOptions({
     queryKey: ['app', companyId, 'alarms', 'detail', alarmId],

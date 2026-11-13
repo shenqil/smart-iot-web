@@ -11,7 +11,6 @@ type Row = { channel: number; cfg?: RelayDraft }
 
 const toDraft = (r: RelayView): RelayDraft => ({
   channel: r.channel,
-  standardRelayId: r.standardRelayId,
   standardName: r.standardName || undefined,
   name: r.name || undefined,
   iconUrl: r.iconUrl || undefined,
@@ -121,11 +120,11 @@ export function RelaysEditor({
                   showSearch
                   optionFilterProp="label"
                   placeholder="选择后自动带出"
-                  value={r.cfg.standardRelayId ?? undefined}
+                  value={std.list.find((s) => s.name === r.cfg?.standardName)?.id}
                   options={std.list.map((s) => ({ value: s.id, label: s.name }))}
                   onChange={(id) => {
                     const d = id != null ? std.byId.get(id) : undefined
-                    patch(r.channel, { standardRelayId: d?.id, standardName: d?.name, iconUrl: r.cfg?.iconUrl })
+                    patch(r.channel, { standardName: d?.name, iconUrl: r.cfg?.iconUrl })
                   }}
                 />
               ) : (

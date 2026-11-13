@@ -1,12 +1,14 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import { COMPANY_DENIED_CODES, errorText, isApiError, NETWORK_ERROR } from '@/api/errors'
+import { currentOperatorName } from '@/lib/operator'
 
-export type RelayOp = Schemas['RelayRecordView']
+export type RelayOp = Schemas['AppRelayOperation']
+export type ManualControlResult = Schemas['AppManualControl']
 /** 控制某一路继电器的一条告警规则 (触发设备的规则 -> 本设备的一路继电器) */
 export type RelayLinkage = Schemas['LinkageView']
 /** 一路继电器的定时规则、下一次定时动作与手动接管状态 */
-export type RelayAutomation = Schemas['RelayAutomation']
+export type RelayAutomation = Schemas['AppRelayAutomation']
 
 /** 继电器面板中一路继电器的自动控制：联动 (告警规则) + 定时 + 手动接管 */
 export interface RelayLink {
@@ -66,7 +68,7 @@ export function controlRelay(companyId: number, deviceId: number, channel: numbe
   return unwrap(
     api.POST('/api/v1/app/devices/{id}/relays/{channel}', {
       params: { path: { id: deviceId, channel }, header: companyHeader(companyId) },
-      body: takeover ? { state, takeover } : { state },
+      body: { state, operatorName: currentOperatorName(100), ...(takeover ? { takeover: true } : {}) },
       signal: AbortSignal.timeout(RELAY_TIMEOUT_MS),
     }),
   )
@@ -95,6 +97,7 @@ export function releaseRelayHold(companyId: number, deviceId: number, channel: n
   return unwrap(
     api.DELETE('/api/v1/app/devices/{id}/relays/{channel}/hold', {
       params: { path: { id: deviceId, channel }, header: companyHeader(companyId) },
+      body: { operatorName: currentOperatorName(100) },
     }),
   )
 }
@@ -116,7 +119,9 @@ export interface ControlOutcome {
   global?: boolean
 }
 
-export function interpretControl(r: { ok: true; data: RelayOp } | { ok: false; error: unknown }): ControlOutcome {
+export function interpretControl(
+  r: { ok: true; data: ManualControlResult } | { ok: false; error: unknown },
+): ControlOutcome {
   if (r.ok) {
     const { status, actualState, errorMessage } = r.data
     if (status === 'success')

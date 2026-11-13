@@ -14,9 +14,10 @@ import {
 
 const view: SensorView = {
   channel: 0,
-  standardSensorId: 3,
+  name: '空气温度',
   standardName: '空气温度',
   label: '空气温度',
+  iconUrl: '',
   unit: '℃',
   rangeMin: -40,
   rangeMax: 80,

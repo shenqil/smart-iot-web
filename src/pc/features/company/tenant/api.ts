@@ -1,9 +1,9 @@
 import { queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 
-export type TenantCompany = Schemas['CompanyDetailView']
+export type TenantCompany = Schemas['CompanyDetail']
 /** 企业端可修改的资料 (部分更新)；名称、状态、过期时间只能由平台修改 */
-export type CompanyTenantBody = Schemas['CompanyTenantBody']
+export type CompanyTenantBody = Schemas['UpdateCompanyReqBody']
 
 export const tenantCompanyKey = (cid: number) => ['tenant', cid, 'company'] as const
 

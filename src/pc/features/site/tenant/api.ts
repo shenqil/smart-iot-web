@@ -4,12 +4,12 @@ import { fetchAllPages } from '@/api/page'
 import type { PageParams } from '@/api/types'
 import { useCompanyId } from '@/hooks/session'
 
-export type Site = Schemas['SiteView']
-export type SiteDetail = Schemas['SiteDetailView']
-export type SiteBody = Schemas['SiteBody']
+export type Site = Schemas['CompanySite']
+export type SiteDetail = Schemas['TenantSiteDetail']
+export type SiteBody = Schemas['CreateSiteReqBody']
 /** 修改园区 (部分更新：未传不修改；经纬度成对传 null 清除；images 传值即整体替换) */
-export type SiteUpdateBody = Schemas['SiteUpdateBody']
-export type SiteDevice = Schemas['DeviceView']
+export type SiteUpdateBody = Schemas['UpdateSiteReqBody']
+export type SiteDevice = Schemas['CompanyDevice']
 export type SiteStatus = Site['status']
 
 export const tenantSiteKeys = {
@@ -26,18 +26,18 @@ export function tenantSiteApi(cid: number) {
   const header = companyHeader(cid)
   const p = (id: number) => ({ params: { header, path: { id } } })
   return {
-    list: (q: PageParams) => unwrap(api.GET('/api/v1/tenant/sites', { params: { header, query: q as never } })),
+    list: (q: PageParams) => unwrap(api.GET('/api/v1/tenant/sites', { params: { header, query: q } })),
     detail: (id: number) => unwrap(api.GET('/api/v1/tenant/sites/{id}', p(id))),
     create: (body: SiteBody) => unwrap(api.POST('/api/v1/tenant/sites', { params: { header }, body })),
     update: (id: number, body: SiteUpdateBody) => unwrap(api.PUT('/api/v1/tenant/sites/{id}', { ...p(id), body })),
     remove: (ids: number[]) => unwrap(api.DELETE('/api/v1/tenant/sites', { params: { header }, body: { ids } })),
 
     devices: (id: number, q: PageParams) =>
-      unwrap(api.GET('/api/v1/tenant/sites/{id}/devices', { params: { header, path: { id }, query: q as never } })),
+      unwrap(api.GET('/api/v1/tenant/sites/{id}/devices', { params: { header, path: { id }, query: q } })),
     availableDevices: (id: number, q: Partial<PageParams>) =>
       unwrap(
         api.GET('/api/v1/tenant/sites/{id}/devices/available', {
-          params: { header, path: { id }, query: q as never },
+          params: { header, path: { id }, query: q },
         }),
       ),
     mount: (id: number, deviceIds: number[]) =>

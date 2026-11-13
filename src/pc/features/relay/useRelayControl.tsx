@@ -33,7 +33,7 @@ export function useRelayControl(device: AppDevice, realtime: Realtime | undefine
   const [busy, setBusy] = useState<ReadonlySet<number>>(new Set())
   const online = realtime?.online ?? device.online
   const blocked = relayBlockedReason(device, online)
-  const key = realtimeKey(companyId, device.id)
+  const key = realtimeKey(companyId, device.deviceSn)
   const linksKey = relayLinksKey(companyId, device.id)
   const { data: linkList } = useQuery({ ...relayLinksQuery(companyId, device.id), enabled: device.relays.length > 0 })
   /** 通道号 -> 联动与接管状态 (只有被联动控制或已接管的通道) */

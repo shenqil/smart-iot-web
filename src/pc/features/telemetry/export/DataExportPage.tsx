@@ -91,7 +91,7 @@ export default function DataExportPage() {
     setProgress({ phase: 'download', done: 0, total: 0 })
     const task = runExport({
       companyId: cid,
-      deviceId: device.id,
+      deviceSn: device.deviceSn,
       ...q,
       channels,
       info: [

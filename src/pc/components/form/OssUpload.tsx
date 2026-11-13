@@ -6,8 +6,8 @@ import { api, unwrap } from '@/api/client'
 import { errorText } from '@/api/errors'
 import { notify } from '@/app/notify'
 
-type Scene = Schemas['OSSPolicyRequest']['scene']
-type ContentType = Schemas['OSSPolicyRequest']['contentType']
+type Scene = Schemas['UploadPolicyReqBody']['scene']
+type ContentType = Schemas['UploadPolicyReqBody']['contentType']
 
 const ICON_SCENES: Scene[] = ['device-type-icon', 'sensor-icon', 'relay-icon']
 const IMAGE_TYPES: ContentType[] = ['image/png', 'image/jpeg', 'image/webp']

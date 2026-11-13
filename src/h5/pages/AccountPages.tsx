@@ -253,7 +253,7 @@ function Password() {
               useSession.getState().setSession(result.token, result.expiresAt)
               if (result.user) qc.setQueryData(authKeys.me, result.user)
               form.resetFields()
-              Toast.show({ content: '密码已修改，其他设备登录已失效', duration: 3500 })
+              Toast.show({ content: '密码已修改', duration: 3500 })
             } catch (e) {
               showFailure(e)
             } finally {
@@ -355,7 +355,6 @@ function DeviceInfo() {
               {!isVideo && <List.Item extra={`${d.readInterval} 秒`}>采集周期</List.Item>}
               {!isVideo && <List.Item extra={`${d.sensors.length} 路`}>传感器</List.Item>}
               {!isVideo && <List.Item extra={`${d.relays.length} 路`}>继电器</List.Item>}
-              {isVideo && <List.Item extra={d.hasCamera ? '已配置' : '未配置'}>摄像头</List.Item>}
               <List.Item extra={d.longitude != null && d.latitude != null ? `${d.longitude}, ${d.latitude}` : '未配置'}>
                 位置
               </List.Item>

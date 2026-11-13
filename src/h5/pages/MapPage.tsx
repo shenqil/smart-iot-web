@@ -9,7 +9,6 @@ import type { AppDevice } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
 import { isValidLngLat, TDT_SUBDOMAINS, tdtTileUrl, useTdtBrowserKey } from '@shared/lib/tianditu'
-import { isVideoDeviceType } from '@shared/telemetry/lib/realtime'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import { Link, useSearchParams } from 'react-router'
@@ -91,7 +90,7 @@ export default function MapPage() {
                     url={tdtTileUrl(satellite ? 'cia' : 'cva', key)}
                     subdomains={TDT_SUBDOMAINS}
                   />
-                  <Markers devices={points} select={select} target={target} nameOf={types.nameOf} />
+                  <Markers devices={points} select={select} target={target} />
                 </MapContainer>
               </div>
             </LocalErrorBoundary>
@@ -132,18 +131,14 @@ export default function MapPage() {
               }
             >
               <p>
-                {types.nameOf(selected.deviceTypeId)} · {selected.deviceSn} ·{' '}
-                {selected.onlineKnown === false ? '状态未知' : selected.online ? '在线' : '离线'}
-                {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm ? ' · 有未处理告警' : ''}
+                {types.nameOf(selected.deviceTypeId)} · {selected.deviceSn} · {selected.online ? '在线' : '离线'}
               </p>
-              {!isVideoDeviceType(types.nameOf(selected.deviceTypeId)) && selected.hasAlarm && (
-                <Link
-                  className="h5-navigation-card"
-                  to={`/h5/${cid}/alarms?deviceId=${selected.id}&processed=false${site ? `&siteId=${site}` : ''}`}
-                >
-                  查看设备告警 ›
-                </Link>
-              )}
+              <Link
+                className="h5-navigation-card"
+                to={`/h5/${cid}/alarms?deviceId=${selected.id}&processed=false${site ? `&siteId=${site}` : ''}`}
+              >
+                查看设备告警 ›
+              </Link>
               <Link
                 className="h5-navigation-card"
                 to={`/h5/${cid}/devices?deviceId=${selected.id}${site ? `&siteId=${site}` : ''}`}
@@ -163,7 +158,6 @@ export default function MapPage() {
                     <small className="h5-muted">
                       {' '}
                       {types.nameOf(d.deviceTypeId)} · {d.deviceSn}
-                      {!isVideoDeviceType(types.nameOf(d.deviceTypeId)) && d.hasAlarm ? ' · 待处理告警' : ''}
                     </small>
                   </Link>
                   {isValidLngLat(d.longitude, d.latitude) ? (
@@ -192,21 +186,18 @@ function Markers({
   devices,
   select,
   target,
-  nameOf,
 }: {
   devices: AppDevice[]
   select: (d: AppDevice) => void
   target: [number, number] | null
-  nameOf: (id: number | null | undefined) => string
 }) {
   const map = useMap()
   useEffect(() => {
     const group = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 45 })
     for (const d of devices) {
-      const isVideo = isVideoDeviceType(nameOf(d.deviceTypeId))
       const marker = L.marker([d.latitude ?? 0, d.longitude ?? 0], {
         icon: L.divIcon({
-          html: `<span class="h5-map-dot ${!isVideo && d.hasAlarm ? 'has-alarm' : ''} ${d.online ? 'online' : ''}"></span>`,
+          html: `<span class="h5-map-dot ${d.online ? 'online' : ''}"></span>`,
           className: 'h5-marker',
           iconSize: [28, 28],
         }),
@@ -220,7 +211,7 @@ function Markers({
       group.clearLayers()
       map.removeLayer(group)
     }
-  }, [devices, map, select, nameOf])
+  }, [devices, map, select])
   useEffect(() => {
     if (target) map.flyTo(target, Math.max(map.getZoom(), 15))
   }, [target, map])

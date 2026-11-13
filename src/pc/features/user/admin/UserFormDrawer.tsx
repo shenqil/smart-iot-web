@@ -72,10 +72,9 @@ export function UserFormDrawer({
         <Form.Item
           name="systemRole"
           label="系统角色"
-          tooltip={self ? '不能修改自己的系统角色' : '平台管理员拥有平台管理端全部权限'}
+          tooltip="平台管理员可进入平台管理端"
         >
           <Radio.Group
-            disabled={self}
             optionType="button"
             options={[
               { value: 'none', label: '普通用户' },
@@ -83,9 +82,8 @@ export function UserFormDrawer({
             ]}
           />
         </Form.Item>
-        <Form.Item name="status" label="账号状态" tooltip={self ? '不能停用自己' : '停用后该用户立即下线'}>
+        <Form.Item name="status" label="账号状态" tooltip="停用后无法重新登录">
           <Radio.Group
-            disabled={self}
             optionType="button"
             options={[
               { value: 'active', label: '启用' },
@@ -94,9 +92,6 @@ export function UserFormDrawer({
           />
         </Form.Item>
       </div>
-      {user && !self && (
-        <div className="text-fg-tertiary text-xs">修改系统角色或停用后，该用户当前的登录会立即失效。</div>
-      )}
     </FormDrawer>
   )
 }

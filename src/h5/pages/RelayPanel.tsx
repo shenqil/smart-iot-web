@@ -67,9 +67,7 @@ export default function MobileRelayPanel({
   const blocked =
     (realtimeError
       ? '实时状态获取失败，请刷新后控制'
-      : device.onlineKnown === false
-        ? '在线状态未知，暂不能控制'
-        : relayBlockedReason(device, realtime?.online ?? device.online)) || denied
+      : relayBlockedReason(device, realtime?.online ?? device.online)) || denied
 
   const relays = byChannel(device.relays)
 
@@ -135,18 +133,18 @@ export default function MobileRelayPanel({
 
     const actual = outcome.actualState
     if (actual != null) {
-      qc.setQueryData<Realtime>(realtimeKey(cid, device.id), (old) => {
+      qc.setQueryData<Realtime>(realtimeKey(cid, device.deviceSn), (old) => {
         if (!old) return old
         const nextRelays = [...(old.relays ?? [])]
         nextRelays[ch] = actual
         return { ...old, relays: nextRelays }
       })
     }
-    if (outcome.refresh) void qc.invalidateQueries({ queryKey: realtimeKey(cid, device.id) })
+    if (outcome.refresh) void qc.invalidateQueries({ queryKey: realtimeKey(cid, device.deviceSn) })
     if (outcome.refreshAgain && alive.current) {
       timers.current.push(
         setTimeout(() => {
-          void qc.invalidateQueries({ queryKey: realtimeKey(cid, device.id) })
+          void qc.invalidateQueries({ queryKey: realtimeKey(cid, device.deviceSn) })
         }, 5_000),
       )
     }
@@ -249,7 +247,7 @@ export default function MobileRelayPanel({
               try {
                 await Promise.all([
                   qc.fetchQuery({ ...mobileDeviceQuery(cid, device.id), staleTime: 0 }),
-                  qc.fetchQuery({ ...realtimeQuery(cid, device.id), staleTime: 0 }),
+                  qc.fetchQuery({ ...realtimeQuery(cid, device.deviceSn), staleTime: 0 }),
                   qc.invalidateQueries({ queryKey: relayLinksKey(cid, device.id) }),
                 ])
                 if (alive.current) setDenied('')

@@ -15,7 +15,7 @@ export interface ExportProgress {
 
 export interface ExportJob {
   companyId: number
-  deviceId: number
+  deviceSn: string
   start: string
   end: string
   channels: ExportChannel[]
@@ -40,7 +40,7 @@ export function runExport(job: ExportJob): { done: Promise<ExportResult | null>;
   const done = (async () => {
     const bytes = await downloadHistory({
       companyId: job.companyId,
-      deviceId: job.deviceId,
+      deviceSn: job.deviceSn,
       start: job.start,
       end: job.end,
       signal: ctrl.signal,

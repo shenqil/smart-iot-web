@@ -13,7 +13,7 @@ import { QuickActions, useQuickActions } from '../components/QuickActions'
 import { SitePreview } from '../components/SiteCard'
 import { DeviceBookmarkCard } from '../deviceCards'
 import { preferenceKey, useMobilePreferences } from '../preferences'
-import { Card, Empty, Failure, Icon, Loading, Notice, Page, SectionHeading, Sheet, StatRing } from '../ui'
+import { Card, Empty, Failure, Icon, Loading, Notice, Page, SectionHeading, Sheet } from '../ui'
 
 export default function HomePage() {
   const cid = useCompanyId(),
@@ -27,7 +27,7 @@ export default function HomePage() {
   const summary = useQuery(appDeviceSummaryQuery(cid)),
     sites = useQuery(appSitesQuery(cid))
   const count = useQuery(scopedUnprocessedCountQuery(cid, {}))
-  const alarms = useQuery(alarmsQuery(cid, { processed: 'false', sort: 'level,-lastAlarmAt', page: 1, pageSize: 3 }))
+  const alarms = useQuery(alarmsQuery(cid, { processed: 'false', sort: 'level,-createdAt', page: 1, pageSize: 3 }))
   const types = useDeviceTypes(),
     entry = useMobilePreferences((s) => s.entries[preferenceKey(me.id, cid)])
   const stats = summary.data,
@@ -75,40 +75,15 @@ export default function HomePage() {
               stats && (
                 <Card className="h5-overview" title="企业运行概况" extra={<span className="h5-muted">当前企业</span>}>
                   {summary.isError && <Notice tone="warning">刷新失败，显示上次数据</Notice>}
-                  <div className="h5-row">
-                    <StatRing
-                      value={stats.onlineKnown && total ? (stats.onlineCount / total) * 100 : null}
-                      label="设备在线率"
-                    />
-                    <div>
-                      <p className="h5-eyebrow">CONNECTED DEVICES</p>
-                      <h3>每一台设备，尽在掌握</h3>
-                      <small className="h5-muted">
-                        {stats.onlineKnown
-                          ? `在线 ${stats.onlineCount} · 离线 ${stats.offlineCount}`
-                          : `在线状态未知 ${stats.unknownCount} 台`}
-                      </small>
-                    </div>
-                  </div>
                   <MetricGrid
                     items={[
                       { label: '园区', value: stats.siteCount, to: `${base}/sites` },
                       { label: '设备', value: total, to: `${base}/devices` },
-                      {
-                        label: '在线',
-                        value: stats.onlineKnown ? stats.onlineCount : '—',
-                        to: `${base}/devices`,
-                      },
-                      {
-                        label: '离线',
-                        value: stats.onlineKnown ? stats.offlineCount : '—',
-                        to: `${base}/devices`,
-                      },
                     ]}
                   />
                   <Link className="h5-alarm-strip" to={`${base}/alarms?processed=false`}>
                     <span>待处理告警</span>
-                    <b>{count.data ? `${count.data.capped ? '999+' : count.data.count} 条` : '—'} ›</b>
+                    <b>{count.data ? `${count.data.capped ? '99+' : count.data.count} 条` : '—'} ›</b>
                   </Link>
                 </Card>
               )
@@ -125,7 +100,7 @@ export default function HomePage() {
                     key: String(t.deviceTypeId ?? 'none'),
                     label: types.nameOf(t.deviceTypeId),
                     count: t.count,
-                    to: `${base}/devices?${t.deviceTypeId == null ? 'unclassified=true' : `deviceTypeId=${t.deviceTypeId}`}`,
+                    to: t.deviceTypeId == null ? `${base}/devices` : `${base}/devices?deviceTypeId=${t.deviceTypeId}`,
                   }))}
                 />
               )}
@@ -151,7 +126,7 @@ export default function HomePage() {
                     <div>
                       <strong>{a.description || '设备告警'}</strong>
                       <small>
-                        {a.deviceName} · {a.alarmCount} 次
+                        {a.deviceName}
                       </small>
                     </div>
                     <span>›</span>

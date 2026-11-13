@@ -107,8 +107,9 @@ export function DeviceConfigPage({
   })
   const camera = useMutation({
     mutationFn: (c: Parameters<DeviceConfigApi['updateCamera']>[1]) => cfg.updateCamera(id, c),
-    onSuccess: (r) => {
-      saved(r)
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: key })
+      setDirty(false)
       notify.success('摄像头配置已保存')
     },
   })

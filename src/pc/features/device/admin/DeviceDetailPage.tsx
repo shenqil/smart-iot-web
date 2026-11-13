@@ -1,6 +1,6 @@
 import { DeleteOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Tag } from 'antd'
+import { Button } from 'antd'
 import { useNavigate, useParams } from 'react-router'
 import { confirmAction } from '@/lib/confirm'
 import { adminDeviceConfigApi } from '../config/api'
@@ -20,7 +20,6 @@ export default function DeviceDetailPage() {
       backTo="/admin/devices"
       headerExtra={(d) => (
         <>
-          {d.companyCount === 0 && <Tag color="orange">公海设备</Tag>}
           <Button
             danger
             icon={<DeleteOutlined />}

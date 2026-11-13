@@ -1,8 +1,8 @@
 import type { Schemas } from '@/api/client'
 
 export type Portal = 'admin' | 'tenant' | 'app'
-export type Me = Schemas['AuthProfile']
-export type MyCompany = Schemas['AuthMyCompany']
+export type Me = Schemas['Profile']
+export type MyCompany = Schemas['MyCompany']
 
 export const PORTAL_LABEL: Record<Portal, string> = {
   admin: '平台管理',

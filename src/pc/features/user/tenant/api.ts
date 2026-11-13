@@ -1,8 +1,8 @@
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import type { PageParams } from '@/api/types'
 
-export type Member = Schemas['UserMemberView']
-export type MemberCreateBody = Schemas['UserTenantCreateBody']
+export type Member = Schemas['Member']
+export type MemberCreateBody = Schemas['UserCreate']
 
 export const tenantUserKeys = {
   all: (cid: number) => ['tenant', cid, 'users'] as const,
@@ -18,10 +18,7 @@ export function tenantUserApi(cid: number) {
     detail: (id: number) => unwrap(api.GET('/api/v1/tenant/users/{id}', { params: { header, path: { id } } })),
     /** 创建用户：自动以 user 角色加入本企业 */
     create: (body: MemberCreateBody) => unwrap(api.POST('/api/v1/tenant/users', { params: { header }, body })),
-    /** 批量移出：只能移出 user 角色；含管理员或自己时整批拒绝 */
+    /** 批量解除企业成员关系 */
     remove: (ids: number[]) => unwrap(api.DELETE('/api/v1/tenant/users', { params: { header }, body: { ids } })),
   }
 }
-
-/** 可被企业管理员移出：普通成员且不是自己 */
-export const canRemoveMember = (m: Pick<Member, 'id' | 'role'>, meId: number) => m.role === 'user' && m.id !== meId

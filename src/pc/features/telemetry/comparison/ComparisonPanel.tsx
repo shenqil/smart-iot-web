@@ -42,14 +42,14 @@ export function ComparisonPanel({
 
   const prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD')
   const prevMonth = dayjs(`${month}-01`).subtract(1, 'month').format('YYYY-MM')
-  const day = useQuery({ ...dailyComparisonQuery(companyId, device.id, date), enabled: mode === 'day' })
+  const day = useQuery({ ...dailyComparisonQuery(companyId, device.deviceSn, date), enabled: mode === 'day' })
   const dayPrev = useQuery({
-    ...dailyComparisonQuery(companyId, device.id, prevDate),
+    ...dailyComparisonQuery(companyId, device.deviceSn, prevDate),
     enabled: mode === 'day' && overlay,
   })
-  const mon = useQuery({ ...monthlyComparisonQuery(companyId, device.id, month), enabled: mode === 'month' })
+  const mon = useQuery({ ...monthlyComparisonQuery(companyId, device.deviceSn, month), enabled: mode === 'month' })
   const monPrev = useQuery({
-    ...monthlyComparisonQuery(companyId, device.id, prevMonth),
+    ...monthlyComparisonQuery(companyId, device.deviceSn, prevMonth),
     enabled: mode === 'month' && overlay,
   })
 

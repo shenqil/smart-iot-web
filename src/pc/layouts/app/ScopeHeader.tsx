@@ -35,7 +35,7 @@ export function ScopeHeader({ showStatus = true, heroVisible = true, onScrollToT
     ...scopedUnprocessedCountQuery(companyId, { deviceId: deviceId ?? 0 }),
     enabled: Boolean(deviceId && !isVideo),
   })
-  const alarmCount = !isVideo && alarm ? (alarm.capped ? '999+' : String(alarm.count)) : null
+  const alarmCount = !isVideo && alarm ? (alarm.capped ? '99+' : String(alarm.count)) : null
 
   const items = [{ key: 'c', title: <Link to={{ search: '' }}>{company?.name ?? '企业'}</Link> }]
   if (siteId)

@@ -2,11 +2,11 @@ import { queryOptions } from '@tanstack/react-query'
 import { api, type Schemas, unwrap } from '@/api/client'
 import type { PageParams } from '@/api/types'
 
-export type User = Schemas['UserView']
-export type UserDetail = Schemas['UserDetailView']
-export type UserCreateBody = Schemas['UserCreateBody']
-export type UserUpdateBody = Schemas['UserUpdateBody']
-export type Membership = Schemas['UserMembershipView']
+export type User = Schemas['User']
+export type UserDetail = Schemas['AdminUserDetail']
+export type UserCreateBody = Schemas['CreateUserReqBody']
+export type UserUpdateBody = Schemas['UpdateUserReqBody']
+export type Membership = Schemas['AdminUserMembership']
 export type CompanyRole = 'admin' | 'user'
 
 export const userKeys = {

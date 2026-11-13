@@ -3,10 +3,10 @@ import type { Realtime } from '@shared/telemetry/lib/realtime'
 import { StatusTag } from './primitives'
 
 export function deviceOnline(
-  device: Pick<AppDevice, 'online' | 'onlineKnown'> | undefined,
+  device: Pick<AppDevice, 'online'> | undefined,
   realtime?: Pick<Realtime, 'online'>,
 ): boolean | undefined {
-  if (!device || device.onlineKnown === false) return undefined
+  if (!device) return undefined
   return realtime?.online ?? device.online
 }
 export function DeviceStatus({ online }: { online: boolean | undefined }) {

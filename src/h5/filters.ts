@@ -8,7 +8,6 @@ export function readDeviceFilters(p: URLSearchParams): DeviceFilters {
   return {
     siteId: positiveId(p.get('siteId')),
     deviceTypeId: positiveId(p.get('deviceTypeId')),
-    unclassified: p.get('unclassified') === 'true' || undefined,
     keyword: p.get('keyword')?.trim() || undefined,
     capability: ['sensor', 'relay', 'camera'].includes(cap ?? '') ? (cap as DeviceFilters['capability']) : undefined,
     hasAlarm: p.get('hasAlarm') === 'true' || undefined,

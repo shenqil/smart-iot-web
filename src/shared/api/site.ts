@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import { fetchAllPages } from '@/api/page'
 
-export type SiteView = Schemas['SiteView']
+export type SiteView = Schemas['CompanySite']
 
 /** 数据端：本企业全部园区 */
 export const appSitesQuery = (companyId: number) =>

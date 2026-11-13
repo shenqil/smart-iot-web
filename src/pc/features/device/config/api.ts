@@ -1,32 +1,32 @@
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 
-export type DeviceDetail = Schemas['DeviceDetailView']
+export type DeviceDetail = Schemas['DeviceDetail']
 /** 修改基本信息 (部分更新：未传的字段不修改；deviceTypeId、经纬度传 null 表示清除) */
-export type DeviceUpdateBody = Schemas['DeviceUpdateBody']
+export type DeviceUpdateBody = Schemas['UpdateDeviceReqBody']
 /** 传感器通道 (详情) 与保存时的请求体 */
-export type SensorView = Schemas['DeviceSensorView']
-export type SensorBody = Schemas['DeviceSensorBody']
+export type SensorView = Schemas['DeviceSensor']
+export type SensorBody = Schemas['AdminDeviceSensorInput']
 /** 告警规则 (在传感器配置中维护；联动动作单独配置) */
-export type RuleView = Schemas['DeviceRuleView']
-export type RuleBody = Schemas['DeviceRuleBody']
-export type Calibration = Schemas['DeviceCalibration']
-export type Simulation = Schemas['DeviceSimulation']
+export type RuleView = Schemas['SensorRule']
+export type RuleBody = Schemas['AdminDeviceSensorRuleInput']
+export type Calibration = Schemas['SensorCalibration']
+export type Simulation = Schemas['SensorSimulation']
 /** 继电器通道 (详情) 与保存时的请求体 */
-export type RelayView = Schemas['DeviceRelayView']
-export type RelayFields = Schemas['DeviceRelayFields']
+export type RelayView = Schemas['DeviceRelay']
+export type RelayFields = Schemas['AdminDeviceRelayInput']
 /** 摄像头 (详情；appSecret 脱敏) 与修改请求体 (部分更新) */
-export type CameraView = Schemas['DeviceCameraView']
-export type CameraBody = Schemas['DeviceCameraBody']
+export type CameraView = Schemas['DeviceCamera']
+export type CameraBody = Schemas['UpdateDeviceCameraReqBody']
 /** 可选的被控设备 (设备列表行) */
-export type DeviceOption = Schemas['DeviceView']
+export type DeviceOption = Schemas['CompanyDevice']
 /** 定时开关规则 */
-export type RelaySchedule = Schemas['RelayScheduleView']
+export type RelaySchedule = Schemas['ScheduleView']
 /** 新增 / 修改定时规则 (整体替换) */
-export type RelayScheduleBody = Schemas['RelayScheduleBody']
+export type RelayScheduleBody = Schemas['CreateDeviceScheduleReqBody']
 /** 联动配置页：设备的一条告警规则及其联动动作 */
-export type LinkageRule = Schemas['LinkageRuleView']
-export type LinkageAction = Schemas['LinkageActionView']
-export type LinkageActionBody = Schemas['LinkageActionBody']
+export type LinkageRule = Schemas['AlertRuleView']
+export type LinkageAction = Schemas['RuleAction']
+export type LinkageActionBody = Schemas['Item']
 /** 控制本设备某一路继电器的一条规则 (含其他设备的规则) */
 export type RelayLinkage = Schemas['LinkageView']
 
@@ -41,7 +41,7 @@ export interface DeviceConfigApi {
   updateBasic: (id: number, body: DeviceUpdateBody) => Promise<DeviceDetail>
   updateSensors: (id: number, sensors: SensorBody[]) => Promise<DeviceDetail>
   updateRelays: (id: number, relays: RelayFields[]) => Promise<DeviceDetail>
-  updateCamera: (id: number, camera: CameraBody) => Promise<DeviceDetail>
+  updateCamera: (id: number, camera: CameraBody) => Promise<void>
   disconnect: (id: number) => Promise<{ notice: string }>
   /** 联动：设备的全部告警规则及联动动作 / 整体替换一条规则的联动动作 */
   alertRules: (id: number) => Promise<LinkageRule[]>

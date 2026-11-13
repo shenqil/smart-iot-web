@@ -28,13 +28,8 @@ export async function login(username: string, password: string) {
   return r
 }
 
-/** 退出登录：通知后端使当前令牌失效 (失败也继续清理本地)，并跳到登录页 */
-export async function logout() {
-  try {
-    await api.POST('/api/v1/auth/logout')
-  } catch {
-    // 令牌已失效等情况忽略
-  }
+/** 退出登录：清理本地会话并跳到登录页 */
+export function logout() {
   useSession.getState().clear()
   navigateTo(loginPath(), { replace: true })
   // 等登录页渲染后再清缓存，避免仍挂载的页面因缓存清空重新请求

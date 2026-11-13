@@ -138,7 +138,7 @@ export function ScopeTree() {
             <span className="truncate">{s.name}</span>
             {SITE_STATUS[s.status] && <span className="shrink-0 text-xs">({SITE_STATUS[s.status]})</span>}
             <span className="ml-auto flex shrink-0 items-center gap-1.5 pr-1">
-              {alarm && alarm.count > 0 && <AlarmBadge count={alarm.capped ? '999+' : alarm.count} />}
+              {alarm && alarm.count > 0 && <AlarmBadge count={alarm.capped ? '99+' : alarm.count} />}
               {all && (
                 <span className="text-fg-tertiary text-xs">
                   {online}/{all.length}

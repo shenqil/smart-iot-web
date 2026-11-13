@@ -77,13 +77,13 @@ export default function UserListPage() {
           <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => setResetting(r)}>
             重置密码
           </Button>
-          <Tooltip title={r.id === me.id ? '不能删除自己' : undefined}>
+          <Tooltip title={r.systemRole === 'admin' ? '不能删除平台管理员' : undefined}>
             <Button
               type="link"
               size="small"
               danger
               icon={<DeleteOutlined />}
-              disabled={r.id === me.id}
+              disabled={r.systemRole === 'admin'}
               onClick={() => remove([r.id])}
             >
               删除
@@ -119,7 +119,7 @@ export default function UserListPage() {
             新建用户
           </Button>
         }
-        selectable={(r) => r.id !== me.id}
+        selectable={(r) => r.systemRole !== 'admin'}
         batchActions={(keys, _r, clear) => (
           <Button danger size="small" onClick={() => remove(keys, clear)}>
             批量删除

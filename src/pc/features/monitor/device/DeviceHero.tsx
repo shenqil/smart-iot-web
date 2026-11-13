@@ -33,7 +33,7 @@ export function DeviceHero({
     ...scopedUnprocessedCountQuery(companyId, { deviceId: device.id }),
     enabled: !isVideo,
   })
-  const alarmCount = !isVideo && alarm ? (alarm.capped ? '999+' : String(alarm.count)) : null
+  const alarmCount = !isVideo && alarm ? (alarm.capped ? '99+' : String(alarm.count)) : null
   const alarmsLink = `/app/${companyId}/alarms?deviceId=${device.id}${siteId ? `&siteId=${siteId}` : ''}`
 
   return (

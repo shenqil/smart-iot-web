@@ -3,15 +3,15 @@ import { api, type Schemas, unwrap } from '@/api/client'
 import type { PageResult } from '@/api/page'
 import type { PageParams } from '@/api/types'
 
-export type Company = Schemas['CompanyView']
-export type CompanyDetail = Schemas['CompanyDetailView']
-export type CompanyBody = Schemas['CompanyBody']
+export type Company = Schemas['Company']
+export type CompanyDetail = Schemas['CompanyDetail']
+export type CompanyBody = Schemas['CreateCompanyReqBody']
 /** 修改企业 (部分更新：未传的字段不修改；expiredAt 传 null 表示不过期) */
-export type CompanyUpdateBody = Schemas['CompanyUpdateBody']
-export type Member = Schemas['UserMemberView']
-export type UserRow = Schemas['UserView']
-export type DeviceRow = Schemas['DeviceView']
-export type SiteRow = Schemas['SiteView']
+export type CompanyUpdateBody = Schemas['UpdateCompanyReqBody']
+export type Member = Schemas['Member']
+export type UserRow = Schemas['User']
+export type DeviceRow = Schemas['CompanyDevice']
+export type SiteRow = Schemas['CompanySite']
 
 export const companyKeys = {
   all: ['admin', 0, 'companies'] as const,

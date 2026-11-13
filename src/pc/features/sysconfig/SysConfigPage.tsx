@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Form, Input, Space, Typography } from 'antd'
 import type { Key } from 'react'
 import { useState } from 'react'
+import type { Schemas } from '@/api/client'
 import { api, unwrap } from '@/api/client'
 import type { PageResult } from '@/api/page'
 import type { PageParams } from '@/api/types'
@@ -12,7 +13,9 @@ import { type PageColumn, PageTable } from '@/components/table/PageTable'
 import { affectedText, confirmAction } from '@/lib/confirm'
 import { fmtDateTime } from '@/lib/time'
 import { FRONTEND_CONFIG_KEY } from '@/stores/sysConfig'
-import { loadFrontendConfig, type SysConfig } from './api'
+import { loadFrontendConfig } from './api'
+
+type SysConfig = Schemas['AdminSysConfig']
 
 interface FormValues {
   key: string

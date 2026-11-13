@@ -67,7 +67,7 @@ export function ScheduleModal({
             channel: schedule.channel,
             start: clock(schedule.start),
             stop: clock(schedule.stop),
-            weekdays: schedule.weekdays,
+            weekdays: schedule.weekdays ?? [],
             retryCount: schedule.retryCount,
             retryIntervalSec: schedule.retryIntervalSec,
             remark: schedule.remark,

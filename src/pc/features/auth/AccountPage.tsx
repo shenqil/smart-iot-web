@@ -77,7 +77,7 @@ function PasswordCard() {
       useSession.getState().setSession(r.token, r.expiresAt)
       if (r.user) qc.setQueryData(authKeys.me, r.user)
       form.resetFields()
-      notify.success('密码已修改，其他设备上的登录已失效')
+      notify.success('密码已修改')
     },
     onError: (e) => {
       if (!isApiError(e)) return

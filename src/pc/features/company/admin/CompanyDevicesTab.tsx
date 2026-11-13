@@ -35,7 +35,7 @@ export function CompanyDevicesTab({ companyId }: { companyId: number }) {
       content: '设备将从本企业的所有园区解除挂载，企业成员不再能看到这些设备；设备配置与其他企业的授权不受影响。',
       okText: '撤销授权',
       onOk: () => companyApi.batchDevices(ids as number[], [companyId], 'remove'),
-      successText: (r) => `已撤销 ${(r as { removed: number }).removed} 台设备的授权`,
+      successText: (r) => `已撤销 ${(r as { affected: number }).affected} 台设备的授权`,
       onDone: () => {
         clear?.()
         refresh()
@@ -117,7 +117,7 @@ export function CompanyDevicesTab({ companyId }: { companyId: number }) {
             [companyId],
             'add',
           )
-          notify.success(`已授权 ${r.added} 台设备 (授权后需企业管理员挂载到园区，数据使用端才可见)`)
+          notify.success(`已授权 ${r.affected} 台设备 (授权后需企业管理员挂载到园区，数据使用端才可见)`)
           refresh()
         }}
         onClose={() => setAdding(false)}

@@ -137,8 +137,8 @@ export default function UserDetailPage() {
             <Button icon={<KeyOutlined />} disabled={!u} onClick={() => setResetting(true)}>
               重置密码
             </Button>
-            <Tooltip title={self ? '不能删除自己' : undefined}>
-              <Button danger icon={<DeleteOutlined />} disabled={!u || self} onClick={remove}>
+            <Tooltip title={u?.systemRole === 'admin' ? '不能删除平台管理员' : undefined}>
+              <Button danger icon={<DeleteOutlined />} disabled={!u || u.systemRole === 'admin'} onClick={remove}>
                 删除
               </Button>
             </Tooltip>

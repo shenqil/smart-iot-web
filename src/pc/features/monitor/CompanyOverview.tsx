@@ -50,7 +50,7 @@ export function CompanyOverview() {
                   )}
                   {c && c.count > 0 && (
                     <span className="absolute top-2 right-2 rounded-full bg-danger px-2 py-0.5 text-white text-xs">
-                      ⚠ {c.capped ? '999+' : c.count} 条未处理告警
+                      ⚠ {c.capped ? '99+' : c.count} 条未处理告警
                     </span>
                   )}
                 </div>

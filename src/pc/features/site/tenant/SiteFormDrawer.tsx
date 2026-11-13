@@ -43,16 +43,18 @@ export function SiteFormDrawer({
 
   const submit = async ({ location, ...v }: FormValues) => {
     const body = { ...v, name: v.name.trim(), images: v.images ?? [] }
-    const saved = site
-      ? // 部分更新：清除坐标要显式传 null
-        await api.update(site.id, {
-          ...body,
-          longitude: location ? location[0] : null,
-          latitude: location ? location[1] : null,
-        })
-      : await api.create({ ...body, ...fromLngLat(location) })
+    if (site) {
+      await api.update(site.id, {
+        ...body,
+        longitude: location ? location[0] : null,
+        latitude: location ? location[1] : null,
+      })
+      onSaved?.(site.id)
+    } else {
+      const saved = await api.create({ ...body, ...fromLngLat(location) })
+      onSaved?.(saved.id)
+    }
     invalidateTenant(qc, cid, 'sites', 'company')
-    onSaved?.(saved.id)
   }
 
   return (

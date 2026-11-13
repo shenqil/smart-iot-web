@@ -18,7 +18,6 @@ import {
   Icon,
   Loading,
   MobileListView,
-  Notice,
   Page,
   Pagination,
   Sheet,
@@ -28,7 +27,6 @@ import {
 } from '../ui'
 
 export const LEVELS: Record<number, string> = { 1: '紧急', 2: '重要', 3: '警告', 4: '提示' }
-export const ALARM_STATES: Record<string, string> = { active: '进行中', recovered: '已解除', closed: '已关闭' }
 const TYPES: Record<string, string> = {
   threshold: '越限',
   offline: '离线',
@@ -55,21 +53,19 @@ function AlarmList() {
   const keyword = params.get('keyword') ?? '',
     signature = params.toString(),
     level = Number(params.get('level')),
-    type = params.get('type'),
-    state = params.get('status')
+    type = params.get('type')
   const currentQ: AlarmQuery = {
     siteId: positiveId(params.get('siteId')),
     deviceId: positiveId(params.get('deviceId')),
     level: level >= 1 && level <= 4 ? level : undefined,
     type: type && type in TYPES ? (type as AlarmQuery['type']) : undefined,
-    status: state && state in ALARM_STATES ? (state as AlarmQuery['status']) : undefined,
     processed: processed === 'all' ? undefined : (processed as 'true' | 'false'),
     keyword: keyword || undefined,
     start: params.get('start') || undefined,
     end: params.get('end') || undefined,
     page,
     pageSize: 20,
-    sort: '-lastAlarmAt',
+    sort: '-createdAt',
   }
   const qRef = useRef(currentQ)
   if (isTabActive) {
@@ -154,9 +150,6 @@ function AlarmList() {
                 <StatusTag tone={a.level === 1 ? 'danger' : a.level === 2 ? 'warning' : 'info'}>
                   {LEVELS[a.level] ?? `级别${a.level}`}
                 </StatusTag>
-                <StatusTag tone={a.status === 'active' ? 'warning' : 'success'}>
-                  {ALARM_STATES[a.status] ?? a.status}
-                </StatusTag>
                 <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
               </div>
               {multi && !a.processed && (
@@ -174,7 +167,7 @@ function AlarmList() {
               {a.deviceName} · SN {a.deviceSn} · {TYPES[a.type]}
             </small>
             <small className="h5-muted">
-              最近 {fmtDateTime(a.lastAlarmAt)} · 累计 {a.alarmCount} 次
+              触发于 {fmtDateTime(a.createdAt)}
             </small>
             {!a.processed && !multi && (
               <Button size="small" fill="outline" onClick={() => setProcessing([a.id])}>
@@ -243,15 +236,6 @@ function AlarmList() {
           value={q.type}
           options={[{ label: '全部', value: '' }, ...Object.entries(TYPES).map(([value, label]) => ({ value, label }))]}
           onChange={(v) => patch({ type: v })}
-        />
-        <Choice
-          label="告警状态"
-          value={q.status}
-          options={[
-            { label: '全部', value: '' },
-            ...Object.entries(ALARM_STATES).map(([value, label]) => ({ value, label })),
-          ]}
-          onChange={(v) => patch({ status: v })}
         />
         <TimeFilter start={q.start} end={q.end} apply={(start, end) => patch({ start, end })} />
         <Button block onClick={() => setParams(q.siteId ? { siteId: String(q.siteId) } : {})}>
@@ -362,7 +346,6 @@ function AlarmDetail({ id }: { id: number }) {
             <Card>
               <div className="h5-tags">
                 <span className={`h5-level level-${a.level}`}>{LEVELS[a.level] ?? a.level}</span>
-                <span className="h5-chip">{ALARM_STATES[a.status]}</span>
                 <StatusTag>{a.processed ? '已处理' : '未处理'}</StatusTag>
               </div>
               <h1>{a.description || '设备告警'}</h1>
@@ -374,12 +357,8 @@ function AlarmDetail({ id }: { id: number }) {
               <DetailList
                 items={[
                   { label: '类型', value: TYPES[a.type] },
-                  { label: '首次发生', value: fmtDateTime(a.createdAt) },
-                  { label: '最近发生', value: fmtDateTime(a.lastAlarmAt) },
-                  { label: '结束时间', value: fmtDateTime(a.endedAt) },
-                  { label: '累计次数', value: a.alarmCount },
+                  { label: '触发时间', value: fmtDateTime(a.createdAt) },
                   { label: '触发值', value: a.triggerValue ?? '—' },
-                  { label: '持续期间极值', value: a.peakValue ?? '—' },
                   { label: '通道', value: a.channel ?? '—' },
                 ]}
               />
@@ -396,7 +375,6 @@ function AlarmDetail({ id }: { id: number }) {
                 处理此告警
               </Button>
             )}
-            <Notice>告警状态与人工处理分别记录；“已处理”不代表设备异常已经解除。</Notice>
             <Link className="h5-navigation-card" to={`/h5/${cid}/devices?deviceId=${a.deviceId}`}>
               查看关联设备 ›
             </Link>

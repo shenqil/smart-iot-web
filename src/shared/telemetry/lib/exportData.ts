@@ -10,7 +10,9 @@ export interface SensorConfig {
   unit?: string
   resolution?: number
 }
-export type HistoryRecord = Schemas['DataRecord']
+export type HistoryRecord = Omit<Schemas['AppReadingRecord'], 'vals'> & {
+  vals: (number | null)[] | null
+}
 
 /** 导出的一列 (传感器通道) */
 export interface ExportChannel {

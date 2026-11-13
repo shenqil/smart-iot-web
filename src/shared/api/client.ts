@@ -1,5 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
+import { queryClient } from '@/app/queryClient'
 import { useSession } from '@/stores/session'
+import { authKeys } from './authKeys'
 import { ApiError, NETWORK_ERROR } from './errors'
 import type { components, paths } from './schema'
 
@@ -12,6 +14,16 @@ const auth: Middleware = {
   onRequest({ request }) {
     const { token } = useSession.getState()
     if (token) request.headers.set('Authorization', `Bearer ${token}`)
+    const path = new URL(request.url).pathname
+    if (path.startsWith('/api/v1/admin/')) {
+      const profile = queryClient.getQueryData<Schemas['Profile']>(authKeys.me)
+      if (profile) request.headers.set('X-System-Role', profile.systemRole)
+    } else if (path.startsWith('/api/v1/tenant/') || path.startsWith('/api/v1/app/')) {
+      const companyId = Number(request.headers.get('X-Company-ID'))
+      const companies = queryClient.getQueryData<Schemas['MyCompany'][]>(authKeys.companies)
+      const role = companies?.find((company) => company.companyId === companyId)?.role
+      if (role) request.headers.set('X-Company-Role', role)
+    }
     return request
   },
 }

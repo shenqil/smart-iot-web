@@ -34,7 +34,7 @@ export function BatchAuthorizeModal({
     setSaving(true)
     try {
       const r = await adminDeviceApi.batchCompanies(deviceIds ?? [], v.companyIds, v.action)
-      notify.success(v.action === 'add' ? `新增 ${r.added} 条授权` : `撤销 ${r.removed} 条授权`)
+      notify.success(v.action === 'add' ? `新增 ${r.affected} 条授权` : `撤销 ${r.affected} 条授权`)
       onDone()
       onClose()
     } catch (e) {

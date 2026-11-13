@@ -38,11 +38,11 @@ export default function DevicePage({ id }: { id: number }) {
     active =
       ['history', 'comparison'].includes(tab) && d?.sensors.length
         ? tab
-        : tab === 'video' && d?.hasCamera
+        : tab === 'video' && isVideo
           ? 'video'
           : 'realtime'
   const rt = useQuery({
-      ...realtimeQuery(cid, id),
+      ...realtimeQuery(cid, d?.deviceSn ?? ''),
       enabled: visible && !isVideo && active === 'realtime' && !!d && !!(d.sensors.length || d.relays.length),
     }),
     now = useNow(10_000)
@@ -56,8 +56,7 @@ export default function DevicePage({ id }: { id: number }) {
     if (visitedId && visitedName)
       useMobilePreferences.getState().visit(me.id, cid, { id: visitedId, name: visitedName, siteId })
   }, [visitedId, visitedName, me.id, cid, siteId])
-  const known = d?.onlineKnown !== false,
-    online = deviceOnline(d, rt.data),
+  const online = deviceOnline(d, rt.data),
     stale = !!(
       online &&
       rt.data?.sensorsAt &&
@@ -82,7 +81,6 @@ export default function DevicePage({ id }: { id: number }) {
                 : []),
             ]
           : []),
-        ...(d?.hasCamera && (d.sensors.length || d.relays.length) ? [{ key: 'video', title: '视频' }] : []),
       ]
   return (
     <Page
@@ -146,7 +144,7 @@ export default function DevicePage({ id }: { id: number }) {
               </Button>
               <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
             </div>
-            {isVideo || active === 'video' || (d.hasCamera && !d.sensors.length && !d.relays.length) ? (
+            {isVideo || active === 'video' ? (
               <LocalErrorBoundary fallbackTitle="视频监控加载异常">
                 <Suspense fallback={<Loading />}>
                   <Video key={d.id} device={d} />
@@ -161,7 +159,6 @@ export default function DevicePage({ id }: { id: number }) {
             ) : (
               <>
                 {online === false && <Notice>设备离线，显示最后一次数据；离线期间不能控制。</Notice>}
-                {!known && <Notice tone="warning">在线服务暂不可用，设备状态未知；请稍后刷新。</Notice>}
                 {stale && <Notice tone="warning">设备仍在线，但传感器数据已超过三个采集周期未更新。</Notice>}
                 {!!sensors.length && (
                   <Card
@@ -196,7 +193,7 @@ export default function DevicePage({ id }: { id: number }) {
                         <SensorTile
                           key={sensor.channel}
                           sensor={sensor}
-                          values={rt.data?.sensors}
+                          values={rt.data?.sensors ?? undefined}
                           trail={trail[sensor.channel] ?? []}
                           online={online}
                         />
@@ -207,7 +204,7 @@ export default function DevicePage({ id }: { id: number }) {
                 {!!d.relays.length && (
                   <RelayPanel key={d.id} device={d} realtime={rt.data} realtimeError={rt.isError} />
                 )}
-                {!d.sensors.length && !d.relays.length && !d.hasCamera && (
+                {!d.sensors.length && !d.relays.length && !isVideo && (
                   <Empty title="尚未配置传感器、继电器或摄像头">请联系企业管理员配置通道</Empty>
                 )}
                 <div className="h5-grid-two">

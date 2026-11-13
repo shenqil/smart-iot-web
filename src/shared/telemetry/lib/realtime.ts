@@ -2,9 +2,9 @@ import type { Schemas } from '@/api/client'
 import { decimalsOf } from '@/lib/resolution'
 import { dayjs } from '@/lib/time'
 
-export type AppSensor = Schemas['DeviceAppSensor']
-export type AppRelay = Schemas['DeviceAppRelay']
-export type Realtime = Schemas['DataRealtimeView']
+export type AppSensor = Schemas['AppSensorChannel']
+export type AppRelay = Schemas['AppRelayChannel']
+export type Realtime = Schemas['AppRealtime']
 /** 读数数组：下标即通道号，null 表示该通道无读数 */
 export type Readings = readonly (number | null)[]
 

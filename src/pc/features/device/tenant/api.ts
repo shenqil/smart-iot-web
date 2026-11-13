@@ -2,9 +2,9 @@ import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 import { fetchAllPages } from '@/api/page'
 import type { PageParams } from '@/api/types'
 
-export type DeviceTenantCreateBody = Schemas['DeviceTenantCreateBody']
-export type MountedSite = Schemas['SiteMountedView']
-export type AvailableSite = Schemas['SiteView']
+export type DeviceTenantCreateBody = Schemas['CreateDeviceReqBody1']
+export type MountedSite = Schemas['TenantMountedSite']
+export type AvailableSite = Schemas['CompanySite']
 
 export const tenantDeviceKeys = {
   all: (cid: number) => ['tenant', cid, 'devices'] as const,

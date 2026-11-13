@@ -7,16 +7,14 @@ export interface paths {
     "/api/v1/admin/alert-rules/{id}/actions": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 设置规则的联动
-         * @description 整体替换一条规则的联动动作 (最多 16 个)，立即生效：规则每次触发与重复推送时执行 (手动接管中的继电器跳过)，条件解除时不执行。被控设备须在当前企业范围内、继电器通道已配置、同一路继电器不重复，否则 400 LINKAGE_ACTION_INVALID。需要滞回控制时配置两条规则，例如 > 35 开风机、< 34 关风机 (后者关闭生成告警记录)。
-         */
-        put: operations["admin-set-alert-rule-actions"];
+        put: operations["admin-save-rule-actions"];
         post?: never;
         delete?: never;
         options?: never;
@@ -27,22 +25,18 @@ export interface paths {
     "/api/v1/admin/companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 企业列表 (分页)
-         * @description 关键字匹配：名称、联系人、联系电话；可排序字段：createdAt, expiredAt, id, name, status。
-         */
+        /** 查询企业列表 */
         get: operations["admin-list-companies"];
         put?: never;
         /** 创建企业 */
         post: operations["admin-create-company"];
-        /**
-         * 批量删除企业
-         * @description 硬删除：同时删除企业的园区、成员关系与设备授权；用户与设备本身保留 (回到公海)。
-         */
+        /** 批量删除企业 */
         delete: operations["admin-delete-companies"];
         options?: never;
         head?: never;
@@ -52,16 +46,15 @@ export interface paths {
     "/api/v1/admin/companies/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 企业详情 */
+        /** 查询企业详情 */
         get: operations["admin-get-company"];
-        /**
-         * 修改企业
-         * @description 部分更新：未传的字段不修改；expiredAt 传 null 表示改为不过期。
-         */
+        /** 更新企业 */
         put: operations["admin-update-company"];
         post?: never;
         delete?: never;
@@ -73,14 +66,13 @@ export interface paths {
     "/api/v1/admin/companies/{id}/devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 企业已授权的设备 (分页)
-         * @description 关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
-         */
+        /** 查询企业授权设备 */
         get: operations["admin-list-company-devices"];
         put?: never;
         post?: never;
@@ -93,14 +85,13 @@ export interface paths {
     "/api/v1/admin/companies/{id}/devices/available": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 未授权给该企业的设备 (分页)
-         * @description 用于授权。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
-         */
+        /** 查询可授权设备 */
         get: operations["admin-list-company-available-devices"];
         put?: never;
         post?: never;
@@ -113,25 +104,18 @@ export interface paths {
     "/api/v1/admin/companies/{id}/members": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 企业成员 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
-         */
+        /** 查询企业成员 */
         get: operations["admin-list-company-members"];
-        /**
-         * 批量分配成员与企业角色
-         * @description 不是成员的加入企业，已是成员的更新企业角色。任一用户不存在则整批拒绝。
-         */
+        /** 添加企业成员 */
         put: operations["admin-assign-company-members"];
         post?: never;
-        /**
-         * 批量移出成员
-         * @description 用户本身保留 (不属于任何企业时回到公海)。
-         */
+        /** 移除企业成员 */
         delete: operations["admin-remove-company-members"];
         options?: never;
         head?: never;
@@ -141,14 +125,13 @@ export interface paths {
     "/api/v1/admin/companies/{id}/members/available": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 未加入该企业的用户 (分页)
-         * @description 用于分配成员。关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
-         */
+        /** 查询可选成员 */
         get: operations["admin-list-company-available-users"];
         put?: never;
         post?: never;
@@ -161,14 +144,13 @@ export interface paths {
     "/api/v1/admin/companies/{id}/sites": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 企业的园区 (分页，只读)
-         * @description 园区由企业管理端维护，平台只读。关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
-         */
+        /** 查询企业园区 */
         get: operations["admin-list-company-sites"];
         put?: never;
         post?: never;
@@ -181,19 +163,15 @@ export interface paths {
     "/api/v1/admin/device-types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备类型列表 (分页)
-         * @description 关键字匹配：名称、描述；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["admin-list-device-types"];
         put?: never;
-        /** 创建设备类型 */
-        post: operations["admin-create-device-type"];
-        /** 批量删除设备类型 */
+        post: operations["admin-create-device-types"];
         delete: operations["admin-delete-device-types"];
         options?: never;
         head?: never;
@@ -203,17 +181,14 @@ export interface paths {
     "/api/v1/admin/device-types/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 设备类型详情 */
-        get: operations["admin-get-device-type"];
-        /**
-         * 修改设备类型
-         * @description 部分更新：未传的字段不修改。
-         */
-        put: operations["admin-update-device-type"];
+        get?: never;
+        put: operations["admin-update-device-types"];
         post?: never;
         delete?: never;
         options?: never;
@@ -224,25 +199,15 @@ export interface paths {
     "/api/v1/admin/devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备列表 (分页)
-         * @description 关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。unassigned=true 只看公海设备。
-         */
         get: operations["admin-list-devices"];
         put?: never;
-        /**
-         * 创建设备
-         * @description 创建的设备不授权给任何企业 (公海设备)。SN 与通道数创建后不可修改；通道在创建后按标签页配置。
-         */
         post: operations["admin-create-device"];
-        /**
-         * 批量删除设备
-         * @description 同时删除通道、规则、联动、定时、企业授权与园区挂载；告警与继电器操作记录按 SN 保留。在线设备会被网关断开。
-         */
         delete: operations["admin-delete-devices"];
         options?: never;
         head?: never;
@@ -252,16 +217,14 @@ export interface paths {
     "/api/v1/admin/devices/companies/batch": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 批量授权 / 撤销授权
-         * @description action=add：把每台设备授权给每家企业 (已授权的忽略)；action=remove：撤销这些设备在这些企业的授权。
-         */
         post: operations["admin-batch-device-companies"];
         delete?: never;
         options?: never;
@@ -272,16 +235,13 @@ export interface paths {
     "/api/v1/admin/devices/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 设备详情 */
         get: operations["admin-get-device"];
-        /**
-         * 修改设备基本信息
-         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后立即生效 (停用的设备立即断开)。
-         */
         put: operations["admin-update-device"];
         post?: never;
         delete?: never;
@@ -293,15 +253,13 @@ export interface paths {
     "/api/v1/admin/devices/{id}/alert-rules": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备的告警规则及联动
-         * @description 联动配置页：这台设备的全部告警规则 (规则在传感器配置中维护) 及每条规则的联动动作。
-         */
-        get: operations["admin-list-device-alert-rules"];
+        get: operations["admin-list-device-rules"];
         put?: never;
         post?: never;
         delete?: never;
@@ -313,15 +271,13 @@ export interface paths {
     "/api/v1/admin/devices/{id}/camera": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改摄像头
-         * @description 部分更新：未传的字段保留原值；appSecret 传空串或 ****** 也保留原值。
-         */
         put: operations["admin-update-device-camera"];
         post?: never;
         delete?: never;
@@ -333,20 +289,14 @@ export interface paths {
     "/api/v1/admin/devices/{id}/companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备已授权的企业 (分页)
-         * @description 关键字匹配：企业名称、联系人、联系电话；可排序字段：createdAt, expiredAt, id, name, status。
-         */
         get: operations["admin-list-device-companies"];
-        /**
-         * 设置设备授权的企业
-         * @description 按差异增删：列表中新增的企业授权，列表外的企业撤销授权 (同时解除该企业园区下的挂载)。空列表表示撤销全部授权。
-         */
-        put: operations["admin-set-device-companies"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -357,14 +307,13 @@ export interface paths {
     "/api/v1/admin/devices/{id}/companies/available": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备未授权的企业 (分页)
-         * @description 用于授权。关键字匹配：企业名称、联系人、联系电话；可排序字段：createdAt, expiredAt, id, name, status。
-         */
+        /** 查询可授权企业 */
         get: operations["admin-list-device-available-companies"];
         put?: never;
         post?: never;
@@ -377,16 +326,14 @@ export interface paths {
     "/api/v1/admin/devices/{id}/disconnect": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 断开设备连接
-         * @description 同步断开设备与网关的连接 (最长约 7 秒)，设备会自动重连；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。
-         */
         post: operations["admin-disconnect-device"];
         delete?: never;
         options?: never;
@@ -397,20 +344,14 @@ export interface paths {
     "/api/v1/admin/devices/{id}/relay-schedules": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备的定时规则
-         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用时为 null)。
-         */
-        get: operations["admin-list-relay-schedules"];
+        get: operations["admin-list-device-schedules"];
         put?: never;
-        /**
-         * 新增定时规则
-         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
-         */
         post: operations["admin-create-relay-schedule"];
         delete?: never;
         options?: never;
@@ -421,16 +362,14 @@ export interface paths {
     "/api/v1/admin/devices/{id}/relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改继电器
-         * @description 整体替换继电器通道，立即生效。被联动、定时规则或手动接管引用的通道不能删除 (409 RELAY_CHANNEL_IN_USE，details 列出引用方)。
-         */
-        put: operations["admin-update-device-relays"];
+        put: operations["admin-save-device-relays"];
         post?: never;
         delete?: never;
         options?: never;
@@ -441,15 +380,13 @@ export interface paths {
     "/api/v1/admin/devices/{id}/relays/linkages": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 继电器联动总览
-         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
-         */
-        get: operations["admin-list-device-relay-linkages"];
+        get: operations["admin-list-device-linkages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -461,16 +398,14 @@ export interface paths {
     "/api/v1/admin/devices/{id}/sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改传感器与告警规则
-         * @description 整体替换传感器通道与告警规则，立即生效。已有规则传 id (保持不变，其联动随之保留)，新规则不传 id；不在列表中的通道与规则连同其联动一起删除。保存后这台设备进行中的阈值告警关闭，仍越限的在下一帧重新触发。
-         */
-        put: operations["admin-update-device-sensors"];
+        put: operations["admin-save-device-sensors"];
         post?: never;
         delete?: never;
         options?: never;
@@ -481,21 +416,15 @@ export interface paths {
     "/api/v1/admin/relay-schedules/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改定时规则
-         * @description 整体替换 (设备不可修改)；保存后立即生效，已在等待中的重试被取消。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
-         */
         put: operations["admin-update-relay-schedule"];
         post?: never;
-        /**
-         * 删除定时规则
-         * @description 删除后立即生效，已在等待中的重试被取消；不改变继电器当前状态。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
-         */
         delete: operations["admin-delete-relay-schedule"];
         options?: never;
         head?: never;
@@ -505,19 +434,15 @@ export interface paths {
     "/api/v1/admin/standard-relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 标准继电器列表 (分页)
-         * @description 关键字匹配：名称；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["admin-list-standard-relays"];
         put?: never;
-        /** 创建标准继电器 */
-        post: operations["admin-create-standard-relay"];
-        /** 批量删除标准继电器 */
+        post: operations["admin-create-standard-relays"];
         delete: operations["admin-delete-standard-relays"];
         options?: never;
         head?: never;
@@ -527,17 +452,14 @@ export interface paths {
     "/api/v1/admin/standard-relays/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 标准继电器详情 */
-        get: operations["admin-get-standard-relay"];
-        /**
-         * 修改标准继电器
-         * @description 部分更新：未传的字段不修改。
-         */
-        put: operations["admin-update-standard-relay"];
+        get?: never;
+        put: operations["admin-update-standard-relays"];
         post?: never;
         delete?: never;
         options?: never;
@@ -548,19 +470,15 @@ export interface paths {
     "/api/v1/admin/standard-sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 标准传感器列表 (分页)
-         * @description 关键字匹配：名称、单位；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["admin-list-standard-sensors"];
         put?: never;
-        /** 创建标准传感器 */
-        post: operations["admin-create-standard-sensor"];
-        /** 批量删除标准传感器 */
+        post: operations["admin-create-standard-sensors"];
         delete: operations["admin-delete-standard-sensors"];
         options?: never;
         head?: never;
@@ -570,17 +488,14 @@ export interface paths {
     "/api/v1/admin/standard-sensors/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 标准传感器详情 */
-        get: operations["admin-get-standard-sensor"];
-        /**
-         * 修改标准传感器
-         * @description 部分更新：未传的字段不修改。
-         */
-        put: operations["admin-update-standard-sensor"];
+        get?: never;
+        put: operations["admin-update-standard-sensors"];
         post?: never;
         delete?: never;
         options?: never;
@@ -591,20 +506,16 @@ export interface paths {
     "/api/v1/admin/sys-configs": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 系统配置列表 (分页)
-         * @description 关键字匹配：配置键、描述；可排序字段：createdAt, id, key, updatedAt。
-         */
+        /** 查询系统配置列表 */
         get: operations["admin-list-sys-configs"];
         put?: never;
-        /**
-         * 创建系统配置
-         * @description 配置键重复返回 409 DUPLICATE。value 为 JSON 字符串，后端不校验，原样存储；任意登录用户都可以按 key 读取，不得存放服务端密钥。
-         */
+        /** 创建系统配置 */
         post: operations["admin-create-sys-config"];
         /** 批量删除系统配置 */
         delete: operations["admin-delete-sys-configs"];
@@ -616,16 +527,14 @@ export interface paths {
     "/api/v1/admin/sys-configs/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 系统配置详情 */
-        get: operations["admin-get-sys-config"];
-        /**
-         * 修改系统配置
-         * @description 部分更新：未传的字段不修改；配置键不可修改。
-         */
+        get?: never;
+        /** 修改系统配置 */
         put: operations["admin-update-sys-config"];
         post?: never;
         delete?: never;
@@ -637,25 +546,18 @@ export interface paths {
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 用户列表 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。unassigned=true 只看公海用户。
-         */
+        /** 查询平台用户列表 */
         get: operations["admin-list-users"];
         put?: never;
-        /**
-         * 创建用户
-         * @description 创建的用户不属于任何企业 (公海用户)，需在企业管理中分配。
-         */
+        /** 创建用户 */
         post: operations["admin-create-user"];
-        /**
-         * 批量删除用户
-         * @description 不能删除自己 (包含自己时整批拒绝)；不存在的 ID 会被忽略。
-         */
+        /** 批量删除用户 */
         delete: operations["admin-delete-users"];
         options?: never;
         head?: never;
@@ -665,16 +567,15 @@ export interface paths {
     "/api/v1/admin/users/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 用户详情 */
+        /** 查询用户详情 */
         get: operations["admin-get-user"];
-        /**
-         * 修改用户
-         * @description 部分更新：未传的字段不修改；phone 传 null 或空串表示清空。不能修改自己的系统角色与状态。修改角色或停用后该用户的登录立即失效。
-         */
+        /** 更新用户 */
         put: operations["admin-update-user"];
         post?: never;
         delete?: never;
@@ -686,18 +587,17 @@ export interface paths {
     "/api/v1/admin/users/{id}/companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 用户所属企业 (分页)
-         * @description 关键字匹配：企业名称；可排序字段：createdAt, expiredAt, id, name, status。
-         */
+        /** 查询用户所属企业 */
         get: operations["admin-list-user-companies"];
         put?: never;
         post?: never;
-        /** 批量移出企业 */
+        /** 移除用户企业关系 */
         delete: operations["admin-remove-user-companies"];
         options?: never;
         head?: never;
@@ -707,15 +607,14 @@ export interface paths {
     "/api/v1/admin/users/{id}/companies/{companyId}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改用户在企业中的角色
-         * @description 用户必须已是该企业成员 (本接口不能为用户添加企业，请在企业管理中分配)。
-         */
+        /** 更新用户企业角色 */
         put: operations["admin-update-user-company-role"];
         post?: never;
         delete?: never;
@@ -727,15 +626,14 @@ export interface paths {
     "/api/v1/admin/users/{id}/password": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 重置用户密码
-         * @description 重置后该用户的登录全部失效。
-         */
+        /** 重置用户密码 */
         put: operations["admin-reset-user-password"];
         post?: never;
         delete?: never;
@@ -747,14 +645,14 @@ export interface paths {
     "/api/v1/app/alarms": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 告警列表 (分页)
-         * @description 当前授权给本企业的设备的全部告警。不返回总数 (hasMore 表示是否还有下一页)；未处理数量见 GET /alarms/unprocessed-count。关键字匹配：设备 SN、设备名称、描述；可排序字段：alarmCount, createdAt, lastAlarmAt, level。siteId 按设备当前的园区挂载筛选。
-         */
+        /** 查询告警 */
         get: operations["app-list-alarms"];
         put?: never;
         post?: never;
@@ -767,16 +665,16 @@ export interface paths {
     "/api/v1/app/alarms/process": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 批量处理告警
-         * @description 记录处理人 (当前用户名称快照)、处理时间与备注；已处理、范围外的告警忽略。处理状态在各企业间共享。
-         */
+        /** 批量处理告警 */
         post: operations["app-process-alarms"];
         delete?: never;
         options?: never;
@@ -787,14 +685,14 @@ export interface paths {
     "/api/v1/app/alarms/unprocessed-count": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 未处理告警数
-         * @description 当前授权给本企业的设备的未处理告警数 (顶栏角标、设备树、大屏级别分布)，可按园区 / 设备 / 级别筛选；最多数到 1000，达到上限时 capped=true (显示 999+)。
-         */
+        /** 统计未处理告警 */
         get: operations["app-count-unprocessed-alarms"];
         put?: never;
         post?: never;
@@ -807,11 +705,14 @@ export interface paths {
     "/api/v1/app/alarms/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 告警详情 */
+        /** 查询告警详情 */
         get: operations["app-get-alarm"];
         put?: never;
         post?: never;
@@ -824,14 +725,14 @@ export interface paths {
     "/api/v1/app/devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备列表 (分页)
-         * @description 本企业已授权的设备，siteId 只看挂载在该园区的设备。附带在线状态与传感器 / 继电器通道 (不含告警规则与校准参数)，前端据此解读实时 / 历史 / 环比接口返回的数组 (下标即通道号，null 表示无读数)。unclassified=true 筛选未分类。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
-         */
+        /** 查询挂载设备列表 */
         get: operations["app-list-devices"];
         put?: never;
         post?: never;
@@ -844,12 +745,95 @@ export interface paths {
     "/api/v1/app/devices/summary": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 设备数量、类型与在线状态汇总 */
+        /** 统计企业设备和园区 */
         get: operations["app-device-summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{deviceSn}/comparison/daily": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询设备日环比 */
+        get: operations["app-device-daily-comparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{deviceSn}/comparison/monthly": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询设备月环比 */
+        get: operations["app-device-monthly-comparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{deviceSn}/history": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 流式查询设备历史数据 */
+        get: operations["app-device-history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{deviceSn}/realtime": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询设备实时读数与继电器状态 */
+        get: operations["app-get-realtime"];
         put?: never;
         post?: never;
         delete?: never;
@@ -861,11 +845,14 @@ export interface paths {
     "/api/v1/app/devices/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 设备详情（数据端安全视图） */
+        /** 查询数据端设备详情 */
         get: operations["app-get-device"];
         put?: never;
         post?: never;
@@ -878,15 +865,15 @@ export interface paths {
     "/api/v1/app/devices/{id}/camera/live": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 摄像头预览信息
-         * @description 萤石云摄像头返回 ezopen 播放地址、accessToken (由后端用设备配置的 AppKey / Secret 换取并缓存，Secret 不出后端) 与云台能力，前端用 EZUIKit 播放；只配置了直播地址的设备返回直播地址。没有配置摄像头 404 CAMERA_NOT_CONFIGURED；配置有误 409 CAMERA_CONFIG_INVALID；萤石服务不可用 503 CAMERA_UNAVAILABLE。
-         */
-        get: operations["app-device-camera-live"];
+        /** 查询摄像头直播地址 */
+        get: operations["app-camera-live"];
         put?: never;
         post?: never;
         delete?: never;
@@ -898,97 +885,17 @@ export interface paths {
     "/api/v1/app/devices/{id}/camera/ptz": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 云台控制
-         * @description 按下方向键时 action=start 开始转动，松开时 action=stop 停止 (前端须保证每个 start 都有对应的 stop)。不支持云台 409 CAMERA_PTZ_UNSUPPORTED；已转到限位 409 CAMERA_PTZ_LIMIT；摄像头不在线 409 CAMERA_OFFLINE；萤石服务不可用 503 CAMERA_UNAVAILABLE。
-         */
-        post: operations["app-device-camera-ptz"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/app/devices/{id}/comparison/daily": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 日环比
-         * @description 某天每小时的统计帧 (每小时第一帧) {time, vals}，按时间升序，缺失的小时没有行；由前端落位到 24 个小时。
-         */
-        get: operations["app-device-comparison-daily"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/app/devices/{id}/comparison/monthly": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 月环比
-         * @description 某月每天的统计帧 (每天设定时间后的第一帧) {date, vals}，按日期升序，缺失的日期没有行；由前端落位到当月每天。
-         */
-        get: operations["app-device-comparison-monthly"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/app/devices/{id}/history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 历史数据 (原始数据)
-         * @description 区间内的原始帧 {time, vals}，按时间升序；vals 为完整读数数组 (下标即通道号，null 表示无读数)，由前端取所需通道。不限时间范围 (由前端控制)，数据量大时流式输出，最长 5 分钟。同时进行的历史查询每人最多 2 个、全局最多为数据库连接池的 1/4，超出返回 429 HISTORY_BUSY。
-         */
-        get: operations["app-device-history"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/app/devices/{id}/realtime": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 设备实时数据
-         * @description 传感器读数、继电器状态与在线状态 (数组下标即通道号，null 表示无读数)。通道配置见设备列表；最近告警、操作记录分别用 GET /alarms?deviceId=、GET /operations?deviceId=。
-         */
-        get: operations["app-device-realtime"];
-        put?: never;
-        post?: never;
+        /** 控制摄像头云台 */
+        post: operations["app-camera-ptz"];
         delete?: never;
         options?: never;
         head?: never;
@@ -998,15 +905,15 @@ export interface paths {
     "/api/v1/app/devices/{id}/relays/automation": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 继电器定时与接管状态
-         * @description 每路已配置继电器启用中的定时规则、下一次定时动作与手动接管状态。手动接管期间联动与定时都跳过。控制这些继电器的联动见 GET /devices/{id}/relays/linkages。
-         */
-        get: operations["app-device-relay-automation"];
+        /** 查询继电器定时与接管 */
+        get: operations["app-relay-automation"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1018,15 +925,15 @@ export interface paths {
     "/api/v1/app/devices/{id}/relays/linkages": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 继电器联动总览
-         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
-         */
-        get: operations["app-list-device-relay-linkages"];
+        /** 查询设备继电器联动 */
+        get: operations["app-relay-linkages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1038,17 +945,17 @@ export interface paths {
     "/api/v1/app/devices/{id}/relays/{channel}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 控制继电器
-         * @description 同步等待结果 (通常为设备往返耗时，最长约 7 秒)，返回本次操作记录：success 设备确认达到目标状态；failed 确定未达到 (actualState 非空为设备回报的相反状态，为空表示未下发或不支持控制，见 errorMessage)；timeout 已下发、结果未知 (以实时数据中设备回报的状态为准)。前置检查不通过时不写记录：设备离线 409 DEVICE_OFFLINE、已停用 409 DEVICE_DISABLED、故障 409 DEVICE_FAULT、该通道有在途操作 409 RELAY_BUSY、服务不可用 503。网络异常时前端不应自动重发。takeover 为 true 时同时进入手动接管 (该通道的联动与定时暂停，直到恢复)，接管写一条 source = hold 的记录。
-         */
-        post: operations["app-control-relay"];
+        /** 手动控制继电器 */
+        post: operations["app-manual-relay-control"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1058,18 +965,58 @@ export interface paths {
     "/api/v1/app/devices/{id}/relays/{channel}/hold": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * 恢复自动控制
-         * @description 解除该通道的手动接管，写一条 source = release 的记录；之后的联动与定时照常执行 (不主动对齐)。未接管时 released = false。
-         */
+        /** 解除手动接管 */
         delete: operations["app-release-relay-hold"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{sn}/relays/{channel}/control": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 手动控制继电器通道 */
+        post: operations["app-control-relay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{sn}/relays/{channel}/release": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 解除继电器手动接管 */
+        post: operations["app-release-relay"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1078,14 +1025,14 @@ export interface paths {
     "/api/v1/app/operations": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 操作记录 (分页)
-         * @description 当前授权给本企业的设备的全部继电器操作 (含其他企业成员的操作)。不返回总数 (hasMore 表示是否还有下一页)。关键字匹配：设备 SN、设备名称、操作人；可排序字段：createdAt。siteId 按设备当前的园区挂载筛选。
-         */
+        /** 查询继电器操作记录 */
         get: operations["app-list-operations"];
         put?: never;
         post?: never;
@@ -1098,15 +1045,35 @@ export interface paths {
     "/api/v1/app/sites": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 园区列表 (分页)
-         * @description 本企业全部园区。关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
-         */
+        /** 查询激活地块列表 */
         get: operations["app-list-sites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/sites/{id}/summary": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 统计一座园区的设备 */
+        get: operations["app-site-summary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1122,11 +1089,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 我的企业
-         * @description 登录后选择企业：企业管理端与数据使用端的请求都要在请求头 X-Company-ID 中携带选中的企业 ID。accessible=false (停用或过期) 的企业不能进入；manageable=true 才能进入企业管理端。
-         */
-        get: operations["auth-my-companies"];
+        /** 获取当前用户所属企业 */
+        get: operations["auth-companies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1144,7 +1108,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 登录 */
+        /** 用户登录 */
         post: operations["auth-login"];
         delete?: never;
         options?: never;
@@ -1161,7 +1125,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 退出登录 (只使当前令牌失效) */
+        /** 退出登录 */
         post: operations["auth-logout"];
         delete?: never;
         options?: never;
@@ -1176,9 +1140,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 当前用户信息 */
+        /** 获取个人资料 */
         get: operations["auth-me"];
-        /** 修改自己的昵称、手机号与头像 (部分更新：未传的字段不修改) */
+        /** 更新个人资料 */
         put: operations["auth-update-me"];
         post?: never;
         delete?: never;
@@ -1195,7 +1159,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** 修改自己的密码 (其他设备上的登录全部失效，返回新令牌) */
+        /** 修改个人密码 */
         put: operations["auth-change-password"];
         post?: never;
         delete?: never;
@@ -1211,10 +1175,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备类型列表 (分页，只读)
-         * @description 关键字匹配：名称、描述；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["common-list-device-types"];
         put?: never;
         post?: never;
@@ -1233,10 +1193,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 获取文件上传凭证 (前端直传 OSS)
-         * @description 前端拿到凭证后，以 multipart/form-data 把 fields 中的字段原样提交、文件字段 file 放在最后，POST 到 host；OSS 返回 200 即上传成功，之后把 url 保存到业务字段 (如 logo、coverImage、icon)。凭证只能上传服务端指定的这一个文件。
-         */
         post: operations["common-oss-upload-policy"];
         delete?: never;
         options?: never;
@@ -1251,10 +1207,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 标准继电器列表 (分页，只读)
-         * @description 关键字匹配：名称；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["common-list-standard-relays"];
         put?: never;
         post?: never;
@@ -1271,10 +1223,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 标准传感器列表 (分页，只读)
-         * @description 关键字匹配：名称、单位；可排序字段：createdAt, id, name, sort。
-         */
         get: operations["common-list-standard-sensors"];
         put?: never;
         post?: never;
@@ -1291,10 +1239,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 获取系统配置
-         * @description 按配置键获取系统配置 (任意登录用户)。value 为 JSON 字符串，原样返回，由前端解析；配置键不存在返回 404。
-         */
+        /** 读取前端配置 */
         get: operations["common-get-sys-config"];
         put?: never;
         post?: never;
@@ -1311,11 +1256,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 实时天气
-         * @description 按经纬度查询实时天气 (腾讯地图天气数据，仅支持国内坐标)。结果缓存 30 分钟，相距约 1 公里内的位置共用一份数据；天气服务暂不可用时返回缓存中的旧数据并标记 stale=true。
-         */
-        get: operations["common-weather-realtime"];
+        get: operations["common-weather"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/alarms": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询告警记录列表 */
+        get: operations["tenant-list-alarms"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1327,16 +1288,15 @@ export interface paths {
     "/api/v1/tenant/alert-rules/{id}/actions": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 设置规则的联动
-         * @description 整体替换一条规则的联动动作 (最多 16 个)，立即生效：规则每次触发与重复推送时执行 (手动接管中的继电器跳过)，条件解除时不执行。被控设备须在当前企业范围内、继电器通道已配置、同一路继电器不重复，否则 400 LINKAGE_ACTION_INVALID。需要滞回控制时配置两条规则，例如 > 35 开风机、< 34 关风机 (后者关闭生成告警记录)。
-         */
-        put: operations["tenant-set-alert-rule-actions"];
+        put: operations["tenant-save-rule-actions"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1347,16 +1307,16 @@ export interface paths {
     "/api/v1/tenant/company": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 本企业详情 */
+        /** 查询当前企业详情 */
         get: operations["tenant-get-company"];
-        /**
-         * 修改本企业资料
-         * @description 部分更新：未传的字段不修改。企业名称、状态与服务过期时间只能由平台管理端修改。
-         */
+        /** 更新当前企业资料 */
         put: operations["tenant-update-company"];
         post?: never;
         delete?: never;
@@ -1368,26 +1328,19 @@ export interface paths {
     "/api/v1/tenant/devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备列表 (分页)
-         * @description 本企业已授权的设备。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。siteId 只看挂载在该园区的设备。
-         */
+        /** 查询企业设备列表 */
         get: operations["tenant-list-devices"];
         put?: never;
-        /**
-         * 创建设备
-         * @description 设备自动授权给本企业并挂载到 siteIds 指定的园区。SN 已存在时返回 409 DEVICE_ALREADY_REGISTERED (请联系平台分配)。
-         */
+        /** 注册新设备 */
         post: operations["tenant-create-device"];
-        /**
-         * 批量删除设备 (解除授权)
-         * @description 只解除本企业的授权并解除本企业园区下的挂载；设备本身与配置保留 (回到平台)。
-         */
-        delete: operations["tenant-revoke-devices"];
+        delete: operations["tenant-delete-devices"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1396,16 +1349,14 @@ export interface paths {
     "/api/v1/tenant/devices/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 设备详情 */
         get: operations["tenant-get-device"];
-        /**
-         * 修改设备基本信息
-         * @description 部分更新：未传的字段不修改；deviceTypeId 传 null 表示未分类，经纬度成对传 null 表示清除坐标。保存后立即生效 (停用的设备立即断开)。 设备配置全局共享，修改会影响其他授权企业。
-         */
         put: operations["tenant-update-device"];
         post?: never;
         delete?: never;
@@ -1417,15 +1368,14 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/alert-rules": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备的告警规则及联动
-         * @description 联动配置页：这台设备的全部告警规则 (规则在传感器配置中维护) 及每条规则的联动动作。
-         */
-        get: operations["tenant-list-device-alert-rules"];
+        get: operations["tenant-list-device-rules"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1437,15 +1387,14 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/camera": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改摄像头
-         * @description 部分更新：未传的字段保留原值；appSecret 传空串或 ****** 也保留原值。
-         */
         put: operations["tenant-update-device-camera"];
         post?: never;
         delete?: never;
@@ -1457,16 +1406,15 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/disconnect": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /**
-         * 断开设备连接
-         * @description 同步断开设备与网关的连接 (最长约 7 秒)，设备会自动重连；与普通下线一样产生一条离线告警。设备未连接返回 409 DEVICE_OFFLINE；网关不可用返回 503 SERVICE_UNAVAILABLE。 设备配置全局共享，修改会影响其他授权企业。
-         */
         post: operations["tenant-disconnect-device"];
         delete?: never;
         options?: never;
@@ -1477,20 +1425,15 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/relay-schedules": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备的定时规则
-         * @description 设备的全部定时规则 (按继电器通道、开启时刻排序)；nextOn / nextOff 为下一次开启 / 关闭时刻 (停用时为 null)。
-         */
-        get: operations["tenant-list-relay-schedules"];
+        get: operations["tenant-list-device-schedules"];
         put?: never;
-        /**
-         * 新增定时规则
-         * @description 到开启时刻开启、到关闭时刻关闭继电器 (业务时区，秒级)；关闭时刻早于开启时刻表示次日关闭。一路继电器可有多组规则，允许重叠，各组独立执行。执行失败按 retryCount / retryIntervalSec 重试，全部失败产生「继电器控制失败」告警；每次执行写一条操作记录。保存后立即生效。继电器通道必须已配置，否则 400 RELAY_CHANNEL_INVALID。
-         */
         post: operations["tenant-create-relay-schedule"];
         delete?: never;
         options?: never;
@@ -1501,16 +1444,15 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改继电器
-         * @description 整体替换继电器通道，立即生效。被联动、定时规则或手动接管引用的通道不能删除 (409 RELAY_CHANNEL_IN_USE，details 列出引用方)。 设备配置全局共享，修改会影响其他授权企业。
-         */
-        put: operations["tenant-update-device-relays"];
+        put: operations["tenant-save-device-relays"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1521,15 +1463,14 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/relays/linkages": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 继电器联动总览
-         * @description 哪些告警规则会控制这台设备的哪一路继电器 (含其他设备的规则；企业范围只列出触发设备也在本企业的规则)。
-         */
-        get: operations["tenant-list-device-relay-linkages"];
+        get: operations["tenant-list-device-linkages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1541,16 +1482,15 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改传感器与告警规则
-         * @description 整体替换传感器通道与告警规则，立即生效。已有规则传 id (保持不变，其联动随之保留)，新规则不传 id；不在列表中的通道与规则连同其联动一起删除。保存后这台设备进行中的阈值告警关闭，仍越限的在下一帧重新触发。 设备配置全局共享，修改会影响其他授权企业。
-         */
-        put: operations["tenant-update-device-sensors"];
+        put: operations["tenant-save-device-sensors"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1561,20 +1501,17 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/sites": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备挂载的园区 (分页)
-         * @description 只含本企业的园区。关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
-         */
-        get: operations["tenant-list-device-sites"];
-        /**
-         * 设置设备挂载的园区
-         * @description 按差异增删本企业园区下的挂载；空列表表示解除本企业全部挂载 (设备仍属于本企业)。
-         */
-        put: operations["tenant-set-device-sites"];
+        /** 查询设备已挂载园区 */
+        get: operations["tenant-list-mounted-sites"];
+        /** 设置设备挂载园区 */
+        put: operations["tenant-set-mounted-sites"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1585,15 +1522,35 @@ export interface paths {
     "/api/v1/tenant/devices/{id}/sites/available": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 设备尚未挂载的园区 (分页)
-         * @description 关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
-         */
+        /** 查询设备可挂载的候选园区列表 (SQL子查询单次完成) */
         get: operations["tenant-list-device-available-sites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/members": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询企业成员 */
+        get: operations["tenant-list-members"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1605,21 +1562,16 @@ export interface paths {
     "/api/v1/tenant/relay-schedules/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         get?: never;
-        /**
-         * 修改定时规则
-         * @description 整体替换 (设备不可修改)；保存后立即生效，已在等待中的重试被取消。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
-         */
         put: operations["tenant-update-relay-schedule"];
         post?: never;
-        /**
-         * 删除定时规则
-         * @description 删除后立即生效，已在等待中的重试被取消；不改变继电器当前状态。规则不存在 404 RELAY_SCHEDULE_NOT_FOUND。
-         */
         delete: operations["tenant-delete-relay-schedule"];
         options?: never;
         head?: never;
@@ -1629,22 +1581,19 @@ export interface paths {
     "/api/v1/tenant/sites": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 园区列表 (分页)
-         * @description 关键字匹配：名称、地址；可排序字段：createdAt, id, name, status。
-         */
+        /** 查询企业地块列表 */
         get: operations["tenant-list-sites"];
         put?: never;
-        /** 创建园区 */
+        /** 创建当前企业的园区 */
         post: operations["tenant-create-site"];
-        /**
-         * 批量删除园区
-         * @description 只解除园区下的设备挂载，设备仍属于本企业。
-         */
+        /** 批量删除企业园区 */
         delete: operations["tenant-delete-sites"];
         options?: never;
         head?: never;
@@ -1654,16 +1603,16 @@ export interface paths {
     "/api/v1/tenant/sites/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 园区详情 */
+        /** 查询企业园区详情 */
         get: operations["tenant-get-site"];
-        /**
-         * 修改园区
-         * @description 部分更新：未传的字段不修改；经纬度成对修改，两者传 null 表示清除坐标；images、properties 传值即整体替换。
-         */
+        /** 修改企业园区 */
         put: operations["tenant-update-site"];
         post?: never;
         delete?: never;
@@ -1675,22 +1624,19 @@ export interface paths {
     "/api/v1/tenant/sites/{id}/devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 园区下的设备 (分页)
-         * @description 关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
-         */
+        /** 查询园区设备 */
         get: operations["tenant-list-site-devices"];
         put?: never;
-        /**
-         * 挂载设备到园区
-         * @description 已挂载的忽略；任一设备未授权给本企业则整批拒绝 (404)。
-         */
+        /** 挂载园区设备 */
         post: operations["tenant-mount-site-devices"];
-        /** 解除设备挂载 */
+        /** 解除园区设备挂载 */
         delete: operations["tenant-unmount-site-devices"];
         options?: never;
         head?: never;
@@ -1700,14 +1646,14 @@ export interface paths {
     "/api/v1/tenant/sites/{id}/devices/available": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 可挂载到该园区的设备 (分页)
-         * @description 本企业已授权、尚未挂载到该园区的设备。关键字匹配：SN、名称、SIM 卡号、MAC 地址；可排序字段：createdAt, deviceSn, id, name, status, updatedAt。
-         */
+        /** 查询园区可挂载的候选设备列表 (SQL子查询单次完成) */
         get: operations["tenant-list-site-available-devices"];
         put?: never;
         post?: never;
@@ -1720,25 +1666,19 @@ export interface paths {
     "/api/v1/tenant/users": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /**
-         * 本企业成员 (分页)
-         * @description 关键字匹配：用户名、昵称、手机号；可排序字段：createdAt, id, nickname, status, systemRole, username。
-         */
+        /** 查询企业成员 */
         get: operations["tenant-list-users"];
         put?: never;
-        /**
-         * 创建用户
-         * @description 用户自动加入本企业，企业角色为 user。用户名、手机号全局唯一。
-         */
+        /** 创建企业普通成员 */
         post: operations["tenant-create-user"];
-        /**
-         * 批量移出本企业
-         * @description 只能移出企业角色为 user 的成员；包含企业管理员或自己时整批拒绝。用户本身保留 (不属于任何企业时回到公海)。
-         */
+        /** 批量移除企业成员 */
         delete: operations["tenant-remove-users"];
         options?: never;
         head?: never;
@@ -1748,11 +1688,14 @@ export interface paths {
     "/api/v1/tenant/users/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
-        /** 成员详情 */
+        /** 查询企业成员详情 */
         get: operations["tenant-get-user"];
         put?: never;
         post?: never;
@@ -1766,182 +1709,95 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        "Admin-assign-company-membersRequest": {
-            /** @description 成员及其企业角色 (1~500 个) */
-            members: components["schemas"]["UserMemberAssignment"][] | null;
-        };
-        "Admin-batch-device-companiesRequest": {
-            /**
-             * @description add 授权 / remove 撤销授权
-             * @enum {string}
-             */
-            action: "add" | "remove";
-            companyIds: number[] | null;
-            deviceIds: number[] | null;
-        };
-        "Admin-remove-company-membersRequest": {
-            /** @description 要移出的用户 ID */
-            userIds: number[] | null;
-        };
-        "Admin-remove-user-companiesRequest": {
-            /** @description 要移出的企业 ID */
-            companyIds: number[] | null;
-        };
-        "Admin-reset-user-passwordRequest": {
-            /** @description 新密码：8~64 个字符，必须同时包含字母和数字 */
-            password: string;
-        };
-        "Admin-update-user-company-roleRequest": {
-            /**
-             * @description 企业角色
-             * @enum {string}
-             */
+        AdminCompanyMemberAssignment: {
+            /** @enum {string} */
             role: "admin" | "user";
+            /** Format: int64 */
+            userId: number;
         };
-        AffectedBody: {
-            /**
-             * Format: int64
-             * @description 实际影响的记录数 (不存在的 ID 会被忽略)
-             */
-            affected: number;
+        AdminDeviceRelayInput: {
+            /** Format: int64 */
+            channel: number;
+            iconUrl?: string;
+            name?: string;
         };
-        AlarmCountView: {
-            /** @description 是否达到上限 (实际数量可能更多，前端显示 999+) */
-            capped: boolean;
-            /**
-             * Format: int64
-             * @description 数量 (最多 1000)
-             */
-            count: number;
+        AdminDeviceSensorInput: {
+            calibration?: components["schemas"]["SensorCalibration"];
+            /** Format: int64 */
+            channel: number;
+            iconUrl?: string;
+            name?: string;
+            /** Format: double */
+            rangeMax?: number;
+            /** Format: double */
+            rangeMin?: number;
+            /** Format: double */
+            resolution?: number;
+            rules?: components["schemas"]["AdminDeviceSensorRuleInput"][] | null;
+            simulation?: components["schemas"]["SensorSimulation"];
+            unit?: string;
         };
-        AlarmProcessBody: {
-            /** @description 告警 ID (已处理的忽略) */
-            ids: number[] | null;
-            /** @description 处理备注 */
-            remark?: string;
+        AdminDeviceSensorRuleInput: {
+            /** @enum {string} */
+            condition: "greater" | "less" | "equal" | "between";
+            createAlarm: boolean;
+            enabled: boolean;
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: double */
+            lower?: number;
+            /** Format: int64 */
+            repeatSeconds: number;
+            /** Format: double */
+            threshold?: number;
+            /** Format: double */
+            upper?: number;
         };
-        AlarmView: {
-            /**
-             * Format: int64
-             * @description 持续期间的推送次数
-             */
-            alarmCount: number;
-            /**
-             * Format: int64
-             * @description threshold：传感器通道；relay_failed：继电器通道
-             */
-            channel: number | null;
-            /**
-             * Format: date-time
-             * @description 触发时间 (帧时间)
-             */
+        AdminDeviceTypeBody: {
+            description?: string;
+            iconUrl?: string;
+            name: string;
+            /** Format: int64 */
+            sort?: number;
+        };
+        AdminDictFields: {
+            iconUrl?: string;
+            name: string;
+            /** Format: int64 */
+            sort?: number;
+        };
+        AdminDisconnectNotice: {
+            notice: string;
+        };
+        AdminSensorBody: {
+            iconUrl?: string;
+            name: string;
+            /** Format: double */
+            rangeMax?: number;
+            /** Format: double */
+            rangeMin?: number;
+            /** Format: double */
+            resolution?: number;
+            /** Format: int64 */
+            sort?: number;
+            unit?: string;
+        };
+        AdminSysConfig: {
+            /** Format: date-time */
             createdAt: string;
-            /** @description 规则描述或原因 (快照) */
             description: string;
             /** Format: int64 */
-            deviceId: number;
-            /** @description 设备名称 (告警时的快照) */
-            deviceName: string;
-            deviceSn: string;
-            /**
-             * Format: date-time
-             * @description 解除或关闭时间
-             */
-            endedAt: string | null;
-            /** Format: int64 */
             id: number;
-            /**
-             * Format: date-time
-             * @description 最后一次推送时间
-             */
-            lastAlarmAt: string;
-            /**
-             * Format: int32
-             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
-             */
-            level: number;
-            /**
-             * Format: double
-             * @description 持续期间偏离阈值最远的值
-             */
-            peakValue: number | null;
-            processRemark: string;
-            processed: boolean;
+            key: string;
             /** Format: date-time */
-            processedAt: string | null;
-            /** @description 处理人名称 (处理时的快照) */
-            processorName: string;
-            /**
-             * Format: int64
-             * @description threshold：来源规则
-             */
-            ruleId: number | null;
-            /**
-             * Format: int64
-             * @description relay_failed：来源定时规则
-             */
-            scheduleId: number | null;
-            /**
-             * @description active 进行中；recovered 已解除 (条件不再满足 / 设备重新上线)；closed 已关闭 (无法再判定：下线、配置变更、服务重启，或一次性告警)
-             * @enum {string}
-             */
-            status: "active" | "recovered" | "closed";
-            /**
-             * Format: double
-             * @description 触发时的值
-             */
-            triggerValue: number | null;
-            /**
-             * @description threshold 规则触发；offline 离线；fault 上报路数少于规格；relay_failed 定时开关执行失败
-             * @enum {string}
-             */
-            type: "threshold" | "offline" | "fault" | "relay_failed";
+            updatedAt: string;
+            value: string;
         };
-        AuthLoginResult: {
-            /**
-             * Format: date-time
-             * @description 过期时间，过期后需重新登录
-             */
-            expiresAt: string;
-            /** @description 访问令牌，请求时放在 Authorization: Bearer <token> */
-            token: string;
-            /** @example Bearer */
-            tokenType: string;
-            user: components["schemas"]["AuthProfile"];
-        };
-        AuthMyCompany: {
-            /** @description 企业启用且未过期：可进入数据使用端 */
-            accessible: boolean;
+        AdminUserDetail: {
             /** Format: int64 */
-            companyId: number;
-            /**
-             * Format: date-time
-             * @description 服务过期时间，为空表示不过期
-             */
-            expiredAt: string | null;
-            /**
-             * Format: date-time
-             * @description 加入时间
-             */
-            joinedAt: string;
-            logo: string;
-            /** @description 可进入且企业角色为 admin：可进入企业管理端 */
-            manageable: boolean;
-            name: string;
-            /**
-             * @description 企业角色：admin 可进入企业管理端
-             * @enum {string}
-             */
-            role: "admin" | "user";
-            /**
-             * @description 企业状态
-             * @enum {string}
-             */
-            status: "active" | "inactive";
-        };
-        AuthProfile: {
-            /** @description 头像 URL，空串表示未设置 */
-            avatar: string;
+            companyCount: number;
             /** Format: date-time */
             createdAt: string;
             /** Format: int64 */
@@ -1950,924 +1806,629 @@ export interface components {
             phone: string | null;
             /** @enum {string} */
             status: "active" | "inactive";
-            /**
-             * @description 系统角色：admin 可进入平台管理端
-             * @enum {string}
-             */
+            /** @enum {string} */
             systemRole: "admin" | "none";
+            /** Format: date-time */
+            updatedAt: string;
             username: string;
         };
-        CameraLiveView: {
-            /** @description 萤石 accessToken (仅 ezviz)：播放器需要；不要写入日志或持久化 */
-            accessToken?: string;
-            /**
-             * Format: date-time
-             * @description accessToken 到期时间 (仅 ezviz)
-             */
-            expireAt?: string;
-            /**
-             * @description ezviz 萤石云 (用 EZUIKit 播放 url，需 accessToken)；url 直播地址 (HLS / FLV 等)
-             * @enum {string}
-             */
-            provider: "ezviz" | "url";
-            /** @description 是否支持云台方向控制 */
-            ptz: boolean;
-            /** @description ezviz：ezopen 播放地址；url：直播地址 */
-            url: string;
-            /** @description 是否支持变倍 (放大 / 缩小) */
-            zoom: boolean;
-        };
-        CameraPTZBody: {
-            /**
-             * @description start 开始转动 (按下方向键)；stop 停止 (松开)
-             * @enum {string}
-             */
-            action: "start" | "stop";
-            /**
-             * Format: int64
-             * @description 0 上、1 下、2 左、3 右、4 左上、5 左下、6 右上、7 右下、8 放大、9 缩小、10 近焦距、11 远焦距
-             */
-            direction: number;
-            /**
-             * Format: int64
-             * @description 0 慢、1 适中 (默认)、2 快；stop 时忽略
-             */
-            speed?: number;
-        };
-        ChangePasswordInputBody: {
-            /** @description 8~64 个字符，必须同时包含字母和数字 */
-            newPassword: string;
-            oldPassword: string;
-        };
-        CompanyBody: {
-            address?: string;
-            contactEmail?: string;
-            contactPerson?: string;
-            contactPhone?: string;
-            description?: string;
-            /**
-             * Format: date-time
-             * @description 服务过期时间，不传表示不过期
-             */
-            expiredAt?: string;
-            /** @description Logo URL */
-            logo?: string;
-            /** @description 企业全称 (唯一) */
-            name: string;
-            /** @description 前端自定义扩展属性 (任意 JSON 对象) */
-            properties?: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description 默认 active
-             * @enum {string}
-             */
-            status?: "active" | "inactive";
-        };
-        CompanyDetailView: {
-            address: string;
-            contactEmail: string;
-            contactPerson: string;
-            contactPhone: string;
+        AdminUserMembership: {
             /** Format: date-time */
-            createdAt: string;
-            description: string;
-            /**
-             * Format: int64
-             * @description 已授权设备数
-             */
-            deviceCount: number;
-            /**
-             * Format: date-time
-             * @description 服务过期时间，为空表示不过期
-             */
-            expiredAt: string | null;
-            /** Format: int64 */
-            id: number;
-            logo: string;
-            /**
-             * Format: int64
-             * @description 成员数
-             */
-            memberCount: number;
-            name: string;
-            /** @description 前端自定义扩展属性 (JSON 对象) */
-            properties: {
-                [key: string]: unknown;
-            };
-            /**
-             * Format: int64
-             * @description 园区数
-             */
-            siteCount: number;
-            /** @enum {string} */
-            status: "active" | "inactive";
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        CompanyTenantBody: {
-            address?: string;
-            contactEmail?: string;
-            contactPerson?: string;
-            contactPhone?: string;
-            description?: string;
-            /** @description Logo URL */
-            logo?: string;
-            /** @description 前端自定义扩展属性 (整体替换) */
-            properties?: {
-                [key: string]: unknown;
-            };
-        };
-        CompanyUpdateBody: {
-            address?: string;
-            contactEmail?: string;
-            contactPerson?: string;
-            contactPhone?: string;
-            description?: string;
-            /**
-             * Format: date-time
-             * @description 服务过期时间；传 null 表示不过期，不传表示不修改
-             */
-            expiredAt?: string | null;
-            /** @description Logo URL */
-            logo?: string;
-            /** @description 企业全称 (唯一) */
-            name?: string;
-            /** @description 前端自定义扩展属性 (整体替换) */
-            properties?: {
-                [key: string]: unknown;
-            };
-            /** @enum {string} */
-            status?: "active" | "inactive";
-        };
-        CompanyView: {
-            address: string;
-            contactEmail: string;
-            contactPerson: string;
-            contactPhone: string;
-            /** Format: date-time */
-            createdAt: string;
-            description: string;
-            /**
-             * Format: date-time
-             * @description 服务过期时间，为空表示不过期
-             */
-            expiredAt: string | null;
-            /** Format: int64 */
-            id: number;
-            logo: string;
-            name: string;
-            /** @description 前端自定义扩展属性 (JSON 对象) */
-            properties: {
-                [key: string]: unknown;
-            };
-            /** @enum {string} */
-            status: "active" | "inactive";
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        DataDailyView: {
-            /** @description 按时间升序，最多 24 行；缺失的小时没有行 */
-            records: components["schemas"]["DataRecord"][];
-        };
-        DataDayRecord: {
-            /** @description 日期 YYYY-MM-DD (业务时区) */
-            date: string;
-            /** @description 读数数组 (同实时数据) */
-            vals: (number | null)[];
-        };
-        DataHistoryView: {
-            /** @description 按时间升序 */
-            records: components["schemas"]["DataRecord"][];
-        };
-        DataMonthlyView: {
-            /** @description 按日期升序，最多当月天数行；缺失的日期没有行 */
-            records: components["schemas"]["DataDayRecord"][];
-        };
-        DataRealtimeView: {
-            /** @description 是否在线 (Valkey 不可用时为 false) */
-            online: boolean;
-            /** @description 继电器状态 (0 断开 / 1 闭合)：下标即通道号；没有数据时为 null */
-            relays: number[] | null;
-            /**
-             * Format: date-time
-             * @description 继电器状态最近一次写入时间，没有数据时为 null
-             */
-            relaysAt: string | null;
-            /** @description 传感器读数：下标即通道号，null 表示无读数；没有数据时整体为 null */
-            sensors: (number | null)[];
-            /**
-             * Format: date-time
-             * @description 传感器采集时间，没有数据时为 null
-             */
-            sensorsAt: string | null;
-        };
-        DataRecord: {
-            /**
-             * Format: int64
-             * @description 时间 (Unix 毫秒)
-             */
-            time: number;
-            /** @description 读数数组：下标即通道号，null 表示无读数 (已配置的通道为换算校准后的值，未配置的为原始值) */
-            vals: (number | null)[];
-        };
-        DeviceAppRelay: {
-            /** Format: int64 */
-            channel: number;
-            /** @description 图标：通道自己的 > 标准继电器的 */
-            iconUrl: string;
-            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
-            label: string;
-            /** @description 标准继电器名称 (前端据此判断类别与图标) */
-            standardName: string;
-        };
-        DeviceAppSensor: {
-            /**
-             * Format: int64
-             * @description 通道号，即实时 / 历史 / 环比读数数组的下标
-             */
-            channel: number;
-            /** @description 图标：通道自己的 > 标准传感器的 */
-            iconUrl: string;
-            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
-            label: string;
-            /** Format: double */
-            rangeMax: number;
-            /**
-             * Format: double
-             * @description 量程下限 (上下限都为 0 表示未配置)
-             */
-            rangeMin: number;
-            /**
-             * Format: double
-             * @description 分辨率 (如 0.1)，用于格式化显示；0 表示未配置
-             */
-            resolution: number;
-            /** @description 标准传感器名称 (前端据此判断类别与配色) */
-            standardName: string;
-            unit: string;
-        };
-        DeviceAppView: {
-            /** @description 封面图 URL */
-            coverImage: string;
-            /** Format: date-time */
-            createdAt: string;
-            /**
-             * Format: int64
-             * @description 创建人用户 ID
-             */
-            createdBy: number | null;
-            description: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改) */
-            deviceSn: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID，为空表示未分类 (名称从设备类型字典获取)
-             */
-            deviceTypeId: number | null;
-            /** @description 是否有未处理告警 */
-            hasAlarm?: boolean;
-            /** @description 是否配置摄像头，不包含任何摄像头凭证 */
-            hasCamera?: boolean;
-            /** Format: int64 */
-            id: number;
-            /**
-             * Format: double
-             * @description 纬度
-             */
-            latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
-            longitude: number | null;
-            macAddress: string;
-            name: string;
-            /** @description 是否在线 (Valkey 不可用时为 false) */
-            online: boolean;
-            /** @description 在线状态是否可用；false 时 online 不是可靠离线结论 */
-            onlineKnown?: boolean;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒)
-             */
-            readInterval: number;
-            /**
-             * Format: int64
-             * @description 继电器路数 (规格，创建后不可修改)
-             */
-            relayChannels: number;
-            relays: components["schemas"]["DeviceAppRelay"][];
-            /**
-             * Format: int64
-             * @description 传感器路数 (规格，创建后不可修改)
-             */
-            sensorChannels: number;
-            sensors: components["schemas"]["DeviceAppSensor"][];
-            /** @description SIM 卡号 / ICCID */
-            simCard: string;
-            /**
-             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
-             * @enum {string}
-             */
-            status: "active" | "inactive" | "fault";
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        DeviceCalibration: {
-            /**
-             * Format: double
-             * @description 偏置
-             */
-            offset: number;
-            /**
-             * Format: double
-             * @description 系数 (不能为 0)
-             */
-            scale: number;
-        };
-        DeviceCameraBody: {
-            appKey?: string;
-            /** @description 不传、空串或 ****** 表示保留原值 */
-            appSecret?: string;
-            /** Format: int64 */
-            cameraChannel?: number;
-            liveUrl?: string;
-            serialNo?: string;
-            vendor?: string;
-        };
-        DeviceCameraView: {
-            appKey: string;
-            /** @description 已配置时为 ****** */
-            appSecret: string;
-            /**
-             * Format: int64
-             * @description 监控通道号
-             */
-            cameraChannel: number;
-            /** @description 直播 / 推流播放地址 */
-            liveUrl: string;
-            /** @description 摄像头序列号 */
-            serialNo: string;
-            /** @description 品牌 / 协议：ezviz、hikvision、dahua、rtsp、onvif */
-            vendor: string;
-        };
-        DeviceChangeResult: {
-            /**
-             * Format: int64
-             * @description 新增授权数
-             */
-            added: number;
-            /**
-             * Format: int64
-             * @description 撤销授权数
-             */
-            removed: number;
-        };
-        DeviceCompaniesBody: {
-            /** @description 授权的企业 ID 全集 (空数组表示撤销全部授权) */
-            companyIds: number[];
-        };
-        DeviceCompanyView: {
-            /**
-             * Format: date-time
-             * @description 授权时间 (未授权的企业为 null)
-             */
-            authorizedAt: string | null;
+            companyExpiredAt: string | null;
             /** Format: int64 */
             companyId: number;
             companyName: string;
             /** @enum {string} */
             companyStatus: "active" | "inactive";
-            /**
-             * Format: date-time
-             * @description 企业服务过期时间
-             */
-            expiredAt: string | null;
+            /** Format: date-time */
+            joinedAt: string;
+            /** @enum {string} */
+            role: "admin" | "user";
         };
-        DeviceCreateBody: {
-            coverImage?: string;
-            description?: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ : - */
+        Affected: {
+            /** Format: int64 */
+            affected: number;
+        };
+        AlertRuleView: {
+            actions: components["schemas"]["RuleAction"][];
+            /** Format: int64 */
+            channel: number;
+            condition: string;
+            createAlarm: boolean;
+            description: string;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: int64 */
+            repeatSeconds: number;
+            sensorLabel: string;
+        };
+        AppAlarm: {
+            /** Format: int64 */
+            channel: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: int64 */
+            deviceId: number;
+            deviceName: string;
             deviceSn: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID，不传表示未分类
-             */
-            deviceTypeId?: number;
-            /**
-             * Format: double
-             * @description 纬度 (与经度同时传入)
-             */
-            latitude?: number;
-            /**
-             * Format: double
-             * @description 经度 (与纬度同时传入)
-             */
-            longitude?: number;
-            macAddress?: string;
-            name: string;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒，1~3600)，默认 60
-             */
-            readInterval?: number;
-            /**
-             * Format: int64
-             * @description 继电器路数，默认 32，创建后不可修改
-             */
-            relayChannels?: number;
-            /**
-             * Format: int64
-             * @description 传感器路数，默认 16，创建后不可修改
-             */
-            sensorChannels?: number;
-            simCard?: string;
-            /**
-             * @description 默认 active；停用的设备立即断开且不能接入
-             * @enum {string}
-             */
-            status?: "active" | "inactive";
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            level: number;
+            processRemark: string;
+            processed: boolean;
+            /** Format: date-time */
+            processedAt: string | null;
+            processorName: string;
+            /** Format: int64 */
+            ruleId: number | null;
+            /** Format: int64 */
+            scheduleId: number | null;
+            /** Format: double */
+            triggerValue: number | null;
+            /** @enum {string} */
+            type: "threshold" | "offline" | "fault" | "relay_failed";
         };
-        DeviceDetailView: {
-            /** @description 摄像头 (未配置为 null；appSecret 脱敏为 ******) */
-            camera: components["schemas"]["DeviceCameraView"];
-            /**
-             * Format: int64
-             * @description 已授权企业数 (仅平台管理端；0 表示公海设备)
-             */
-            companyCount?: number;
-            /** @description 封面图 URL */
+        AppAlarmPage: {
+            hasMore: boolean;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["AppAlarm"][];
+        };
+        AppDailyComparison: {
+            records: components["schemas"]["AppReadingRecord"][];
+        };
+        AppDayRecord: {
+            date: string;
+            vals: number[] | null;
+        };
+        AppDevice: {
             coverImage: string;
             /** Format: date-time */
             createdAt: string;
-            /**
-             * Format: int64
-             * @description 创建人用户 ID
-             */
+            /** Format: int64 */
             createdBy: number | null;
             description: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改) */
             deviceSn: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID，为空表示未分类 (名称从设备类型字典获取)
-             */
+            /** Format: int64 */
             deviceTypeId: number | null;
             /** Format: int64 */
             id: number;
-            /**
-             * Format: double
-             * @description 纬度
-             */
+            /** Format: double */
             latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
+            /** Format: double */
             longitude: number | null;
             macAddress: string;
             name: string;
-            /** @description 是否在线 (Valkey 不可用时为 false) */
             online: boolean;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒)
-             */
+            /** Format: int64 */
             readInterval: number;
-            /**
-             * Format: int64
-             * @description 继电器路数 (规格，创建后不可修改)
-             */
+            /** Format: int64 */
             relayChannels: number;
-            /** @description 继电器通道 (按通道号排序) */
-            relays: components["schemas"]["DeviceRelayView"][];
-            /**
-             * Format: int64
-             * @description 传感器路数 (规格，创建后不可修改)
-             */
+            relays: components["schemas"]["AppRelayChannel"][];
+            /** Format: int64 */
             sensorChannels: number;
-            /** @description 传感器通道 (按通道号排序，含告警规则) */
-            sensors: components["schemas"]["DeviceSensorView"][];
-            /** @description SIM 卡号 / ICCID */
+            sensors: components["schemas"]["AppSensorChannel"][];
             simCard: string;
-            /**
-             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
-             * @enum {string}
-             */
+            /** @enum {string} */
             status: "active" | "inactive" | "fault";
             /** Format: date-time */
             updatedAt: string;
         };
-        DeviceDisconnectResult: {
-            /** @description 提示信息 */
-            notice: string;
-        };
-        DeviceRelayFields: {
-            /**
-             * Format: int64
-             * @description 通道号 (从 0 开始，小于设备继电器路数)
-             */
-            channel: number;
-            iconUrl?: string;
-            /** @description 展示名称；为空时显示标准名称 */
-            name?: string;
-            /**
-             * Format: int64
-             * @description 标准继电器 ID (名称作为默认标签)
-             */
-            standardRelayId?: number;
-        };
-        DeviceRelayView: {
-            /**
-             * Format: int64
-             * @description 通道号 (从 0 开始，小于设备继电器路数)
-             */
-            channel: number;
-            iconUrl?: string;
-            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
-            label: string;
-            /** @description 展示名称；为空时显示标准名称 */
-            name?: string;
-            /** @description 标准继电器名称 */
-            standardName: string;
-            /**
-             * Format: int64
-             * @description 标准继电器 ID (名称作为默认标签)
-             */
-            standardRelayId?: number;
-        };
-        DeviceRelaysBody: {
-            /** @description 继电器通道；被联动、定时或手动接管引用的通道不能删除 */
-            relays: components["schemas"]["DeviceRelayFields"][];
-        };
-        DeviceRuleBody: {
-            /**
-             * @description greater: v > threshold；less: v < threshold；equal: |v - threshold| < 1e-5；between: lower ≤ v ≤ upper
-             * @enum {string}
-             */
-            condition: "greater" | "less" | "equal" | "between";
-            /** @description 是否生成告警记录；只用于联动的规则 (例如 < 34℃ 关风机) 设为 false */
-            createAlarm: boolean;
-            enabled: boolean;
-            /**
-             * Format: int64
-             * @description 已有规则的 ID (保持不变，联动随之保留)；新规则不传
-             */
-            id?: number;
-            /**
-             * Format: int32
-             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
-             */
-            level: number;
-            /**
-             * Format: double
-             * @description between 的下限
-             */
-            lower?: number;
-            /**
-             * Format: int64
-             * @description 条件持续满足期间的重复推送间隔 (秒)；每次推送都执行联动
-             */
-            repeatSeconds: number;
-            /** Format: double */
-            threshold?: number;
-            /**
-             * Format: double
-             * @description between 的上限
-             */
-            upper?: number;
-        };
-        DeviceRuleView: {
-            /**
-             * Format: int64
-             * @description 联动动作数 (删除带联动的规则前提示)
-             */
-            actionCount: number;
-            /**
-             * @description greater: v > threshold；less: v < threshold；equal: |v - threshold| < 1e-5；between: lower ≤ v ≤ upper
-             * @enum {string}
-             */
-            condition: "greater" | "less" | "equal" | "between";
-            /** @description 是否生成告警记录；只用于联动的规则 (例如 < 34℃ 关风机) 设为 false */
-            createAlarm: boolean;
-            enabled: boolean;
+        AppDeviceSummary: {
             /** Format: int64 */
-            id: number;
-            /**
-             * Format: int32
-             * @description 1 紧急 / 2 重要 / 3 警告 / 4 提示
-             */
-            level: number;
-            /**
-             * Format: double
-             * @description between 的下限
-             */
-            lower?: number;
-            /**
-             * Format: int64
-             * @description 条件持续满足期间的重复推送间隔 (秒)；每次推送都执行联动
-             */
-            repeatSeconds: number;
-            /** Format: double */
-            threshold?: number;
-            /**
-             * Format: double
-             * @description between 的上限
-             */
-            upper?: number;
-        };
-        DeviceSensorBody: {
-            /** @description 校准，不传为 {scale: 1, offset: 0} */
-            calibration?: components["schemas"]["DeviceCalibration"];
-            /**
-             * Format: int64
-             * @description 通道号 (从 0 开始，小于设备传感器路数)，即读数数组的下标
-             */
-            channel: number;
-            iconUrl?: string;
-            /** @description 展示名称；为空时显示标准名称 */
-            name?: string;
-            /**
-             * Format: double
-             * @description 量程上限
-             */
-            rangeMax?: number;
-            /**
-             * Format: double
-             * @description 量程下限
-             */
-            rangeMin?: number;
-            /**
-             * Format: double
-             * @description 分辨率：物理值 = 原始值 × 分辨率，并按分辨率舍入；0 表示未配置
-             * @enum {number}
-             */
-            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
-            /** @description 告警规则 (按顺序) */
-            rules?: components["schemas"]["DeviceRuleBody"][] | null;
-            /** @description 模拟值，不传或 null 表示使用上报值 */
-            simulation?: components["schemas"]["DeviceSimulation"];
-            /**
-             * Format: int64
-             * @description 标准传感器 ID (名称作为默认标签)
-             */
-            standardSensorId?: number;
-            unit?: string;
-        };
-        DeviceSensorView: {
-            calibration: components["schemas"]["DeviceCalibration"];
-            /**
-             * Format: int64
-             * @description 通道号 (从 0 开始，小于设备传感器路数)，即读数数组的下标
-             */
-            channel: number;
-            iconUrl?: string;
-            /** @description 显示标签：展示名称 > 标准名称 > 通道 N */
-            label: string;
-            /** @description 展示名称；为空时显示标准名称 */
-            name?: string;
-            /**
-             * Format: double
-             * @description 量程上限
-             */
-            rangeMax?: number;
-            /**
-             * Format: double
-             * @description 量程下限
-             */
-            rangeMin?: number;
-            /**
-             * Format: double
-             * @description 分辨率：物理值 = 原始值 × 分辨率，并按分辨率舍入；0 表示未配置
-             * @enum {number}
-             */
-            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
-            rules: components["schemas"]["DeviceRuleView"][];
-            simulation: components["schemas"]["DeviceSimulation"];
-            /** @description 标准传感器名称 */
-            standardName: string;
-            /**
-             * Format: int64
-             * @description 标准传感器 ID (名称作为默认标签)
-             */
-            standardSensorId?: number;
-            unit?: string;
-        };
-        DeviceSensorsBody: {
-            /** @description 传感器通道；不在列表中的通道连同其规则 (和规则的联动) 一起删除 */
-            sensors: components["schemas"]["DeviceSensorBody"][];
-        };
-        DeviceSimulation: {
-            /** Format: double */
-            base: number;
-            /** Format: double */
-            jitter: number;
-        };
-        DeviceSummaryView: {
-            /**
-             * Format: int64
-             * @description 范围内唯一授权设备数量，不累加园区挂载次数
-             */
             deviceCount: number;
-            deviceTypes: components["schemas"]["DeviceTypeCount"][];
-            /** Format: int64 */
-            offlineCount: number;
-            /** Format: int64 */
-            onlineCount: number;
-            onlineKnown: boolean;
+            deviceTypes: components["schemas"]["AppDeviceTypeCount"][];
             /** Format: int64 */
             siteCount: number;
+        };
+        AppDeviceTypeCount: {
+            /** Format: int64 */
+            count: number;
+            /** Format: int64 */
+            deviceTypeId: number | null;
+        };
+        AppHoldRelease: {
+            released: boolean;
+        };
+        AppLiveCamera: {
+            accessToken?: string;
+            /** Format: date-time */
+            expireAt?: string;
+            /** @enum {string} */
+            provider: "url" | "ezviz";
+            ptz: boolean;
+            url: string;
+            zoom: boolean;
+        };
+        AppManualControl: {
+            /** Format: int64 */
+            actualState: number | null;
+            errorMessage: string;
+            status: string;
+        };
+        AppMonthlyComparison: {
+            records: components["schemas"]["AppDayRecord"][];
+        };
+        AppOperationsPage: {
+            hasMore: boolean;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["AppRelayOperation"][];
+        };
+        AppReadingRecord: {
+            /** Format: int64 */
+            time: number;
+            vals: number[] | null;
+        };
+        AppRealtime: {
+            online: boolean;
+            relays: number[] | null;
+            /** Format: date-time */
+            relaysAt: string | null;
+            sensors: number[] | null;
+            /** Format: date-time */
+            sensorsAt: string | null;
+        };
+        AppRelayAutomation: {
+            /** Format: int64 */
+            channel: number;
+            hold: components["schemas"]["AppRelayHold"];
+            label: string;
+            next: components["schemas"]["AppRelayNextAction"];
+            schedules: components["schemas"]["ScheduleView"][];
+        };
+        AppRelayChannel: {
+            /** Format: int64 */
+            channel: number;
+            iconUrl: string;
+            label: string;
+            standardName: string;
+        };
+        AppRelayControl: {
+            /** Format: int64 */
+            actualState?: number;
+            message?: string;
+            result: string;
+            /** Format: int64 */
+            state: number;
+        };
+        AppRelayHold: {
+            /** Format: date-time */
+            at: string;
+            operatorName: string;
+        };
+        AppRelayNextAction: {
+            /** Format: date-time */
+            at: string;
+            /**
+             * Format: int32
+             * @enum {integer}
+             */
+            state: 0 | 1;
+        };
+        AppRelayOperation: {
+            /** Format: int32 */
+            actualState: number | null;
+            /** Format: int64 */
+            channel: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            deviceId: number;
+            deviceName: string;
+            deviceSn: string;
+            /** Format: int64 */
+            durationMs: number;
+            errorMessage: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            /** Format: int64 */
+            id: number;
+            operatorName: string;
+            source: string;
+            /** Format: int64 */
+            sourceId: number | null;
+            status: string;
+            /** Format: int32 */
+            targetState: number;
+        };
+        AppRelayRelease: {
+            message?: string;
+            success: boolean;
+        };
+        AppSensorChannel: {
+            /** Format: int64 */
+            channel: number;
+            iconUrl: string;
+            label: string;
+            /** Format: double */
+            rangeMax: number;
+            /** Format: double */
+            rangeMin: number;
+            /** Format: double */
+            resolution: number;
+            standardName: string;
+            unit: string;
+        };
+        AppUnprocessedAlarmCount: {
+            capped: boolean;
+            /** Format: int64 */
+            count: number;
+        };
+        AssignCompanyMembersReqBody: {
+            members: components["schemas"]["AdminCompanyMemberAssignment"][] | null;
+        };
+        BatchDeviceCompaniesReqBody: {
+            /** @enum {string} */
+            action: "add" | "remove";
+            companyIds: number[] | null;
+            deviceIds: number[] | null;
+        };
+        CameraPTZReqBody: {
+            /** @enum {string} */
+            action: "start" | "stop";
+            /** Format: int64 */
+            direction: number;
             /**
              * Format: int64
-             * @description 在线服务不可用时不将未知状态计为离线
+             * @default 1
              */
-            unknownCount: number;
+            speed: number;
         };
-        DeviceTenantCreateBody: {
+        ChangePasswordReqBody: {
+            newPassword: string;
+            oldPassword: string;
+        };
+        Company: {
+            address: string;
+            contactEmail: string;
+            contactPerson: string;
+            contactPhone: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: date-time */
+            expiredAt: string | null;
+            /** Format: int64 */
+            id: number;
+            logo: string;
+            name: string;
+            properties: {
+                [key: string]: unknown;
+            };
+            /** @enum {string} */
+            status: "active" | "inactive";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CompanyDetail: {
+            address: string;
+            contactEmail: string;
+            contactPerson: string;
+            contactPhone: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: int64 */
+            deviceCount: number;
+            /** Format: date-time */
+            expiredAt: string | null;
+            /** Format: int64 */
+            id: number;
+            logo: string;
+            /** Format: int64 */
+            memberCount: number;
+            name: string;
+            properties: {
+                [key: string]: unknown;
+            };
+            /** Format: int64 */
+            siteCount: number;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CompanyDevice: {
+            coverImage: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            createdBy: number | null;
+            description: string;
+            deviceSn: string;
+            /** Format: int64 */
+            deviceTypeId: number | null;
+            /** Format: int64 */
+            id: number;
+            /** Format: double */
+            latitude: number | null;
+            /** Format: double */
+            longitude: number | null;
+            macAddress: string;
+            name: string;
+            online: boolean;
+            /** Format: int64 */
+            readInterval: number;
+            /** Format: int64 */
+            relayChannels: number;
+            /** Format: int64 */
+            sensorChannels: number;
+            simCard: string;
+            /** @enum {string} */
+            status: "active" | "inactive" | "fault";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CompanyFields: {
+            address?: string;
+            contactEmail?: string;
+            contactPerson?: string;
+            contactPhone?: string;
+            description?: string;
+            logo?: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+        };
+        CompanySite: {
+            address: string;
+            city: string;
+            /** Format: int64 */
+            companyId: number;
+            coverImage: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            district: string;
+            /** Format: int64 */
+            id: number;
+            images: string[];
+            /** Format: double */
+            latitude: number | null;
+            /** Format: double */
+            longitude: number | null;
+            name: string;
+            properties: {
+                [key: string]: unknown;
+            };
+            province: string;
+            /** @enum {string} */
+            status: "active" | "inactive" | "under_construction";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ControlRelayReqBody: {
+            operatorName: string;
+            /**
+             * Format: int64
+             * @enum {integer}
+             */
+            state: 0 | 1;
+        };
+        CreateCompanyReqBody: {
+            address?: string;
+            contactEmail?: string;
+            contactPerson?: string;
+            contactPhone?: string;
+            description?: string;
+            /** Format: date-time */
+            expiredAt?: string;
+            logo?: string;
+            name: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+            /** @enum {string} */
+            status?: "active" | "inactive";
+        };
+        CreateDeviceReqBody: {
             coverImage?: string;
             description?: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改)：1~64 位字母、数字或 _ : - */
             deviceSn: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID，不传表示未分类
-             */
+            /** Format: int64 */
             deviceTypeId?: number;
-            /**
-             * Format: double
-             * @description 纬度 (与经度同时传入)
-             */
+            /** Format: double */
             latitude?: number;
-            /**
-             * Format: double
-             * @description 经度 (与纬度同时传入)
-             */
+            /** Format: double */
             longitude?: number;
             macAddress?: string;
             name: string;
             /**
              * Format: int64
-             * @description 采集间隔 (秒，1~3600)，默认 60
+             * @default 60
              */
-            readInterval?: number;
+            readInterval: number;
             /**
              * Format: int64
-             * @description 继电器路数，默认 32，创建后不可修改
+             * @default 32
              */
-            relayChannels?: number;
+            relayChannels: number;
             /**
              * Format: int64
-             * @description 传感器路数，默认 16，创建后不可修改
+             * @default 16
              */
-            sensorChannels?: number;
+            sensorChannels: number;
             simCard?: string;
-            /** @description 挂载到本企业的园区 (1~50 个) */
-            siteIds: number[] | null;
             /**
-             * @description 默认 active；停用的设备立即断开且不能接入
+             * @default active
              * @enum {string}
              */
-            status?: "active" | "inactive";
+            status: "active" | "inactive";
         };
-        DeviceTypeBody: {
+        CreateDeviceReqBody1: {
+            coverImage?: string;
             description?: string;
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 类型名称 (唯一) */
+            deviceSn: string;
+            /** Format: int64 */
+            deviceTypeId?: number;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            macAddress?: string;
             name: string;
             /**
              * Format: int64
-             * @description 排序 (越小越靠前)，默认 0
+             * @default 60
              */
-            sort?: number;
+            readInterval: number;
+            /**
+             * Format: int64
+             * @default 32
+             */
+            relayChannels: number;
+            /**
+             * Format: int64
+             * @default 16
+             */
+            sensorChannels: number;
+            simCard?: string;
+            siteIds: number[];
+            /**
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
         };
-        DeviceTypeCount: {
+        CreateDeviceScheduleReqBody: {
             /** Format: int64 */
-            count: number;
-            /**
-             * Format: int64
-             * @description 为空表示未分类
-             */
-            deviceTypeId: number | null;
+            channel: number;
+            enabled: boolean;
+            remark?: string;
+            /** Format: int64 */
+            retryCount: number;
+            /** Format: int64 */
+            retryIntervalSec: number;
+            start: string;
+            stop: string;
+            weekdays: number[] | null;
         };
-        DeviceTypePatch: {
+        CreateSiteReqBody: {
+            address?: string;
+            city?: string;
+            coverImage?: string;
             description?: string;
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 类型名称 (唯一) */
-            name?: string;
+            district?: string;
+            images?: string[] | null;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            name: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+            province?: string;
             /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
+             * @default active
+             * @enum {string}
              */
-            sort?: number;
+            status: "active" | "inactive" | "under_construction";
         };
-        DeviceTypeView: {
+        CreateSysConfigReqBody: {
+            description?: string;
+            key: string;
+            value: string;
+        };
+        CreateUserReqBody: {
+            nickname?: string;
+            password: string;
+            phone?: string;
+            /** @enum {string} */
+            status?: "active" | "inactive";
+            /** @enum {string} */
+            systemRole?: "admin" | "none";
+            username: string;
+        };
+        DeviceCamera: {
+            appKey: string;
+            appSecret: string;
+            /** Format: int64 */
+            cameraChannel: number;
+            liveUrl: string;
+            serialNo: string;
+            vendor: string;
+        };
+        DeviceDetail: {
+            camera: components["schemas"]["DeviceCamera"];
+            coverImage: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            createdBy: number | null;
+            description: string;
+            deviceSn: string;
+            /** Format: int64 */
+            deviceTypeId: number | null;
+            /** Format: int64 */
+            id: number;
+            /** Format: double */
+            latitude: number | null;
+            /** Format: double */
+            longitude: number | null;
+            macAddress: string;
+            name: string;
+            online: boolean;
+            /** Format: int64 */
+            readInterval: number;
+            /** Format: int64 */
+            relayChannels: number;
+            relays: components["schemas"]["DeviceRelay"][];
+            /** Format: int64 */
+            sensorChannels: number;
+            sensors: components["schemas"]["DeviceSensor"][];
+            simCard: string;
+            /** @enum {string} */
+            status: "active" | "inactive" | "fault";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DeviceRelay: {
+            /** Format: int64 */
+            channel: number;
+            iconUrl: string;
+            label: string;
+            name: string;
+            standardName: string;
+        };
+        DeviceSensor: {
+            calibration: components["schemas"]["SensorCalibration"];
+            /** Format: int64 */
+            channel: number;
+            iconUrl: string;
+            label: string;
+            name: string;
+            /** Format: double */
+            rangeMax: number;
+            /** Format: double */
+            rangeMin: number;
+            /** Format: double */
+            resolution: number;
+            rules: components["schemas"]["SensorRule"][];
+            simulation: components["schemas"]["SensorSimulation"];
+            standardName: string;
+            unit: string;
+        };
+        DeviceType: {
             /** Format: date-time */
             createdAt: string;
             description: string;
-            /** @description 图标 URL */
             iconUrl: string;
             /** Format: int64 */
             id: number;
             name: string;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
-             */
-            sort: number;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        DeviceUpdateBody: {
-            coverImage?: string;
-            description?: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID；传 null 表示未分类，不传表示不修改
-             */
-            deviceTypeId?: number | null;
-            /**
-             * Format: double
-             * @description 纬度：与经度成对修改
-             */
-            latitude?: number | null;
-            /**
-             * Format: double
-             * @description 经度：与纬度成对修改，两者传 null 表示清除坐标
-             */
-            longitude?: number | null;
-            macAddress?: string;
-            name?: string;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒，1~3600)，立即生效
-             */
-            readInterval?: number;
-            simCard?: string;
-            /**
-             * @description 停用的设备立即断开且不能接入；故障 (fault) 的设备更换为与规格相符的硬件后改为 active 即可重新接入
-             * @enum {string}
-             */
-            status?: "active" | "inactive";
-        };
-        DeviceView: {
-            /** @description 封面图 URL */
-            coverImage: string;
-            /** Format: date-time */
-            createdAt: string;
-            /**
-             * Format: int64
-             * @description 创建人用户 ID
-             */
-            createdBy: number | null;
-            description: string;
-            /** @description 硬件 SN (全局唯一，创建后不可修改) */
-            deviceSn: string;
-            /**
-             * Format: int64
-             * @description 设备类型 ID，为空表示未分类 (名称从设备类型字典获取)
-             */
-            deviceTypeId: number | null;
             /** Format: int64 */
-            id: number;
-            /**
-             * Format: double
-             * @description 纬度
-             */
-            latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
-            longitude: number | null;
-            macAddress: string;
-            name: string;
-            /** @description 是否在线 (Valkey 不可用时为 false) */
-            online: boolean;
-            /**
-             * Format: int64
-             * @description 采集间隔 (秒)
-             */
-            readInterval: number;
-            /**
-             * Format: int64
-             * @description 继电器路数 (规格，创建后不可修改)
-             */
-            relayChannels: number;
-            /**
-             * Format: int64
-             * @description 传感器路数 (规格，创建后不可修改)
-             */
-            sensorChannels: number;
-            /** @description SIM 卡号 / ICCID */
-            simCard: string;
-            /**
-             * @description active 启用；inactive 停用 (人工)；fault 故障 (系统判定：上报路数少于规格，已断开)。只有 active 的设备能接入
-             * @enum {string}
-             */
-            status: "active" | "inactive" | "fault";
+            sort: number;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2887,1091 +2448,626 @@ export interface components {
             /** @description 出错的值 */
             value?: unknown;
         };
-        IDsBody: {
-            /** @description 主键 ID 列表 (1~500 个，不可重复) */
+        IDsInputBody: {
             ids: number[] | null;
         };
-        LinkageActionBody: {
-            /**
-             * Format: int64
-             * @description 被控继电器通道 (须已配置)
-             */
-            channel: number;
-            /**
-             * Format: int64
-             * @description 被控设备 (可以是其他设备，须在当前企业范围内)
-             */
-            deviceId: number;
-            /**
-             * Format: int32
-             * @description 0 关 / 1 开
-             * @enum {integer}
-             */
-            state: 0 | 1;
-        };
-        LinkageActionView: {
+        Item: {
             /** Format: int64 */
             channel: number;
             /** Format: int64 */
             deviceId: number;
-            deviceName: string;
-            deviceSn: string;
-            /** @description 被控继电器标签 */
-            relayLabel: string;
             /**
              * Format: int32
              * @enum {integer}
              */
             state: 0 | 1;
-        };
-        LinkageActionsBody: {
-            /** @description 联动动作 (最多 16 个，同一路继电器不重复)；空数组表示清除 */
-            actions: components["schemas"]["LinkageActionBody"][];
-        };
-        LinkageRuleView: {
-            actions: components["schemas"]["LinkageActionView"][];
-            /**
-             * Format: int64
-             * @description 传感器通道
-             */
-            channel: number;
-            /** @enum {string} */
-            condition: "greater" | "less" | "equal" | "between";
-            createAlarm: boolean;
-            /** @description 规则描述，例如 空气温度 > 35 ℃ */
-            description: string;
-            enabled: boolean;
-            /** Format: int64 */
-            id: number;
-            /** Format: int32 */
-            level: number;
-            /** Format: int64 */
-            repeatSeconds: number;
-            /** @description 传感器通道标签 */
-            sensorLabel: string;
         };
         LinkageView: {
-            /**
-             * Format: int64
-             * @description 被控继电器通道
-             */
+            /** Format: int64 */
             channel: number;
-            /** @description 规则描述 */
             description: string;
-            /** @description 被控继电器标签 */
             relayLabel: string;
-            /** @description 规则是否启用 (停用的规则不会触发) */
             ruleEnabled: boolean;
             /** Format: int64 */
             ruleId: number;
-            /**
-             * Format: int64
-             * @description 触发设备
-             */
+            /** Format: int64 */
             sourceDeviceId: number;
             sourceDeviceName: string;
             sourceDeviceSn: string;
             /**
              * Format: int32
-             * @description 动作：0 关 / 1 开
              * @enum {integer}
              */
             state: 0 | 1;
         };
-        LoginInputBody: {
+        LoginBody: {
+            /** Format: date-time */
+            expiresAt: string;
+            token: string;
+            tokenType: string;
+            user: components["schemas"]["Profile"];
+        };
+        LoginReqBody: {
+            /** @description 密码 */
             password: string;
+            /** @description 用户名 */
             username: string;
         };
-        OSSPolicyRequest: {
-            /**
-             * @description 文件 MIME 类型 (svg 只允许用于图标场景)
-             * @enum {string}
-             */
-            contentType: "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml";
-            /**
-             * @description 上传场景 (决定目录、允许的类型与大小上限)
-             * @enum {string}
-             */
-            scene: "device-type-icon" | "sensor-icon" | "relay-icon" | "company-logo" | "device-cover" | "site-cover" | "site-image" | "avatar";
+        ManualControlReqBody: {
+            operatorName: string;
             /**
              * Format: int64
-             * @description 文件大小 (字节)，用于提前校验；实际上传大小由 OSS 按凭证再次校验
-             */
-            size: number;
-        };
-        OSSPolicyView: {
-            /**
-             * Format: date-time
-             * @description 凭证过期时间
-             */
-            expireAt: string;
-            /** @description 表单字段：原样提交，文件字段 file 必须放在最后 */
-            fields: {
-                [key: string]: string;
-            };
-            /** @description 上传地址：以 multipart/form-data POST 到这里 */
-            host: string;
-            /** @description 对象键 (服务端生成) */
-            key: string;
-            /**
-             * Format: int64
-             * @description 该场景允许的最大文件大小 (字节)
-             */
-            maxBytes: number;
-            /** @description 上传成功后的永久访问链接 (保存到业务字段，如 logo、coverImage) */
-            url: string;
-        };
-        PageCompanyView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["CompanyView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageDeviceAppView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["DeviceAppView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageDeviceCompanyView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["DeviceCompanyView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageDeviceTypeView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["DeviceTypeView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageDeviceView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["DeviceView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageSiteMountedView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["SiteMountedView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageSiteView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["SiteView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageStandardRelayView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["StandardRelayView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageStandardSensorView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["StandardSensorView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageSysConfigView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["SysConfigView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageUserMemberView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["UserMemberView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageUserMembershipView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["UserMembershipView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        PageUserView: {
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["UserView"][];
-            /**
-             * Format: int64
-             * @description 符合条件的总条数
-             */
-            totalCount: number;
-        };
-        RelayAutomation: {
-            /**
-             * Format: int64
-             * @description 继电器通道号
-             */
-            channel: number;
-            /** @description 手动接管 (未接管为 null) */
-            hold: components["schemas"]["RelayHoldView"];
-            /** @description 继电器通道标签 */
-            label: string;
-            /** @description 下一次定时动作 (没有定时规则时为 null) */
-            next: components["schemas"]["RelayNextAction"];
-            /** @description 启用中的定时规则 */
-            schedules: components["schemas"]["RelayScheduleView"][];
-        };
-        RelayControlBody: {
-            /**
-             * Format: int32
-             * @description 目标状态：0 关闭 / 1 开启
              * @enum {integer}
              */
             state: 0 | 1;
-            /** @description 同时进入手动接管：该通道的联动与定时暂停，直到恢复 (DELETE /devices/{id}/relays/{channel}/hold) */
             takeover?: boolean;
         };
-        RelayHoldView: {
-            /**
-             * Format: date-time
-             * @description 接管时间
-             */
-            at: string;
-            /** @description 接管人 */
+        Member: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            joinedAt: string;
+            nickname: string;
+            phone: string | null;
+            /** @enum {string} */
+            role: "admin" | "user";
+            /** @enum {string} */
+            status: "active" | "inactive";
+            /** @enum {string} */
+            systemRole: "admin" | "none";
+            /** Format: date-time */
+            updatedAt: string;
+            username: string;
+        };
+        MountSiteDevicesReqBody: {
+            deviceIds: number[] | null;
+        };
+        MyCompany: {
+            accessible: boolean;
+            /** Format: int64 */
+            companyId: number;
+            /** Format: date-time */
+            expiredAt: string | null;
+            /** Format: date-time */
+            joinedAt: string;
+            logo: string;
+            manageable: boolean;
+            name: string;
+            /** @enum {string} */
+            role: "admin" | "user";
+            /** @enum {string} */
+            status: "active" | "inactive";
+        };
+        PageCompanyBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["Company"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageCompanyDeviceBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["CompanyDevice"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageCompanySiteBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["CompanySite"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageDeviceBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["AppDevice"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageDeviceTypeBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["DeviceType"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageMemberBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["Member"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageMountedSiteBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["TenantMountedSite"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageStandardRelayBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["StandardRelay"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageStandardSensorBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["StandardSensor"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageSysConfigBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["AdminSysConfig"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageUserBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["User"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        PageUserMembershipBody: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pageSize: number;
+            records: components["schemas"]["AdminUserMembership"][] | null;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        ProcessAlarmsReqBody: {
+            ids: number[] | null;
+            operatorName: string;
+            remark?: string;
+        };
+        Profile: {
+            avatar: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            id: number;
+            nickname: string;
+            phone: string | null;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            /** @enum {string} */
+            systemRole: "admin" | "none";
+            username: string;
+        };
+        ReleaseHoldReqBody: {
             operatorName: string;
         };
-        RelayNextAction: {
-            /** Format: date-time */
-            at: string;
+        ReleaseRelayReqBody: {
+            operatorName: string;
+        };
+        RemoveCompanyMembersReqBody: {
+            userIds: number[] | null;
+        };
+        RemoveUserCompaniesReqBody: {
+            companyIds: number[] | null;
+        };
+        ResetUserPasswordReqBody: {
+            password: string;
+        };
+        RuleAction: {
+            /** Format: int64 */
+            channel: number;
+            /** Format: int64 */
+            deviceId: number;
+            deviceName: string;
+            deviceSn: string;
+            relayLabel: string;
             /**
              * Format: int32
-             * @description 0 关 / 1 开
              * @enum {integer}
              */
             state: 0 | 1;
         };
-        RelayRecordView: {
-            /**
-             * Format: int32
-             * @description 设备回报的实际状态 (未应答时为 null)
-             */
-            actualState: number | null;
-            /**
-             * Format: int64
-             * @description 继电器通道号
-             */
-            channel: number;
-            /**
-             * Format: date-time
-             * @description 下发时间
-             */
-            createdAt: string;
+        SaveDeviceRelaysReqBody: {
+            relays: components["schemas"]["AdminDeviceRelayInput"][];
+        };
+        SaveDeviceRelaysReqBody1: {
+            relays: components["schemas"]["TenantDeviceRelayInput"][];
+        };
+        SaveDeviceSensorsReqBody: {
+            sensors: components["schemas"]["AdminDeviceSensorInput"][];
+        };
+        SaveDeviceSensorsReqBody1: {
+            sensors: components["schemas"]["TenantDeviceSensorInput"][];
+        };
+        SaveRuleActionsReqBody: {
+            actions: components["schemas"]["Item"][];
+        };
+        ScheduleView: {
             /** Format: int64 */
-            deviceId: number;
-            /** @description 设备名称 (快照) */
-            deviceName: string;
-            deviceSn: string;
-            /**
-             * Format: int64
-             * @description 往返耗时 (毫秒)
-             */
-            durationMs: number;
-            errorMessage: string;
-            /** Format: date-time */
-            finishedAt: string | null;
-            /** Format: int64 */
-            id: number;
-            /** @description 手动：操作人 (快照)；自动：来源描述 */
-            operatorName: string;
-            /**
-             * @description manual 手动；linkage 告警联动；schedule 定时；hold 进入手动接管；release 恢复自动
-             * @enum {string}
-             */
-            source: "manual" | "linkage" | "schedule" | "hold" | "release";
-            /**
-             * Format: int64
-             * @description linkage：规则 ID；schedule：定时规则 ID
-             */
-            sourceId: number | null;
-            /**
-             * @description pending 执行中 (超过 1 分钟仍为 pending 视为超时)；success 设备确认；failed 确定未达到目标 (原因见 errorMessage)；timeout 已下发、结果未知
-             * @enum {string}
-             */
-            status: "pending" | "success" | "timeout" | "failed";
-            /**
-             * Format: int32
-             * @description 目标状态 0 关闭 / 1 开启；hold / release 为当时的状态
-             */
-            targetState: number;
-        };
-        RelayReleaseView: {
-            /** @description 是否解除了接管 (该通道未接管时为 false) */
-            released: boolean;
-        };
-        RelayScheduleBody: {
-            /**
-             * Format: int64
-             * @description 继电器通道号 (必须已配置)
-             */
-            channel: number;
-            /** @description 是否启用 */
-            enabled: boolean;
-            /** @description 备注 */
-            remark?: string;
-            /**
-             * Format: int64
-             * @description 失败重试次数 (0 表示不重试；全部失败后产生告警)
-             */
-            retryCount: number;
-            /**
-             * Format: int64
-             * @description 重试间隔 (秒)
-             */
-            retryIntervalSec: number;
-            /**
-             * @description 开启时刻 HH:MM:SS (业务时区)
-             * @example 07:00:00
-             */
-            start: string;
-            /**
-             * @description 关闭时刻 HH:MM:SS；早于开启时刻表示次日关闭 (跨零点)，不能与开启时刻相同
-             * @example 19:00:00
-             */
-            stop: string;
-            /** @description 开启日 (1 = 周一 … 7 = 周日)；跨零点时关闭属于开启日 */
-            weekdays: number[] | null;
-        };
-        RelayScheduleView: {
-            /**
-             * Format: int64
-             * @description 继电器通道号
-             */
             channel: number;
             /** Format: date-time */
             createdAt: string;
-            /** @description 次日关闭 (关闭时刻早于开启时刻) */
             crossesMidnight: boolean;
             /** Format: int64 */
             deviceId: number;
             enabled: boolean;
             /** Format: int64 */
             id: number;
-            /**
-             * Format: date-time
-             * @description 下一次关闭时刻 (停用时为 null)
-             */
+            /** Format: date-time */
             nextOff: string | null;
-            /**
-             * Format: date-time
-             * @description 下一次开启时刻 (停用时为 null)
-             */
+            /** Format: date-time */
             nextOn: string | null;
-            /** @description 继电器通道标签 */
             relayLabel: string;
             remark: string;
             /** Format: int64 */
             retryCount: number;
             /** Format: int64 */
             retryIntervalSec: number;
-            /** @description 开启时刻 HH:MM:SS */
             start: string;
-            /** @description 关闭时刻 HH:MM:SS */
             stop: string;
             /** Format: date-time */
             updatedAt: string;
-            /** @description 开启日说明：每天 / 周一、周三 */
             weekdayText: string;
-            /** @description 开启日 (1 = 周一 … 7 = 周日) */
-            weekdays: number[];
+            weekdays: number[] | null;
         };
-        SiteBody: {
-            address?: string;
-            city?: string;
-            /** @description 封面图 URL (上传场景 site-cover) */
-            coverImage?: string;
-            description?: string;
-            district?: string;
-            /** @description 图片 URL 列表 (上传场景 site-image) */
-            images?: string[] | null;
-            /**
-             * Format: double
-             * @description 纬度 (与经度同时传入)
-             */
-            latitude?: number;
-            /**
-             * Format: double
-             * @description 经度 (与纬度同时传入)
-             */
-            longitude?: number;
-            /** @description 园区名称 (企业内唯一) */
-            name: string;
-            /** @description 前端自定义扩展属性 (任意 JSON 对象) */
-            properties?: {
-                [key: string]: unknown;
-            };
-            province?: string;
-            /**
-             * @description 默认 active
-             * @enum {string}
-             */
-            status?: "active" | "inactive" | "under_construction";
+        SensorCalibration: {
+            /** Format: double */
+            offset: number;
+            /** Format: double */
+            scale: number;
         };
-        SiteChangeResult: {
-            /**
-             * Format: int64
-             * @description 新增挂载数
-             */
-            added: number;
-            /**
-             * Format: int64
-             * @description 解除挂载数
-             */
-            removed: number;
-        };
-        SiteDetailView: {
-            address: string;
-            city: string;
+        SensorRule: {
             /** Format: int64 */
-            companyId: number;
-            /** @description 封面图 URL */
-            coverImage: string;
-            /** Format: date-time */
-            createdAt: string;
-            description: string;
-            /**
-             * Format: int64
-             * @description 挂载设备数
-             */
-            deviceCount: number;
-            district: string;
+            actionCount: number;
+            condition: string;
+            createAlarm: boolean;
+            enabled: boolean;
             /** Format: int64 */
-            id: number;
-            /** @description 图片 URL 列表 */
-            images: string[];
-            /**
-             * Format: double
-             * @description 纬度
-             */
-            latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
-            longitude: number | null;
-            name: string;
-            /** @description 前端自定义扩展属性 (JSON 对象) */
-            properties: {
-                [key: string]: unknown;
-            };
-            province: string;
-            /** @enum {string} */
-            status: "active" | "inactive" | "under_construction";
-            /** Format: date-time */
-            updatedAt: string;
+            id?: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: double */
+            lower?: number;
+            /** Format: int64 */
+            repeatSeconds: number;
+            /** Format: double */
+            threshold?: number;
+            /** Format: double */
+            upper?: number;
         };
-        SiteDeviceIDsBody: {
-            /** @description 设备 ID (须已授权给本企业) */
-            deviceIds: number[] | null;
+        SensorSimulation: {
+            /** Format: double */
+            base: number;
+            /** Format: double */
+            jitter: number;
         };
-        SiteDeviceSitesBody: {
-            /** @description 挂载的园区 ID 全集 */
+        SetMountedSitesReqBody: {
             siteIds: number[];
         };
-        SiteMountedView: {
-            address: string;
-            city: string;
-            /** Format: int64 */
-            companyId: number;
-            /** @description 封面图 URL */
-            coverImage: string;
+        StandardRelay: {
             /** Format: date-time */
             createdAt: string;
-            description: string;
-            district: string;
-            /** Format: int64 */
-            id: number;
-            /** @description 图片 URL 列表 */
-            images: string[];
-            /**
-             * Format: double
-             * @description 纬度
-             */
-            latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
-            longitude: number | null;
-            /**
-             * Format: date-time
-             * @description 挂载时间
-             */
-            mountedAt: string;
-            name: string;
-            /** @description 前端自定义扩展属性 (JSON 对象) */
-            properties: {
-                [key: string]: unknown;
-            };
-            province: string;
-            /** @enum {string} */
-            status: "active" | "inactive" | "under_construction";
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        SiteUpdateBody: {
-            address?: string;
-            city?: string;
-            /** @description 封面图 URL (上传场景 site-cover) */
-            coverImage?: string;
-            description?: string;
-            district?: string;
-            /** @description 图片 URL 列表 (整体替换) */
-            images?: string[];
-            /**
-             * Format: double
-             * @description 纬度：与经度成对修改
-             */
-            latitude?: number | null;
-            /**
-             * Format: double
-             * @description 经度：与纬度成对修改，两者传 null 表示清除坐标
-             */
-            longitude?: number | null;
-            /** @description 园区名称 (企业内唯一) */
-            name?: string;
-            /** @description 前端自定义扩展属性 (整体替换) */
-            properties?: {
-                [key: string]: unknown;
-            };
-            province?: string;
-            /** @enum {string} */
-            status?: "active" | "inactive" | "under_construction";
-        };
-        SiteView: {
-            address: string;
-            city: string;
-            /** Format: int64 */
-            companyId: number;
-            /** @description 封面图 URL */
-            coverImage: string;
-            /** Format: date-time */
-            createdAt: string;
-            description: string;
-            district: string;
-            /** Format: int64 */
-            id: number;
-            /** @description 图片 URL 列表 */
-            images: string[];
-            /**
-             * Format: double
-             * @description 纬度
-             */
-            latitude: number | null;
-            /**
-             * Format: double
-             * @description 经度
-             */
-            longitude: number | null;
-            name: string;
-            /** @description 前端自定义扩展属性 (JSON 对象) */
-            properties: {
-                [key: string]: unknown;
-            };
-            province: string;
-            /** @enum {string} */
-            status: "active" | "inactive" | "under_construction";
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        SliceAlarmView: {
-            /** @description 是否还有下一页 */
-            hasMore: boolean;
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["AlarmView"][];
-        };
-        SliceRelayRecordView: {
-            /** @description 是否还有下一页 */
-            hasMore: boolean;
-            /**
-             * Format: int64
-             * @description 页码
-             */
-            page: number;
-            /**
-             * Format: int64
-             * @description 每页条数
-             */
-            pageSize: number;
-            /** @description 当前页数据 */
-            records: components["schemas"]["RelayRecordView"][];
-        };
-        StandardRelayBody: {
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 名称 (唯一) */
-            name: string;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)，默认 0
-             */
-            sort?: number;
-        };
-        StandardRelayPatch: {
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 名称 (唯一) */
-            name?: string;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
-             */
-            sort?: number;
-        };
-        StandardRelayView: {
-            /** Format: date-time */
-            createdAt: string;
-            /** @description 图标 URL */
             iconUrl: string;
             /** Format: int64 */
             id: number;
-            /** @description 名称，如 灌溉电磁阀 */
             name: string;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
-             */
+            /** Format: int64 */
             sort: number;
             /** Format: date-time */
             updatedAt: string;
         };
-        StandardSensorBody: {
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 名称 (唯一) */
-            name: string;
-            /**
-             * Format: double
-             * @description 量程最大值
-             */
-            rangeMax?: number;
-            /**
-             * Format: double
-             * @description 量程最小值
-             */
-            rangeMin?: number;
-            /**
-             * Format: double
-             * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 或不填表示未配置 (物理值 = 原始值 × 分辨率，并按分辨率舍入)
-             * @enum {number}
-             */
-            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)，默认 0
-             */
-            sort?: number;
-            /** @description 单位，如 ℃ */
-            unit?: string;
-        };
-        StandardSensorPatch: {
-            /** @description 图标 URL */
-            iconUrl?: string;
-            /** @description 名称 (唯一) */
-            name?: string;
-            /**
-             * Format: double
-             * @description 量程最大值
-             */
-            rangeMax?: number;
-            /**
-             * Format: double
-             * @description 量程最小值
-             */
-            rangeMin?: number;
-            /**
-             * Format: double
-             * @description 分辨率：10 / 1 / 0.1 / 0.01 / 0.001，0 表示未配置
-             * @enum {number}
-             */
-            resolution?: 0 | 10 | 1 | 0.1 | 0.01 | 0.001;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
-             */
-            sort?: number;
-            /** @description 单位，如 ℃ */
-            unit?: string;
-        };
-        StandardSensorView: {
+        StandardSensor: {
             /** Format: date-time */
             createdAt: string;
-            /** @description 图标 URL */
             iconUrl: string;
             /** Format: int64 */
             id: number;
-            /** @description 名称，如 空气温度 */
             name: string;
-            /**
-             * Format: double
-             * @description 量程最大值
-             */
+            /** Format: double */
             rangeMax: number;
-            /**
-             * Format: double
-             * @description 量程最小值
-             */
+            /** Format: double */
             rangeMin: number;
-            /**
-             * Format: double
-             * @description 分辨率，如 0.1
-             */
+            /** Format: double */
             resolution: number;
-            /**
-             * Format: int64
-             * @description 排序 (越小越靠前)
-             */
+            /** Format: int64 */
             sort: number;
-            /** @description 单位，如 ℃ */
             unit: string;
             /** Format: date-time */
             updatedAt: string;
         };
-        SysConfigBody: {
-            description?: string;
-            /** @description 配置键 (唯一，创建后不可修改)，如 frontend */
+        SysConfigValue: {
             key: string;
-            /** @description 配置值 (JSON 字符串，后端不校验，原样存储) */
             value: string;
         };
-        SysConfigPatch: {
-            description?: string;
-            /** @description 配置值 (JSON 字符串，后端不校验，原样存储) */
-            value?: string;
-        };
-        SysConfigValueView: {
-            /** @description 配置键 */
-            key: string;
-            /** @description 配置值 (JSON 字符串，原样返回，由前端解析) */
-            value: string;
-        };
-        SysConfigView: {
+        TenantAlarm: {
+            /** Format: int64 */
+            channel: number | null;
             /** Format: date-time */
             createdAt: string;
             description: string;
             /** Format: int64 */
-            id: number;
-            /** @description 配置键 (唯一，创建后不可修改) */
-            key: string;
-            /** Format: date-time */
-            updatedAt: string;
-            /** @description 配置值 (JSON 字符串，原样返回，由前端解析) */
-            value: string;
-        };
-        UpdateMeInputBody: {
-            /** @description 头像 http/https URL；空串清除，未传不修改 */
-            avatar?: string;
-            /** @description 昵称 (可为空串)；不传表示不修改 */
-            nickname?: string;
-            /** @description 手机号；传 null 或空串表示清空，不传表示不修改 */
-            phone?: string | null;
-        };
-        UserCreateBody: {
-            nickname?: string;
-            /** @description 8~64 个字符，必须同时包含字母和数字 */
-            password: string;
-            /** @description 手机号 (唯一) */
-            phone?: string;
-            /**
-             * @description 默认 active
-             * @enum {string}
-             */
-            status?: "active" | "inactive";
-            /**
-             * @description 系统角色，默认 none
-             * @enum {string}
-             */
-            systemRole?: "admin" | "none";
-            /** @description 用户名 (唯一)：3~50 位字母、数字或 _ . @ - */
-            username: string;
-        };
-        UserDetailView: {
-            /**
-             * Format: int64
-             * @description 所属企业数 (0 表示公海用户)
-             */
-            companyCount: number;
-            /** Format: date-time */
-            createdAt: string;
+            deviceId: number;
+            deviceName: string;
+            deviceSn: string;
             /** Format: int64 */
             id: number;
-            nickname: string;
-            phone: string | null;
+            /** Format: int32 */
+            level: number;
+            processRemark: string;
+            processed: boolean;
+            /** Format: date-time */
+            processedAt: string | null;
+            processorName: string;
+            /** Format: int64 */
+            ruleId: number | null;
+            /** Format: int64 */
+            scheduleId: number | null;
+            /** Format: double */
+            triggerValue: number | null;
             /** @enum {string} */
-            status: "active" | "inactive";
-            /**
-             * @description 系统角色：admin 可进入平台管理端 (全部权限)，none 为普通用户
-             * @enum {string}
-             */
-            systemRole: "admin" | "none";
-            /** Format: date-time */
-            updatedAt: string;
-            username: string;
+            type: "threshold" | "offline" | "fault" | "relay_failed";
         };
-        UserMemberAssignment: {
-            /**
-             * @description 企业角色：admin 可进入企业管理端
-             * @enum {string}
-             */
-            role: "admin" | "user";
-            /** Format: int64 */
-            userId: number;
+        TenantAlarmPage: {
+            hasMore: boolean;
+            records: components["schemas"]["TenantAlarm"][];
         };
-        UserMemberView: {
-            /** Format: date-time */
-            createdAt: string;
+        TenantDeviceRelayInput: {
             /** Format: int64 */
-            id: number;
-            /**
-             * Format: date-time
-             * @description 加入企业时间
-             */
-            joinedAt: string;
-            nickname: string;
-            phone: string | null;
-            /**
-             * @description 企业角色
-             * @enum {string}
-             */
-            role: "admin" | "user";
+            channel: number;
+            iconUrl?: string;
+            name?: string;
+        };
+        TenantDeviceSensorInput: {
+            calibration?: components["schemas"]["SensorCalibration"];
+            /** Format: int64 */
+            channel: number;
+            iconUrl?: string;
+            name?: string;
+            /** Format: double */
+            rangeMax?: number;
+            /** Format: double */
+            rangeMin?: number;
+            /** Format: double */
+            resolution?: number;
+            rules?: components["schemas"]["TenantDeviceSensorRuleInput"][] | null;
+            simulation?: components["schemas"]["SensorSimulation"];
+            unit?: string;
+        };
+        TenantDeviceSensorRuleInput: {
             /** @enum {string} */
-            status: "active" | "inactive";
-            /**
-             * @description 系统角色：admin 可进入平台管理端 (全部权限)，none 为普通用户
-             * @enum {string}
-             */
-            systemRole: "admin" | "none";
-            /** Format: date-time */
-            updatedAt: string;
-            username: string;
+            condition: "greater" | "less" | "equal" | "between";
+            createAlarm: boolean;
+            enabled: boolean;
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: double */
+            lower?: number;
+            /** Format: int64 */
+            repeatSeconds: number;
+            /** Format: double */
+            threshold?: number;
+            /** Format: double */
+            upper?: number;
         };
-        UserMembershipView: {
-            /** Format: date-time */
-            companyExpiredAt: string | null;
+        TenantDisconnectNotice: {
+            notice: string;
+        };
+        TenantMountedSite: {
+            address: string;
+            city: string;
             /** Format: int64 */
             companyId: number;
-            companyName: string;
+            coverImage: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            district: string;
+            /** Format: int64 */
+            id: number;
+            images: string[];
+            /** Format: double */
+            latitude: number | null;
+            /** Format: double */
+            longitude: number | null;
+            /** Format: date-time */
+            mountedAt: string;
+            name: string;
+            properties: {
+                [key: string]: unknown;
+            };
+            province: string;
             /** @enum {string} */
-            companyStatus: "active" | "inactive";
-            /**
-             * Format: date-time
-             * @description 加入企业时间
-             */
-            joinedAt: string;
-            /**
-             * @description 企业角色
-             * @enum {string}
-             */
+            status: "active" | "inactive" | "under_construction";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TenantSiteChange: {
+            /** Format: int64 */
+            added: number;
+            /** Format: int64 */
+            removed: number;
+        };
+        TenantSiteDetail: {
+            address: string;
+            city: string;
+            /** Format: int64 */
+            companyId: number;
+            coverImage: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: int64 */
+            deviceCount: number;
+            district: string;
+            /** Format: int64 */
+            id: number;
+            images: string[];
+            /** Format: double */
+            latitude: number | null;
+            /** Format: double */
+            longitude: number | null;
+            name: string;
+            properties: {
+                [key: string]: unknown;
+            };
+            province: string;
+            /** @enum {string} */
+            status: "active" | "inactive" | "under_construction";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UnmountSiteDevicesReqBody: {
+            deviceIds: number[] | null;
+        };
+        UpdateCompanyReqBody: {
+            address?: string;
+            contactEmail?: string;
+            contactPerson?: string;
+            contactPhone?: string;
+            description?: string;
+            /** Format: date-time */
+            expiredAt?: string | null;
+            logo?: string;
+            name?: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+            /** @enum {string} */
+            status?: "active" | "inactive";
+        };
+        UpdateDeviceCameraReqBody: {
+            appKey?: string;
+            appSecret?: string;
+            /** Format: int64 */
+            cameraChannel?: number;
+            liveUrl?: string;
+            serialNo?: string;
+            /** @enum {string} */
+            vendor?: "ezviz" | "hikvision" | "dahua" | "rtsp" | "onvif";
+        };
+        UpdateDeviceReqBody: {
+            coverImage?: string;
+            description?: string;
+            /** Format: int64 */
+            deviceTypeId?: number | null;
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+            macAddress?: string;
+            name?: string;
+            /** Format: int64 */
+            readInterval?: number;
+            simCard?: string;
+            /** @enum {string} */
+            status?: "active" | "inactive";
+        };
+        UpdateDeviceScheduleReqBody: {
+            /** Format: int64 */
+            channel: number;
+            enabled: boolean;
+            remark?: string;
+            /** Format: int64 */
+            retryCount: number;
+            /** Format: int64 */
+            retryIntervalSec: number;
+            start: string;
+            stop: string;
+            weekdays: number[] | null;
+        };
+        UpdateMeReqBody: {
+            avatar?: string;
+            nickname?: string;
+            phone?: string;
+        };
+        UpdateSiteReqBody: {
+            address?: string;
+            city?: string;
+            coverImage?: string;
+            description?: string;
+            district?: string;
+            images?: string[];
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+            name?: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+            province?: string;
+            /** @enum {string} */
+            status?: "active" | "inactive" | "under_construction";
+        };
+        UpdateSysConfigReqBody: {
+            description?: string;
+            value?: string;
+        };
+        UpdateUserCompanyRoleReqBody: {
+            /** @enum {string} */
             role: "admin" | "user";
         };
-        UserTenantCreateBody: {
+        UpdateUserReqBody: {
             nickname?: string;
-            /** @description 8~64 个字符，必须同时包含字母和数字 */
-            password: string;
-            /** @description 手机号 (全局唯一) */
-            phone?: string;
-            /** @description 用户名 (全局唯一)：3~50 位字母、数字或 _ . @ - */
-            username: string;
-        };
-        UserUpdateBody: {
-            nickname?: string;
-            /** @description 手机号 (唯一)；传 null 或空串表示清空，不传表示不修改 */
             phone?: string | null;
-            /**
-             * @description 停用后该用户立即下线
-             * @enum {string}
-             */
+            /** @enum {string} */
             status?: "active" | "inactive";
-            /**
-             * @description 系统角色；修改后该用户需重新登录
-             * @enum {string}
-             */
+            /** @enum {string} */
             systemRole?: "admin" | "none";
-            /** @description 用户名 (唯一) */
             username?: string;
         };
-        UserView: {
+        UploadPolicy: {
+            /** Format: date-time */
+            expireAt: string;
+            fields: {
+                [key: string]: string;
+            };
+            host: string;
+            key: string;
+            /** Format: int64 */
+            maxBytes: number;
+            url: string;
+        };
+        UploadPolicyReqBody: {
+            /** @enum {string} */
+            contentType: "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml";
+            /** @enum {string} */
+            scene: "device-type-icon" | "sensor-icon" | "relay-icon" | "company-logo" | "device-cover" | "site-cover" | "site-image" | "avatar";
+            /** Format: int64 */
+            size: number;
+        };
+        User: {
             /** Format: date-time */
             createdAt: string;
             /** Format: int64 */
@@ -3980,46 +3076,32 @@ export interface components {
             phone: string | null;
             /** @enum {string} */
             status: "active" | "inactive";
-            /**
-             * @description 系统角色：admin 可进入平台管理端 (全部权限)，none 为普通用户
-             * @enum {string}
-             */
+            /** @enum {string} */
             systemRole: "admin" | "none";
             /** Format: date-time */
             updatedAt: string;
             username: string;
         };
-        WeatherView: {
-            /** @description 城市 */
+        UserCreate: {
+            nickname?: string;
+            password: string;
+            phone?: string;
+            username: string;
+        };
+        Weather: {
             city: string;
-            /** @description 区县 */
             district: string;
-            /**
-             * Format: date-time
-             * @description 本服务获取该数据的时间
-             */
+            /** Format: date-time */
             fetchedAt: string;
-            /**
-             * Format: double
-             * @description 相对湿度 (%)
-             */
+            /** Format: double */
             humidity: number;
-            /** @description 省份 */
             province: string;
-            /** @description 是否为旧数据：天气服务暂不可用时返回缓存中的旧数据 */
             stale: boolean;
-            /**
-             * Format: double
-             * @description 温度 (℃)
-             */
+            /** Format: double */
             temperature: number;
-            /** @description 气象数据发布时间 (腾讯接口原样返回) */
             updateTime: string;
-            /** @description 天气现象，如 晴、多云 */
             weather: string;
-            /** @description 风向，如 东北风 */
             windDirection: string;
-            /** @description 风力，如 3级 */
             windPower: string;
         };
     };
@@ -4031,19 +3113,20 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    "admin-set-alert-rule-actions": {
+    "admin-save-rule-actions": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LinkageActionsBody"];
+                "application/json": components["schemas"]["SaveRuleActionsReqBody"];
             };
         };
         responses: {
@@ -4053,7 +3136,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinkageActionView"][] | null;
+                    "application/json": components["schemas"]["RuleAction"][] | null;
                 };
             };
             /** @description Error */
@@ -4070,18 +3153,15 @@ export interface operations {
     "admin-list-companies": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按状态筛选 */
                 status?: "active" | "inactive";
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4093,7 +3173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageCompanyView"];
+                    "application/json": components["schemas"]["PageCompanyBody"];
                 };
             };
             /** @description Error */
@@ -4110,13 +3190,15 @@ export interface operations {
     "admin-create-company": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyBody"];
+                "application/json": components["schemas"]["CreateCompanyReqBody"];
             };
         };
         responses: {
@@ -4126,7 +3208,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CompanyDetailView"];
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */
@@ -4143,13 +3225,15 @@ export interface operations {
     "admin-delete-companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -4159,7 +3243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4176,9 +3260,10 @@ export interface operations {
     "admin-get-company": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4191,7 +3276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CompanyDetailView"];
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */
@@ -4208,16 +3293,17 @@ export interface operations {
     "admin-update-company": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyUpdateBody"];
+                "application/json": components["schemas"]["UpdateCompanyReqBody"];
             };
         };
         responses: {
@@ -4227,7 +3313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CompanyDetailView"];
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */
@@ -4244,24 +3330,15 @@ export interface operations {
     "admin-list-company-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
-                status?: "active" | "inactive" | "fault";
-                /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
-                siteId?: number;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4274,7 +3351,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -4291,22 +3368,15 @@ export interface operations {
     "admin-list-company-available-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
-                status?: "active" | "inactive" | "fault";
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4319,7 +3389,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -4336,22 +3406,15 @@ export interface operations {
     "admin-list-company-members": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按企业角色筛选 */
-                role?: "admin" | "user";
-                /** @description 按用户状态筛选 */
-                status?: "active" | "inactive";
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4364,7 +3427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageUserMemberView"];
+                    "application/json": components["schemas"]["PageMemberBody"];
                 };
             };
             /** @description Error */
@@ -4381,16 +3444,17 @@ export interface operations {
     "admin-assign-company-members": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-assign-company-membersRequest"];
+                "application/json": components["schemas"]["AssignCompanyMembersReqBody"];
             };
         };
         responses: {
@@ -4400,7 +3464,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4417,16 +3481,17 @@ export interface operations {
     "admin-remove-company-members": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-remove-company-membersRequest"];
+                "application/json": components["schemas"]["RemoveCompanyMembersReqBody"];
             };
         };
         responses: {
@@ -4436,7 +3501,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4453,18 +3518,15 @@ export interface operations {
     "admin-list-company-available-users": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4477,7 +3539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageUserView"];
+                    "application/json": components["schemas"]["PageUserBody"];
                 };
             };
             /** @description Error */
@@ -4494,20 +3556,15 @@ export interface operations {
     "admin-list-company-sites": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive" | "under_construction";
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4520,7 +3577,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSiteView"];
+                    "application/json": components["schemas"]["PageCompanySiteBody"];
                 };
             };
             /** @description Error */
@@ -4537,16 +3594,14 @@ export interface operations {
     "admin-list-device-types": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4558,7 +3613,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceTypeView"];
+                    "application/json": components["schemas"]["PageDeviceTypeBody"];
                 };
             };
             /** @description Error */
@@ -4572,16 +3627,18 @@ export interface operations {
             };
         };
     };
-    "admin-create-device-type": {
+    "admin-create-device-types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceTypeBody"];
+                "application/json": components["schemas"]["AdminDeviceTypeBody"];
             };
         };
         responses: {
@@ -4591,7 +3648,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceTypeView"];
+                    "application/json": components["schemas"]["DeviceType"];
                 };
             };
             /** @description Error */
@@ -4608,13 +3665,15 @@ export interface operations {
     "admin-delete-device-types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -4624,7 +3683,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4638,62 +3697,29 @@ export interface operations {
             };
         };
     };
-    "admin-get-device-type": {
+    "admin-update-device-types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DeviceTypeView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-update-device-type": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceTypePatch"];
+                "application/json": components["schemas"]["AdminDeviceTypeBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["DeviceTypeView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -4709,22 +3735,16 @@ export interface operations {
     "admin-list-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
-                /** @description 只看公海设备 (未授权给任何企业) */
-                unassigned?: boolean;
+                deviceTypeId?: number;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4736,7 +3756,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -4753,13 +3773,15 @@ export interface operations {
     "admin-create-device": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceCreateBody"];
+                "application/json": components["schemas"]["CreateDeviceReqBody"];
             };
         };
         responses: {
@@ -4769,7 +3791,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["CompanyDevice"];
                 };
             };
             /** @description Error */
@@ -4786,13 +3808,15 @@ export interface operations {
     "admin-delete-devices": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -4802,7 +3826,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4819,13 +3843,15 @@ export interface operations {
     "admin-batch-device-companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-batch-device-companiesRequest"];
+                "application/json": components["schemas"]["BatchDeviceCompaniesReqBody"];
             };
         };
         responses: {
@@ -4835,7 +3861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceChangeResult"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -4852,9 +3878,10 @@ export interface operations {
     "admin-get-device": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4867,7 +3894,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -4884,16 +3911,17 @@ export interface operations {
     "admin-update-device": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceUpdateBody"];
+                "application/json": components["schemas"]["UpdateDeviceReqBody"];
             };
         };
         responses: {
@@ -4903,7 +3931,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -4917,12 +3945,13 @@ export interface operations {
             };
         };
     };
-    "admin-list-device-alert-rules": {
+    "admin-list-device-rules": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -4935,7 +3964,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinkageRuleView"][] | null;
+                    "application/json": components["schemas"]["AlertRuleView"][] | null;
                 };
             };
             /** @description Error */
@@ -4952,27 +3981,26 @@ export interface operations {
     "admin-update-device-camera": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceCameraBody"];
+                "application/json": components["schemas"]["UpdateDeviceCameraReqBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -4988,18 +4016,15 @@ export interface operations {
     "admin-list-device-companies": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -5012,43 +4037,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceCompanyView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-set-device-companies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeviceCompaniesBody"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DeviceChangeResult"];
+                    "application/json": components["schemas"]["PageCompanyBody"];
                 };
             };
             /** @description Error */
@@ -5065,18 +4054,15 @@ export interface operations {
     "admin-list-device-available-companies": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -5089,7 +4075,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceCompanyView"];
+                    "application/json": components["schemas"]["PageCompanyBody"];
                 };
             };
             /** @description Error */
@@ -5106,9 +4092,10 @@ export interface operations {
     "admin-disconnect-device": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -5121,7 +4108,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDisconnectResult"];
+                    "application/json": components["schemas"]["AdminDisconnectNotice"];
                 };
             };
             /** @description Error */
@@ -5135,12 +4122,13 @@ export interface operations {
             };
         };
     };
-    "admin-list-relay-schedules": {
+    "admin-list-device-schedules": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -5153,7 +4141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"][] | null;
+                    "application/json": components["schemas"]["ScheduleView"][] | null;
                 };
             };
             /** @description Error */
@@ -5170,16 +4158,17 @@ export interface operations {
     "admin-create-relay-schedule": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RelayScheduleBody"];
+                "application/json": components["schemas"]["CreateDeviceScheduleReqBody"];
             };
         };
         responses: {
@@ -5189,7 +4178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"];
+                    "application/json": components["schemas"]["ScheduleView"];
                 };
             };
             /** @description Error */
@@ -5203,19 +4192,20 @@ export interface operations {
             };
         };
     };
-    "admin-update-device-relays": {
+    "admin-save-device-relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceRelaysBody"];
+                "application/json": components["schemas"]["SaveDeviceRelaysReqBody"];
             };
         };
         responses: {
@@ -5225,7 +4215,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -5239,12 +4229,13 @@ export interface operations {
             };
         };
     };
-    "admin-list-device-relay-linkages": {
+    "admin-list-device-linkages": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -5271,19 +4262,20 @@ export interface operations {
             };
         };
     };
-    "admin-update-device-sensors": {
+    "admin-save-device-sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceSensorsBody"];
+                "application/json": components["schemas"]["SaveDeviceSensorsReqBody"];
             };
         };
         responses: {
@@ -5293,7 +4285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -5310,16 +4302,17 @@ export interface operations {
     "admin-update-relay-schedule": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RelayScheduleBody"];
+                "application/json": components["schemas"]["UpdateDeviceScheduleReqBody"];
             };
         };
         responses: {
@@ -5329,7 +4322,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"];
+                    "application/json": components["schemas"]["ScheduleView"];
                 };
             };
             /** @description Error */
@@ -5346,23 +4339,22 @@ export interface operations {
     "admin-delete-relay-schedule": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["AffectedBody"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5378,16 +4370,14 @@ export interface operations {
     "admin-list-standard-relays": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -5399,7 +4389,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageStandardRelayView"];
+                    "application/json": components["schemas"]["PageStandardRelayBody"];
                 };
             };
             /** @description Error */
@@ -5413,16 +4403,18 @@ export interface operations {
             };
         };
     };
-    "admin-create-standard-relay": {
+    "admin-create-standard-relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardRelayBody"];
+                "application/json": components["schemas"]["AdminDictFields"];
             };
         };
         responses: {
@@ -5432,7 +4424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StandardRelayView"];
+                    "application/json": components["schemas"]["StandardRelay"];
                 };
             };
             /** @description Error */
@@ -5449,13 +4441,15 @@ export interface operations {
     "admin-delete-standard-relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -5465,7 +4459,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -5479,62 +4473,29 @@ export interface operations {
             };
         };
     };
-    "admin-get-standard-relay": {
+    "admin-update-standard-relays": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["StandardRelayView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-update-standard-relay": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardRelayPatch"];
+                "application/json": components["schemas"]["AdminDictFields"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["StandardRelayView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5550,16 +4511,14 @@ export interface operations {
     "admin-list-standard-sensors": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -5571,7 +4530,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageStandardSensorView"];
+                    "application/json": components["schemas"]["PageStandardSensorBody"];
                 };
             };
             /** @description Error */
@@ -5585,16 +4544,18 @@ export interface operations {
             };
         };
     };
-    "admin-create-standard-sensor": {
+    "admin-create-standard-sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardSensorBody"];
+                "application/json": components["schemas"]["AdminSensorBody"];
             };
         };
         responses: {
@@ -5604,7 +4565,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StandardSensorView"];
+                    "application/json": components["schemas"]["StandardSensor"];
                 };
             };
             /** @description Error */
@@ -5621,13 +4582,15 @@ export interface operations {
     "admin-delete-standard-sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -5637,7 +4600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -5651,62 +4614,29 @@ export interface operations {
             };
         };
     };
-    "admin-get-standard-sensor": {
+    "admin-update-standard-sensors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["StandardSensorView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-update-standard-sensor": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StandardSensorPatch"];
+                "application/json": components["schemas"]["AdminSensorBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["StandardSensorView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5722,16 +4652,14 @@ export interface operations {
     "admin-list-sys-configs": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -5743,7 +4671,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSysConfigView"];
+                    "application/json": components["schemas"]["PageSysConfigBody"];
                 };
             };
             /** @description Error */
@@ -5760,13 +4688,15 @@ export interface operations {
     "admin-create-sys-config": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SysConfigBody"];
+                "application/json": components["schemas"]["CreateSysConfigReqBody"];
             };
         };
         responses: {
@@ -5776,7 +4706,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SysConfigView"];
+                    "application/json": components["schemas"]["AdminSysConfig"];
                 };
             };
             /** @description Error */
@@ -5793,13 +4723,15 @@ export interface operations {
     "admin-delete-sys-configs": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -5809,39 +4741,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "admin-get-sys-config": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SysConfigView"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -5858,27 +4758,26 @@ export interface operations {
     "admin-update-sys-config": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SysConfigPatch"];
+                "application/json": components["schemas"]["UpdateSysConfigReqBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["SysConfigView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5894,22 +4793,16 @@ export interface operations {
     "admin-list-users": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按系统角色筛选 */
-                systemRole?: "admin" | "none";
-                /** @description 按状态筛选 */
                 status?: "active" | "inactive";
-                /** @description 只看公海用户 (不属于任何企业) */
-                unassigned?: boolean;
+                systemRole?: "admin" | "none";
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -5921,7 +4814,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageUserView"];
+                    "application/json": components["schemas"]["PageUserBody"];
                 };
             };
             /** @description Error */
@@ -5938,13 +4831,15 @@ export interface operations {
     "admin-create-user": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserCreateBody"];
+                "application/json": components["schemas"]["CreateUserReqBody"];
             };
         };
         responses: {
@@ -5954,7 +4849,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserDetailView"];
+                    "application/json": components["schemas"]["AdminUserDetail"];
                 };
             };
             /** @description Error */
@@ -5971,13 +4866,15 @@ export interface operations {
     "admin-delete-users": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -5987,7 +4884,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -6004,9 +4901,10 @@ export interface operations {
     "admin-get-user": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -6019,7 +4917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserDetailView"];
+                    "application/json": components["schemas"]["AdminUserDetail"];
                 };
             };
             /** @description Error */
@@ -6036,16 +4934,17 @@ export interface operations {
     "admin-update-user": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserUpdateBody"];
+                "application/json": components["schemas"]["UpdateUserReqBody"];
             };
         };
         responses: {
@@ -6055,7 +4954,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserDetailView"];
+                    "application/json": components["schemas"]["AdminUserDetail"];
                 };
             };
             /** @description Error */
@@ -6072,18 +4971,15 @@ export interface operations {
     "admin-list-user-companies": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -6096,7 +4992,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageUserMembershipView"];
+                    "application/json": components["schemas"]["PageUserMembershipBody"];
                 };
             };
             /** @description Error */
@@ -6113,16 +5009,17 @@ export interface operations {
     "admin-remove-user-companies": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-remove-user-companiesRequest"];
+                "application/json": components["schemas"]["RemoveUserCompaniesReqBody"];
             };
         };
         responses: {
@@ -6132,7 +5029,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -6149,9 +5046,10 @@ export interface operations {
     "admin-update-user-company-role": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
                 companyId: number;
             };
@@ -6159,7 +5057,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-update-user-company-roleRequest"];
+                "application/json": components["schemas"]["UpdateUserCompanyRoleReqBody"];
             };
         };
         responses: {
@@ -6184,16 +5082,17 @@ export interface operations {
     "admin-reset-user-password": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-System-Role"?: string;
+            };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Admin-reset-user-passwordRequest"];
+                "application/json": components["schemas"]["ResetUserPasswordReqBody"];
             };
         };
         responses: {
@@ -6218,34 +5117,21 @@ export interface operations {
     "app-list-alarms": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 只看当前挂载在该园区的设备的告警 */
                 siteId?: number;
-                /** @description 只看该设备的告警 */
                 deviceId?: number;
-                /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
                 level?: number;
-                /** @description 告警类型 */
                 type?: "threshold" | "offline" | "fault" | "relay_failed";
-                /** @description 告警状态 */
-                status?: "active" | "recovered" | "closed";
-                /** @description 是否已处理 */
                 processed?: "true" | "false";
-                /** @description 触发时间起 (含，RFC3339) */
                 start?: string;
-                /** @description 触发时间止 (不含，RFC3339) */
                 end?: string;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6258,7 +5144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SliceAlarmView"];
+                    "application/json": components["schemas"]["AppAlarmPage"];
                 };
             };
             /** @description Error */
@@ -6276,15 +5162,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AlarmProcessBody"];
+                "application/json": components["schemas"]["ProcessAlarmsReqBody"];
             };
         };
         responses: {
@@ -6294,7 +5180,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -6311,16 +5197,13 @@ export interface operations {
     "app-count-unprocessed-alarms": {
         parameters: {
             query?: {
-                /** @description 只数当前挂载在该园区的设备 */
                 siteId?: number;
-                /** @description 只数该设备 */
                 deviceId?: number;
-                /** @description 告警级别 1 紧急 / 2 重要 / 3 警告 / 4 提示 */
                 level?: number;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6333,7 +5216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlarmCountView"];
+                    "application/json": components["schemas"]["AppUnprocessedAlarmCount"];
                 };
             };
             /** @description Error */
@@ -6351,8 +5234,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
                 id: number;
@@ -6367,7 +5250,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlarmView"];
+                    "application/json": components["schemas"]["AppAlarm"];
                 };
             };
             /** @description Error */
@@ -6384,32 +5267,18 @@ export interface operations {
     "app-list-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
-                status?: "active" | "inactive" | "fault";
-                /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
                 siteId?: number;
-                /** @description 指定已授权设备 */
-                deviceId?: number;
-                /** @description 按已配置通道/摄像头能力筛选 */
+                deviceTypeId?: number;
                 capability?: "sensor" | "relay" | "camera";
-                /** @description 仅有未处理告警的设备 */
                 hasAlarm?: boolean;
-                /** @description 只看未分类设备；不能与 deviceTypeId 同时使用 */
-                unclassified?: boolean;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6422,7 +5291,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceAppView"];
+                    "application/json": components["schemas"]["PageDeviceBody"];
                 };
             };
             /** @description Error */
@@ -6438,13 +5307,10 @@ export interface operations {
     };
     "app-device-summary": {
         parameters: {
-            query?: {
-                /** @description 园区 ID，不传表示企业范围 */
-                siteId?: number;
-            };
+            query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6457,7 +5323,152 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceSummaryView"];
+                    "application/json": components["schemas"]["AppDeviceSummary"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-daily-comparison": {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                deviceSn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDailyComparison"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-monthly-comparison": {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                deviceSn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppMonthlyComparison"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-history": {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                deviceSn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 历史数据 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        records: components["schemas"]["AppReadingRecord"][];
+                    };
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-get-realtime": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                deviceSn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppRealtime"];
                 };
             };
             /** @description Error */
@@ -6475,8 +5486,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
                 id: number;
@@ -6491,7 +5502,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceAppView"];
+                    "application/json": components["schemas"]["AppDevice"];
                 };
             };
             /** @description Error */
@@ -6505,15 +5516,14 @@ export interface operations {
             };
         };
     };
-    "app-device-camera-live": {
+    "app-camera-live": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -6526,7 +5536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CameraLiveView"];
+                    "application/json": components["schemas"]["AppLiveCamera"];
                 };
             };
             /** @description Error */
@@ -6540,22 +5550,21 @@ export interface operations {
             };
         };
     };
-    "app-device-camera-ptz": {
+    "app-camera-ptz": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CameraPTZBody"];
+                "application/json": components["schemas"]["CameraPTZReqBody"];
             };
         };
         responses: {
@@ -6577,131 +5586,14 @@ export interface operations {
             };
         };
     };
-    "app-device-comparison-daily": {
-        parameters: {
-            query: {
-                /** @description 日期 YYYY-MM-DD (业务时区) */
-                date: string;
-            };
-            header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
-                "X-Company-ID": number;
-            };
-            path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DataDailyView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "app-device-comparison-monthly": {
-        parameters: {
-            query: {
-                /** @description 月份 YYYY-MM (业务时区) */
-                month: string;
-            };
-            header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
-                "X-Company-ID": number;
-            };
-            path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DataMonthlyView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "app-device-history": {
-        parameters: {
-            query: {
-                /** @description 开始时间 (含，RFC3339 带时区) */
-                start: string;
-                /** @description 结束时间 (不含，RFC3339 带时区) */
-                end: string;
-            };
-            header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
-                "X-Company-ID": number;
-            };
-            path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description 历史数据 */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DataHistoryView"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "app-device-realtime": {
+    "app-relay-automation": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -6714,7 +5606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DataRealtimeView"];
+                    "application/json": components["schemas"]["AppRelayAutomation"][] | null;
                 };
             };
             /** @description Error */
@@ -6728,50 +5620,14 @@ export interface operations {
             };
         };
     };
-    "app-device-relay-automation": {
+    "app-relay-linkages": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelayAutomation"][] | null;
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    "app-list-device-relay-linkages": {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
-                "X-Company-ID": number;
-            };
-            path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -6798,24 +5654,22 @@ export interface operations {
             };
         };
     };
-    "app-control-relay": {
+    "app-manual-relay-control": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
-                /** @description 继电器通道号 (从 0 开始) */
                 channel: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RelayControlBody"];
+                "application/json": components["schemas"]["ManualControlReqBody"];
             };
         };
         responses: {
@@ -6825,7 +5679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayRecordView"];
+                    "application/json": components["schemas"]["AppManualControl"];
                 };
             };
             /** @description Error */
@@ -6843,18 +5697,20 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
-                /** @description 继电器通道号 (从 0 开始) */
                 channel: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseHoldReqBody"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -6862,7 +5718,85 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayReleaseView"];
+                    "application/json": components["schemas"]["AppHoldRelease"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-control-relay": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                sn: string;
+                channel: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ControlRelayReqBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppRelayControl"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-release-relay": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                sn: string;
+                channel: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseRelayReqBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppRelayRelease"];
                 };
             };
             /** @description Error */
@@ -6879,30 +5813,20 @@ export interface operations {
     "app-list-operations": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 只看当前挂载在该园区的设备的操作 */
                 siteId?: number;
-                /** @description 只看该设备的操作 */
                 deviceId?: number;
-                /** @description 按来源筛选 */
                 source?: "manual" | "linkage" | "schedule" | "hold" | "release";
-                /** @description 按结果筛选 */
                 status?: "pending" | "success" | "timeout" | "failed";
-                /** @description 下发时间起 (含，RFC3339) */
                 start?: string;
-                /** @description 下发时间止 (不含，RFC3339) */
                 end?: string;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6915,7 +5839,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SliceRelayRecordView"];
+                    "application/json": components["schemas"]["AppOperationsPage"];
                 };
             };
             /** @description Error */
@@ -6932,20 +5856,14 @@ export interface operations {
     "app-list-sites": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive" | "under_construction";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -6958,7 +5876,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSiteView"];
+                    "application/json": components["schemas"]["PageCompanySiteBody"];
                 };
             };
             /** @description Error */
@@ -6972,7 +5890,41 @@ export interface operations {
             };
         };
     };
-    "auth-my-companies": {
+    "app-site-summary": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDeviceSummary"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "auth-companies": {
         parameters: {
             query?: never;
             header?: never;
@@ -6987,7 +5939,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthMyCompany"][] | null;
+                    "application/json": components["schemas"]["MyCompany"][] | null;
                 };
             };
             /** @description Error */
@@ -7010,7 +5962,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginInputBody"];
+                "application/json": components["schemas"]["LoginReqBody"];
             };
         };
         responses: {
@@ -7020,7 +5972,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthLoginResult"];
+                    "application/json": components["schemas"]["LoginBody"];
                 };
             };
             /** @description Error */
@@ -7076,7 +6028,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthProfile"];
+                    "application/json": components["schemas"]["Profile"];
                 };
             };
             /** @description Error */
@@ -7099,7 +6051,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateMeInputBody"];
+                "application/json": components["schemas"]["UpdateMeReqBody"];
             };
         };
         responses: {
@@ -7109,7 +6061,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthProfile"];
+                    "application/json": components["schemas"]["Profile"];
                 };
             };
             /** @description Error */
@@ -7132,7 +6084,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ChangePasswordInputBody"];
+                "application/json": components["schemas"]["ChangePasswordReqBody"];
             };
         };
         responses: {
@@ -7142,7 +6094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthLoginResult"];
+                    "application/json": components["schemas"]["LoginBody"];
                 };
             };
             /** @description Error */
@@ -7159,13 +6111,9 @@ export interface operations {
     "common-list-device-types": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
             header?: never;
@@ -7180,7 +6128,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceTypeView"];
+                    "application/json": components["schemas"]["PageDeviceTypeBody"];
                 };
             };
             /** @description Error */
@@ -7203,7 +6151,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OSSPolicyRequest"];
+                "application/json": components["schemas"]["UploadPolicyReqBody"];
             };
         };
         responses: {
@@ -7213,7 +6161,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OSSPolicyView"];
+                    "application/json": components["schemas"]["UploadPolicy"];
                 };
             };
             /** @description Error */
@@ -7230,13 +6178,9 @@ export interface operations {
     "common-list-standard-relays": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
             header?: never;
@@ -7251,7 +6195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageStandardRelayView"];
+                    "application/json": components["schemas"]["PageStandardRelayBody"];
                 };
             };
             /** @description Error */
@@ -7268,13 +6212,9 @@ export interface operations {
     "common-list-standard-sensors": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
             header?: never;
@@ -7289,7 +6229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageStandardSensorView"];
+                    "application/json": components["schemas"]["PageStandardSensorBody"];
                 };
             };
             /** @description Error */
@@ -7308,7 +6248,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description 配置键，如 frontend */
                 key: string;
             };
             cookie?: never;
@@ -7321,7 +6260,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SysConfigValueView"];
+                    "application/json": components["schemas"]["SysConfigValue"];
                 };
             };
             /** @description Error */
@@ -7335,12 +6274,10 @@ export interface operations {
             };
         };
     };
-    "common-weather-realtime": {
+    "common-weather": {
         parameters: {
             query: {
-                /** @description 纬度 */
                 lat: number;
-                /** @description 经度 */
                 lng: number;
             };
             header?: never;
@@ -7355,7 +6292,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WeatherView"];
+                    "application/json": components["schemas"]["Weather"];
                 };
             };
             /** @description Error */
@@ -7369,22 +6306,56 @@ export interface operations {
             };
         };
     };
-    "tenant-set-alert-rule-actions": {
+    "tenant-list-alarms": {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantAlarmPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-save-rule-actions": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LinkageActionsBody"];
+                "application/json": components["schemas"]["SaveRuleActionsReqBody"];
             };
         };
         responses: {
@@ -7394,7 +6365,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinkageActionView"][] | null;
+                    "application/json": components["schemas"]["RuleAction"][] | null;
                 };
             };
             /** @description Error */
@@ -7412,8 +6383,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -7426,7 +6397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CompanyDetailView"];
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */
@@ -7444,15 +6415,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyTenantBody"];
+                "application/json": components["schemas"]["CompanyFields"];
             };
         };
         responses: {
@@ -7462,7 +6433,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CompanyDetailView"];
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */
@@ -7479,24 +6450,17 @@ export interface operations {
     "tenant-list-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
                 status?: "active" | "inactive" | "fault";
-                /** @description 只看挂载在该园区的设备 (园区须属于本企业) */
+                deviceTypeId?: number;
                 siteId?: number;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -7509,7 +6473,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -7527,15 +6491,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceTenantCreateBody"];
+                "application/json": components["schemas"]["CreateDeviceReqBody1"];
             };
         };
         responses: {
@@ -7545,7 +6509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["CompanyDevice"];
                 };
             };
             /** @description Error */
@@ -7559,19 +6523,19 @@ export interface operations {
             };
         };
     };
-    "tenant-revoke-devices": {
+    "tenant-delete-devices": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -7581,7 +6545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -7599,11 +6563,10 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7616,7 +6579,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -7634,18 +6597,17 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceUpdateBody"];
+                "application/json": components["schemas"]["UpdateDeviceReqBody"];
             };
         };
         responses: {
@@ -7655,7 +6617,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -7669,15 +6631,14 @@ export interface operations {
             };
         };
     };
-    "tenant-list-device-alert-rules": {
+    "tenant-list-device-rules": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7690,7 +6651,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinkageRuleView"][] | null;
+                    "application/json": components["schemas"]["AlertRuleView"][] | null;
                 };
             };
             /** @description Error */
@@ -7708,29 +6669,26 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceCameraBody"];
+                "application/json": components["schemas"]["UpdateDeviceCameraReqBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -7747,11 +6705,10 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7764,7 +6721,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDisconnectResult"];
+                    "application/json": components["schemas"]["TenantDisconnectNotice"];
                 };
             };
             /** @description Error */
@@ -7778,15 +6735,14 @@ export interface operations {
             };
         };
     };
-    "tenant-list-relay-schedules": {
+    "tenant-list-device-schedules": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7799,7 +6755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"][] | null;
+                    "application/json": components["schemas"]["ScheduleView"][] | null;
                 };
             };
             /** @description Error */
@@ -7817,18 +6773,17 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RelayScheduleBody"];
+                "application/json": components["schemas"]["CreateDeviceScheduleReqBody"];
             };
         };
         responses: {
@@ -7838,7 +6793,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"];
+                    "application/json": components["schemas"]["ScheduleView"];
                 };
             };
             /** @description Error */
@@ -7852,22 +6807,21 @@ export interface operations {
             };
         };
     };
-    "tenant-update-device-relays": {
+    "tenant-save-device-relays": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceRelaysBody"];
+                "application/json": components["schemas"]["SaveDeviceRelaysReqBody1"];
             };
         };
         responses: {
@@ -7877,7 +6831,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -7891,15 +6845,14 @@ export interface operations {
             };
         };
     };
-    "tenant-list-device-relay-linkages": {
+    "tenant-list-device-linkages": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7926,22 +6879,21 @@ export interface operations {
             };
         };
     };
-    "tenant-update-device-sensors": {
+    "tenant-save-device-sensors": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceSensorsBody"];
+                "application/json": components["schemas"]["SaveDeviceSensorsReqBody1"];
             };
         };
         responses: {
@@ -7951,7 +6903,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeviceDetailView"];
+                    "application/json": components["schemas"]["DeviceDetail"];
                 };
             };
             /** @description Error */
@@ -7965,24 +6917,19 @@ export interface operations {
             };
         };
     };
-    "tenant-list-device-sites": {
+    "tenant-list-mounted-sites": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -7995,7 +6942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSiteMountedView"];
+                    "application/json": components["schemas"]["PageMountedSiteBody"];
                 };
             };
             /** @description Error */
@@ -8009,22 +6956,21 @@ export interface operations {
             };
         };
     };
-    "tenant-set-device-sites": {
+    "tenant-set-mounted-sites": {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteDeviceSitesBody"];
+                "application/json": components["schemas"]["SetMountedSitesReqBody"];
             };
         };
         responses: {
@@ -8034,7 +6980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SiteChangeResult"];
+                    "application/json": components["schemas"]["TenantSiteChange"];
                 };
             };
             /** @description Error */
@@ -8051,23 +6997,16 @@ export interface operations {
     "tenant-list-device-available-sites": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按状态筛选 */
-                status?: "active" | "inactive" | "under_construction";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -8080,7 +7019,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSiteView"];
+                    "application/json": components["schemas"]["PageCompanySiteBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "tenant-list-members": {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                keyword?: string;
+                sort?: string;
+                role?: "admin" | "user";
+                status?: "active" | "inactive";
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageMemberBody"];
                 };
             };
             /** @description Error */
@@ -8098,18 +7076,17 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RelayScheduleBody"];
+                "application/json": components["schemas"]["UpdateDeviceScheduleReqBody"];
             };
         };
         responses: {
@@ -8119,7 +7096,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RelayScheduleView"];
+                    "application/json": components["schemas"]["ScheduleView"];
                 };
             };
             /** @description Error */
@@ -8137,25 +7114,22 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["AffectedBody"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -8171,20 +7145,15 @@ export interface operations {
     "tenant-list-sites": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按状态筛选 */
                 status?: "active" | "inactive" | "under_construction";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -8197,7 +7166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageSiteView"];
+                    "application/json": components["schemas"]["PageCompanySiteBody"];
                 };
             };
             /** @description Error */
@@ -8215,15 +7184,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteBody"];
+                "application/json": components["schemas"]["CreateSiteReqBody"];
             };
         };
         responses: {
@@ -8233,7 +7202,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SiteDetailView"];
+                    "application/json": components["schemas"]["CompanySite"];
                 };
             };
             /** @description Error */
@@ -8251,15 +7220,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -8269,7 +7238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -8287,11 +7256,10 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -8304,7 +7272,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SiteDetailView"];
+                    "application/json": components["schemas"]["TenantSiteDetail"];
                 };
             };
             /** @description Error */
@@ -8322,29 +7290,26 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteUpdateBody"];
+                "application/json": components["schemas"]["UpdateSiteReqBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["SiteDetailView"];
-                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -8360,25 +7325,16 @@ export interface operations {
     "tenant-list-site-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
-                status?: "active" | "inactive" | "fault";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -8391,7 +7347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -8409,18 +7365,17 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteDeviceIDsBody"];
+                "application/json": components["schemas"]["MountSiteDevicesReqBody"];
             };
         };
         responses: {
@@ -8430,7 +7385,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -8448,18 +7403,17 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SiteDeviceIDsBody"];
+                "application/json": components["schemas"]["UnmountSiteDevicesReqBody"];
             };
         };
         responses: {
@@ -8469,7 +7423,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -8486,25 +7440,16 @@ export interface operations {
     "tenant-list-site-available-devices": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按设备类型筛选 */
-                deviceTypeId?: number;
-                /** @description 按状态筛选 (fault：系统判定故障) */
-                status?: "active" | "inactive" | "fault";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -8517,7 +7462,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageDeviceView"];
+                    "application/json": components["schemas"]["PageCompanyDeviceBody"];
                 };
             };
             /** @description Error */
@@ -8534,22 +7479,16 @@ export interface operations {
     "tenant-list-users": {
         parameters: {
             query?: {
-                /** @description 页码，从 1 开始 */
                 page?: number;
-                /** @description 每页条数 (1~200) */
                 pageSize?: number;
-                /** @description 关键字，模糊匹配 (各接口匹配的字段见接口说明) */
                 keyword?: string;
-                /** @description 排序：字段名，前缀 - 表示倒序，多个用逗号分隔，如 -createdAt,name；可用字段见接口说明 */
                 sort?: string;
-                /** @description 按企业角色筛选 */
                 role?: "admin" | "user";
-                /** @description 按用户状态筛选 */
                 status?: "active" | "inactive";
             };
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
@@ -8562,7 +7501,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageUserMemberView"];
+                    "application/json": components["schemas"]["PageMemberBody"];
                 };
             };
             /** @description Error */
@@ -8580,15 +7519,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserTenantCreateBody"];
+                "application/json": components["schemas"]["UserCreate"];
             };
         };
         responses: {
@@ -8598,7 +7537,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMemberView"];
+                    "application/json": components["schemas"]["Member"];
                 };
             };
             /** @description Error */
@@ -8616,15 +7555,15 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IDsBody"];
+                "application/json": components["schemas"]["IDsInputBody"];
             };
         };
         responses: {
@@ -8634,7 +7573,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AffectedBody"];
+                    "application/json": components["schemas"]["Affected"];
                 };
             };
             /** @description Error */
@@ -8652,11 +7591,10 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description 当前企业 ID (来自 GET /api/v1/auth/companies) */
                 "X-Company-ID": number;
+                "X-Company-Role"?: string;
             };
             path: {
-                /** @description 主键 ID */
                 id: number;
             };
             cookie?: never;
@@ -8669,7 +7607,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMemberView"];
+                    "application/json": components["schemas"]["Member"];
                 };
             };
             /** @description Error */

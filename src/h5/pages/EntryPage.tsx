@@ -57,8 +57,6 @@ export default function MobileEntryPage() {
                 {[
                   ['园区', stats.siteCount],
                   ['设备', stats.deviceCount],
-                  ['在线', stats.onlineKnown ? stats.onlineCount : '—'],
-                  ['离线', stats.onlineKnown ? stats.offlineCount : '—'],
                 ].map(([label, value]) => (
                   <div className="mobile-stat" key={label}>
                     <span>{label}</span>
@@ -66,7 +64,6 @@ export default function MobileEntryPage() {
                   </div>
                 ))}
               </div>
-              {!stats.onlineKnown && <p role="status">在线状态暂不可用，未知 {stats.unknownCount} 台</p>}
             </section>
             <section className="mobile-card">
               <h3>设备类型分布</h3>

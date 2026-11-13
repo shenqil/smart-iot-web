@@ -1,12 +1,12 @@
 import { alarmsQuery, scopedUnprocessedCountQuery } from '@shared/api/alarm'
-import { appDeviceSummaryQuery } from '@shared/api/device'
+import { appSiteSummaryQuery } from '@shared/api/device'
 import { appSitesQuery, weatherQuery } from '@shared/api/site'
 import { useQuery } from '@tanstack/react-query'
 import { Button, List } from 'antd-mobile'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useCompanyId } from '@/hooks/session'
 import { SitePreview } from '../components/SiteCard'
-import { Card, Empty, Failure, Loading, Page, StatRing } from '../ui'
+import { Card, Empty, Failure, Loading, Page } from '../ui'
 
 export default function SitesPage() {
   const navigate = useNavigate(),
@@ -15,14 +15,14 @@ export default function SitesPage() {
     id = Number(siteId),
     query = useQuery(appSitesQuery(cid)),
     site = query.data?.find((s) => s.id === id)
-  const summary = useQuery({ ...appDeviceSummaryQuery(cid, id), enabled: !!siteId && !!site }),
+  const summary = useQuery({ ...appSiteSummaryQuery(cid, id), enabled: !!siteId && !!site }),
     counts = useQuery({ ...scopedUnprocessedCountQuery(cid, { siteId: id }), enabled: !!siteId && !!site })
   const weather = useQuery({
     ...weatherQuery(site?.latitude ?? 0, site?.longitude ?? 0),
     enabled: site?.latitude != null && site?.longitude != null,
   })
   const latest = useQuery({
-    ...alarmsQuery(cid, { siteId: id, processed: 'false', sort: 'level,-lastAlarmAt', page: 1, pageSize: 3 }),
+    ...alarmsQuery(cid, { siteId: id, processed: 'false', sort: 'level,-createdAt', page: 1, pageSize: 3 }),
     enabled: !!site,
   })
   const base = `/h5/${cid}`,
@@ -69,20 +69,11 @@ export default function SitesPage() {
                   }}
                 />
               ) : s ? (
-                <div className="h5-row">
-                  <StatRing
-                    value={s.onlineKnown && s.deviceCount ? (s.onlineCount / s.deviceCount) * 100 : null}
-                    label="在线率"
-                  />
-                  <div className="h5-stack">
-                    <span>设备 {s.deviceCount} 台</span>
-                    <span>
-                      在线 {s.onlineKnown ? s.onlineCount : '—'} · 离线 {s.onlineKnown ? s.offlineCount : '—'}
-                    </span>
-                    <Link to={`${base}/alarms?siteId=${id}&processed=false`}>
-                      未处理告警 {counts.data ? (counts.data.capped ? '999+' : counts.data.count) : '—'} ›
-                    </Link>
-                  </div>
+                <div className="h5-stack">
+                  <span>设备 {s.deviceCount} 台</span>
+                  <Link to={`${base}/alarms?siteId=${id}&processed=false`}>
+                    未处理告警 {counts.data ? (counts.data.capped ? '99+' : counts.data.count) : '—'} ›
+                  </Link>
                 </div>
               ) : (
                 <Loading />

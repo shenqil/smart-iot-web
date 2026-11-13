@@ -1,9 +1,9 @@
 import { api, type Schemas, unwrap } from '@/api/client'
 import type { PageParams } from '@/api/types'
 
-export type DeviceCreateBody = Schemas['DeviceCreateBody']
-export type DeviceCompany = Schemas['DeviceCompanyView']
-export type AvailableCompany = Schemas['DeviceCompanyView']
+export type DeviceCreateBody = Schemas['CreateDeviceReqBody']
+export type DeviceCompany = Schemas['Company']
+export type AvailableCompany = Schemas['Company']
 
 export const adminDeviceKeys = {
   all: ['admin', 0, 'devices'] as const,

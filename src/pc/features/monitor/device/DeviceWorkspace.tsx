@@ -50,7 +50,7 @@ export function DeviceWorkspace({ siteId, deviceId }: { siteId: number; deviceId
 function TelemetryWorkspace({ device, type }: { device: AppDevice; type: DeviceType | undefined }) {
   const companyId = useCompanyId()
   const now = useNow()
-  const rt = useQuery(realtimeQuery(companyId, device.id))
+  const rt = useQuery(realtimeQuery(companyId, device.deviceSn))
   const realtime = rt.data
   const online = realtime?.online ?? device.online
   const sensors = byChannel(device.sensors)

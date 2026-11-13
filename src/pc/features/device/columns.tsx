@@ -5,7 +5,7 @@ import type { PageColumn } from '@/components/table/PageTable'
 import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
 import { fmtDateTime } from '@/lib/time'
 
-export type DeviceRow = Schemas['DeviceView']
+export type DeviceRow = Schemas['CompanyDevice']
 
 /** 设备表格的通用列 (平台设备列表、企业详情的设备页签共用)；nameOf 为设备类型名称映射 */
 export function deviceColumns(

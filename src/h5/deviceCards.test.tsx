@@ -17,7 +17,6 @@ const device = {
   id: 1,
   name: '温室 A',
   online: false,
-  onlineKnown: true,
   status: 'active',
   deviceSn: 'A',
   sensors: [{ channel: 0, label: '温度', unit: '℃', resolution: 0.1, rangeMin: 0, rangeMax: 60 }],
@@ -64,17 +63,5 @@ describe('设备卡片数据状态', () => {
     expect(screen.getByText('在线')).toBeInTheDocument()
     await act(async () => qc.setQueryData(['realtime'], { online: false, sensors: [26.8] }))
     await waitFor(() => expect(screen.getByText('离线')).toBeInTheDocument())
-  })
-  it('元数据明确在线状态未知时，不把旧实时缓存当成在线', () => {
-    setup(
-      <DeviceListItem
-        device={{ ...device, onlineKnown: false }}
-        typeName="气象站"
-        to="/h5/3/devices?deviceId=1"
-        favorite={false}
-        onFavorite={() => {}}
-      />,
-    )
-    expect(screen.getByText('状态未知')).toBeInTheDocument()
   })
 })

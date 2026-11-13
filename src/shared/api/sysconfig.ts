@@ -3,7 +3,7 @@ import { isApiError } from '@/api/errors'
 import { useSession } from '@/stores/session'
 import { FRONTEND_CONFIG_KEY, useSysConfig } from '@/stores/sysConfig'
 
-export type SysConfig = Schemas['SysConfigView']
+export type SysConfig = Schemas['SysConfigValue']
 
 /** 按 key 获取系统配置 (通用接口，任意登录用户)；value 为 JSON 字符串 */
 export const getSysConfig = (key: string) =>

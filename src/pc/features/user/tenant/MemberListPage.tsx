@@ -1,6 +1,6 @@
 import { UserAddOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Tag, Tooltip } from 'antd'
+import { Alert, Button, Tag } from 'antd'
 import type { Key } from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -10,14 +10,11 @@ import { useCompanyId, useMe } from '@/hooks/session'
 import { affectedText, confirmAction } from '@/lib/confirm'
 import { invalidateTenant } from '@/lib/tenant'
 import { fmtDateTime } from '@/lib/time'
-import { canRemoveMember, type Member, tenantUserApi, tenantUserKeys } from './api'
+import { type Member, tenantUserApi, tenantUserKeys } from './api'
 import { MemberCreateDrawer } from './MemberCreateDrawer'
 import { MemberDetailDrawer } from './MemberDetailDrawer'
 
-/**
- * 成员管理 (FRONTEND_DESIGN §4.4)：列表含管理员；只能创建用户、移出普通成员。
- * 管理员行与自己不可勾选、不可移出
- */
+/** 企业成员管理 */
 export default function MemberListPage() {
   const cid = useCompanyId()
   const me = useMe()
@@ -53,8 +50,6 @@ export default function MemberListPage() {
         invalidateTenant(qc, cid, 'users', 'company')
       },
     })
-
-  const denyReason = (r: Member) => (r.id === me.id ? '不能移出自己' : r.role === 'admin' ? '不能移出企业管理员' : null)
 
   const columns: PageColumn<Member>[] = [
     {
@@ -92,16 +87,11 @@ export default function MemberListPage() {
       title: '操作',
       width: 80,
       fixed: 'right',
-      render: (_, r) => {
-        const reason = denyReason(r)
-        return (
-          <Tooltip title={reason}>
-            <Button type="link" size="small" danger disabled={Boolean(reason)} onClick={() => remove([r.id])}>
-              移出
-            </Button>
-          </Tooltip>
-        )
-      },
+      render: (_, r) => (
+        <Button type="link" size="small" danger onClick={() => remove([r.id])}>
+          移出
+        </Button>
+      ),
     },
   ]
 
@@ -111,7 +101,7 @@ export default function MemberListPage() {
         className="mb-4"
         type="info"
         showIcon
-        title="修改成员资料、密码或角色请联系平台管理员；企业管理员与自己不能在此移出。"
+        title="修改成员资料、密码或角色请联系平台管理员。"
       />
       <PageTable<Member>
         queryKey={tenantUserKeys.list(cid)}
@@ -123,7 +113,6 @@ export default function MemberListPage() {
           { name: 'role', placeholder: '企业角色', options: enumOptions(COMPANY_ROLE), width: 110 },
           { name: 'status', placeholder: '账号状态', options: enumOptions(ACTIVE_STATUS), width: 110 },
         ]}
-        selectable={(r) => canRemoveMember(r, me.id)}
         toolbar={
           <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreating(true)}>
             创建用户

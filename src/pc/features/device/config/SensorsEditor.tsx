@@ -67,9 +67,8 @@ export function SensorsEditor({
 
   const applyStandard = (ch: number, id: number | undefined) => {
     const d = id != null ? std.byId.get(id) : undefined
-    if (!d) return patch(ch, { standardSensorId: undefined, standardName: undefined })
+    if (!d) return patch(ch, { standardName: undefined })
     patch(ch, {
-      standardSensorId: d.id,
       standardName: d.name,
       unit: d.unit || undefined,
       rangeMin: d.rangeMin,
@@ -107,7 +106,7 @@ export function SensorsEditor({
             showSearch
             optionFilterProp="label"
             placeholder="选择后自动带出"
-            value={r.cfg.standardSensorId ?? undefined}
+            value={std.list.find((s) => s.name === r.cfg?.standardName)?.id}
             options={std.list.map((s) => ({ value: s.id, label: s.name }))}
             onChange={(v) => applyStandard(r.channel, v)}
           />

@@ -1,8 +1,8 @@
 import { queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, type Schemas, unwrap } from '@/api/client'
 
-export type CameraLive = Schemas['CameraLiveView']
-export type PTZBody = Schemas['CameraPTZBody']
+export type CameraLive = Schemas['AppLiveCamera']
+export type PTZBody = Schemas['CameraPTZReqBody']
 
 /**
  * 摄像头预览信息：萤石 ezopen 地址 + accessToken (后端换取并缓存，Secret 不出后端) + 云台能力，或直播地址

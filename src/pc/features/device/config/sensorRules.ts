@@ -30,7 +30,6 @@ const isIdentity = (c: Calibration | undefined) => !c || (c.scale === 1 && c.off
 /** 详情 → 编辑草稿 */
 export const toDraft = (v: SensorView): SensorDraft => ({
   channel: v.channel,
-  standardSensorId: v.standardSensorId,
   standardName: v.standardName || undefined,
   name: v.name || undefined,
   unit: v.unit || undefined,
@@ -40,7 +39,12 @@ export const toDraft = (v: SensorView): SensorDraft => ({
   iconUrl: v.iconUrl || undefined,
   calibration: isIdentity(v.calibration) ? undefined : v.calibration,
   simulation: v.simulation ?? undefined,
-  rules: v.rules.map(({ actionCount, ...r }) => ({ ...r, key: `r${r.id}`, actionCount })),
+  rules: v.rules.map(({ actionCount, ...r }) => ({
+    ...r,
+    condition: r.condition as RuleDraft['condition'],
+    key: `r${r.id}`,
+    actionCount,
+  })),
 })
 
 export const newRule = (): RuleDraft => ({

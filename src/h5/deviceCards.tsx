@@ -26,7 +26,7 @@ export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
   const d = device.isError ? undefined : device.data
   const isVideo = isVideoDeviceType(types.nameOf(d?.deviceTypeId))
   const rt = useQuery({
-    ...realtimeQuery(cid, bookmark.id),
+    ...realtimeQuery(cid, d?.deviceSn ?? ''),
     enabled: inView && visible && !isVideo && !!d?.sensors.length,
     refetchInterval: false,
   })
@@ -41,7 +41,7 @@ export function DeviceBookmarkCard({ bookmark }: { bookmark: DeviceBookmark }) {
       >
         <div className="h5-row">
           <span className="h5-bookmark-icon">
-            <Icon name={isVideo || d?.hasCamera ? 'camera' : d?.sensors.length ? 'sensor' : 'devices'} size={18} />
+            <Icon name={isVideo ? 'camera' : d?.sensors.length ? 'sensor' : 'devices'} size={18} />
           </span>
           {device.isError ? (
             <StatusTag tone="warning">暂不可用</StatusTag>
@@ -86,7 +86,7 @@ export function DeviceReading({ device, typeName }: { device: AppDevice; typeNam
     sensor = byChannel(device.sensors)[0]
   const isVideo = isVideoDeviceType(typeName)
   const q = useQuery({
-      ...realtimeQuery(cid, device.id),
+      ...realtimeQuery(cid, device.deviceSn),
       enabled: !isVideo && !!sensor && visible && inView,
       refetchInterval: false,
     }),
@@ -113,7 +113,7 @@ export function DeviceReading({ device, typeName }: { device: AppDevice; typeNam
                     : '最近读数'}
           </small>
         </>
-      ) : isVideo || device.hasCamera ? (
+      ) : isVideo ? (
         '视频监控'
       ) : (
         `${device.relays.length} 路控制`
@@ -135,14 +135,14 @@ export const DeviceListItem = memo(function DeviceListItem({
   onFavorite: () => void
 }) {
   const cid = useCompanyId(),
-    rt = useQuery({ ...realtimeQuery(cid, device.id), enabled: false })
+    rt = useQuery({ ...realtimeQuery(cid, device.deviceSn), enabled: false })
   const isVideo = isVideoDeviceType(typeName)
   return (
     <article className="h5-device-item">
       <div className="h5-device-item-head">
         <Link to={to} className="h5-device-identity">
           <span className="h5-device-glyph">
-            <Icon name={isVideo || device.hasCamera ? 'camera' : device.sensors.length ? 'sensor' : 'relay'} />
+            <Icon name={isVideo ? 'camera' : device.sensors.length ? 'sensor' : 'relay'} />
           </span>
           <div>
             <strong>{device.name}</strong>
@@ -167,7 +167,6 @@ export const DeviceListItem = memo(function DeviceListItem({
           {device.status !== 'active' && (
             <StatusTag tone="warning">{device.status === 'fault' ? '故障' : '停用'}</StatusTag>
           )}
-          {!isVideo && device.hasAlarm && <StatusTag tone="danger">待处理告警</StatusTag>}
           {!isVideo && (
             <span className="h5-muted">
               {device.sensors.length} 路采集 · {device.relays.length} 路控制

@@ -1,4 +1,4 @@
-import { CheckOutlined, InfoCircleOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Modal, Segmented, Select, Table, Tag, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -14,9 +14,7 @@ import { type AlarmQuery, type AlarmView, alarmsQuery, processAlarms } from './a
 import {
   ALARM_TYPE,
   AlarmLevelTag,
-  AlarmStatusTag,
   alarmLevelOptions,
-  alarmStatusOptions,
   alarmTypeOptions,
 } from './enums'
 
@@ -46,11 +44,10 @@ export function AlarmTable({
   const [processed, setProcessed] = useState<Processed>(defaultProcessed)
   const [level, setLevel] = useState<number>()
   const [type, setType] = useState<AlarmQuery['type']>()
-  const [status, setStatus] = useState<AlarmQuery['status']>()
   const [range, setRange] = useState<RangeValue>()
   const [kwInput, setKwInput] = useState('')
   const [keyword, setKeyword] = useState<string>()
-  const [sort, setSort] = useState('-lastAlarmAt')
+  const [sort, setSort] = useState('-createdAt')
   const [page, setPage] = useState({ page: 1, pageSize: ps })
   const [selected, setSelected] = useState<number[]>([])
   const [processing, setProcessing] = useState<number[] | null>(null)
@@ -60,7 +57,6 @@ export function AlarmTable({
     deviceId: deviceId ?? undefined,
     level,
     type,
-    status,
     processed: processed === 'all' ? undefined : processed,
     start: range?.start,
     end: range?.end,
@@ -120,67 +116,18 @@ export function AlarmTable({
           },
         ]),
     {
-      title: (
-        <Tooltip title="越限告警：触发时的读数 / 持续期间偏离阈值最远的读数">
-          触发值 / 峰值 <InfoCircleOutlined className="text-fg-tertiary" />
-        </Tooltip>
-      ),
+      title: '触发值',
       key: 'value',
-      render: (_, a) => {
-        if (a.type !== 'threshold' || a.triggerValue == null) return <span className="text-fg-tertiary">—</span>
-        return (
-          <span className="whitespace-nowrap">
-            <b className="text-danger">{a.triggerValue}</b>
-            {a.peakValue != null && a.peakValue !== a.triggerValue && (
-              <>
-                <span className="mx-1 text-fg-tertiary">/</span>
-                <span className="text-fg-secondary">{a.peakValue}</span>
-              </>
-            )}
-          </span>
-        )
-      },
+      render: (_, a) => a.type === 'threshold' && a.triggerValue != null ? <b className="text-danger">{a.triggerValue}</b> : '—',
     },
     {
-      title: (
-        <Tooltip title="同一告警持续期间只有一条记录，次数为持续期间的推送次数">
-          次数 <InfoCircleOutlined className="text-fg-tertiary" />
-        </Tooltip>
-      ),
-      dataIndex: 'alarmCount',
-      key: 'alarmCount',
-      width: 90,
-      align: 'right',
-      sorter: true,
-      sortOrder: sortOrderOf(sort, 'alarmCount'),
-    },
-    {
-      title: '最后告警',
-      dataIndex: 'lastAlarmAt',
-      key: 'lastAlarmAt',
+      title: '触发时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       width: 150,
       sorter: true,
-      sortOrder: sortOrderOf(sort, 'lastAlarmAt'),
-      render: (v, a) => (
-        <Tooltip title={`首次告警 ${fmtDateTime(a.createdAt)}`}>
-          <span className="whitespace-nowrap">{fmtDateTime(v)}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: '告警状态',
-      dataIndex: 'status',
-      width: 96,
-      render: (v, a) =>
-        a.endedAt ? (
-          <Tooltip title={`${v === 'recovered' ? '解除' : '关闭'}时间 ${fmtDateTime(a.endedAt)}`}>
-            <span>
-              <AlarmStatusTag status={v} />
-            </span>
-          </Tooltip>
-        ) : (
-          <AlarmStatusTag status={v} />
-        ),
+      sortOrder: sortOrderOf(sort, 'createdAt'),
+      render: (v) => <span className="whitespace-nowrap">{fmtDateTime(v)}</span>,
     },
     {
       title: '处理',
@@ -251,14 +198,6 @@ export function AlarmTable({
               options={alarmTypeOptions}
               onChange={filter(setType)}
             />
-            <Select
-              allowClear
-              placeholder="告警状态"
-              style={{ width: 110 }}
-              value={status}
-              options={alarmStatusOptions}
-              onChange={filter(setStatus)}
-            />
             <RetentionRangePicker value={range} onChange={filter(setRange)} />
             <Input
               allowClear
@@ -303,7 +242,7 @@ export function AlarmTable({
         onChange={(_p, _f, sorter, extra) => {
           if (extra.action !== 'sort') return
           const s = Array.isArray(sorter) ? sorter[0] : sorter
-          setSort(toSortParam(s.columnKey as string | undefined, s.order) ?? '-lastAlarmAt')
+          setSort(toSortParam(s.columnKey as string | undefined, s.order) ?? '-createdAt')
           setPage((p) => ({ ...p, page: 1 }))
         }}
         locale={{ emptyText: processed === 'false' ? '没有未处理的告警' : '暂无告警' }}

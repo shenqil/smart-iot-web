@@ -295,7 +295,7 @@ function History({
         worker.current = local
         const bytes = await downloadHistory({
           companyId: cid,
-          deviceId: device.id,
+          deviceSn: device.deviceSn,
           start: dayjs.tz(start, BIZ_TZ).format(),
           end: dayjs.tz(end, BIZ_TZ).format(),
           signal: controller.signal,
@@ -592,11 +592,14 @@ function Comparison({
   const cid = useCompanyId(),
     prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD'),
     prevMonth = dayjs(`${month}-01`).subtract(1, 'month').format('YYYY-MM')
-  const currentDay = useQuery({ ...dailyComparisonQuery(cid, device.id, date), enabled: period === 'day' }),
-    previousDay = useQuery({ ...dailyComparisonQuery(cid, device.id, prevDate), enabled: period === 'day' && overlay }),
-    currentMonth = useQuery({ ...monthlyComparisonQuery(cid, device.id, month), enabled: period === 'month' }),
+  const currentDay = useQuery({ ...dailyComparisonQuery(cid, device.deviceSn, date), enabled: period === 'day' }),
+    previousDay = useQuery({
+      ...dailyComparisonQuery(cid, device.deviceSn, prevDate),
+      enabled: period === 'day' && overlay,
+    }),
+    currentMonth = useQuery({ ...monthlyComparisonQuery(cid, device.deviceSn, month), enabled: period === 'month' }),
     previousMonth = useQuery({
-      ...monthlyComparisonQuery(cid, device.id, prevMonth),
+      ...monthlyComparisonQuery(cid, device.deviceSn, prevMonth),
       enabled: period === 'month' && overlay,
     })
   const current = period === 'day' ? currentDay : currentMonth,

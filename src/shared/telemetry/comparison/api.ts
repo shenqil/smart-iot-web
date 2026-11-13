@@ -2,13 +2,13 @@ import { queryOptions } from '@tanstack/react-query'
 import { api, companyHeader, unwrap } from '@/api/client'
 
 /** 日环比：某天的整点值 (最多 24 行) */
-export const dailyComparisonQuery = (companyId: number, deviceId: number, date: string) =>
+export const dailyComparisonQuery = (companyId: number, deviceSn: string, date: string) =>
   queryOptions({
-    queryKey: ['app', companyId, 'devices', 'comparison', deviceId, 'daily', date],
+    queryKey: ['app', companyId, 'devices', 'comparison', deviceSn, 'daily', date],
     queryFn: ({ signal }) =>
       unwrap(
-        api.GET('/api/v1/app/devices/{id}/comparison/daily', {
-          params: { path: { id: deviceId }, query: { date }, header: companyHeader(companyId) },
+        api.GET('/api/v1/app/devices/{deviceSn}/comparison/daily', {
+          params: { path: { deviceSn }, query: { date }, header: companyHeader(companyId) },
           signal,
         }),
       ),
@@ -16,13 +16,13 @@ export const dailyComparisonQuery = (companyId: number, deviceId: number, date: 
   })
 
 /** 月环比：某月的每日值 */
-export const monthlyComparisonQuery = (companyId: number, deviceId: number, month: string) =>
+export const monthlyComparisonQuery = (companyId: number, deviceSn: string, month: string) =>
   queryOptions({
-    queryKey: ['app', companyId, 'devices', 'comparison', deviceId, 'monthly', month],
+    queryKey: ['app', companyId, 'devices', 'comparison', deviceSn, 'monthly', month],
     queryFn: ({ signal }) =>
       unwrap(
-        api.GET('/api/v1/app/devices/{id}/comparison/monthly', {
-          params: { path: { id: deviceId }, query: { month }, header: companyHeader(companyId) },
+        api.GET('/api/v1/app/devices/{deviceSn}/comparison/monthly', {
+          params: { path: { deviceSn }, query: { month }, header: companyHeader(companyId) },
           signal,
         }),
       ),

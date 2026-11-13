@@ -232,7 +232,7 @@ function useLevelCounts(siteId: number) {
   return [useQuery(q(1)).data, useQuery(q(2)).data, useQuery(q(3)).data, useQuery(q(4)).data]
 }
 
-const countText = (c: { count: number; capped: boolean } | undefined) => (c ? (c.capped ? '999+' : c.count) : '…')
+const countText = (c: { count: number; capped: boolean } | undefined) => (c ? (c.capped ? '99+' : c.count) : '…')
 
 /** ③ 设备告警 (固定)：四个级别的未处理数 + 最新告警 (可滚动，不显示滚动条)；点击告警切换到该设备 */
 export function AlarmCard({
@@ -285,17 +285,16 @@ export function AlarmCard({
               >
                 {ALARM_LEVEL[a.level]?.label ?? a.level}
               </span>
-              <span className="screen-num w-[52px] flex-none text-[14px] text-[var(--sc-text-2)]" title={a.lastAlarmAt}>
-                {dayjs(a.lastAlarmAt).isSame(dayjs(), 'day')
-                  ? dayjs(a.lastAlarmAt).format('HH:mm')
-                  : agoText(a.lastAlarmAt)}
+              <span className="screen-num w-[52px] flex-none text-[14px] text-[var(--sc-text-2)]" title={a.createdAt}>
+                {dayjs(a.createdAt).isSame(dayjs(), 'day')
+                  ? dayjs(a.createdAt).format('HH:mm')
+                  : agoText(a.createdAt)}
               </span>
               <span className="w-[96px] flex-none truncate" title={a.deviceName}>
                 {a.deviceName}
               </span>
               <span className="min-w-0 flex-1 truncate text-[var(--sc-text-2)]" title={a.description}>
                 {a.description || '告警'}
-                {a.alarmCount > 1 && ` · ${a.alarmCount} 次`}
               </span>
             </button>
           ))}

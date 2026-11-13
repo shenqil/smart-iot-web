@@ -98,7 +98,7 @@ export function HistoryPanel({
       try {
         const bytes = await downloadHistory({
           companyId,
-          deviceId: device.id,
+          deviceSn: device.deviceSn,
           start: dayjs(range[0]).tz(BIZ_TZ).format(),
           end: dayjs(range[1]).tz(BIZ_TZ).format(),
           signal: ctrl.signal,

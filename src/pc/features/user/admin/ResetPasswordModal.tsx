@@ -6,7 +6,7 @@ import { handleGlobalError } from '@/app/queryClient'
 import { applyFormErrors, isValidationError } from '@/lib/form'
 import { PASSWORD_RULES, type User, userApi } from './api'
 
-/** 重置密码：该用户所有设备上的登录随即失效 */
+/** 重置指定用户的登录密码 */
 export function ResetPasswordModal({ user, onClose }: { user: User | null; onClose: () => void }) {
   const [form] = Form.useForm<{ password: string; confirm: string }>()
   const [saving, setSaving] = useState(false)
@@ -20,7 +20,7 @@ export function ResetPasswordModal({ user, onClose }: { user: User | null; onClo
     setSaving(true)
     try {
       await userApi.resetPassword(user.id, password)
-      notify.success(`已重置 ${user.username} 的密码，其登录已失效`)
+      notify.success(`已重置 ${user.username} 的密码`)
       onClose()
     } catch (e) {
       if (isApiError(e) && isValidationError(e)) applyFormErrors(form, e)

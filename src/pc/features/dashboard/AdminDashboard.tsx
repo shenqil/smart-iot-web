@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         }),
       )
       const limit = dayjs().add(30, 'day')
-      return r.records.filter((c) => c.expiredAt && dayjs(c.expiredAt).isBefore(limit))
+      return (r.records ?? []).filter((c) => c.expiredAt && dayjs(c.expiredAt).isBefore(limit))
     },
   })
   const recent = useQuery({

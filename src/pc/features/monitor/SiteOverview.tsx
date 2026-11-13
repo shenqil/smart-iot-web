@@ -32,7 +32,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
     meta: { silent: true },
   }).data
   const latest = useQuery(
-    alarmsQuery(companyId, { siteId, processed: 'false', sort: '-lastAlarmAt', page: 1, pageSize: 8 }),
+    alarmsQuery(companyId, { siteId, processed: 'false', sort: '-createdAt', page: 1, pageSize: 8 }),
   )
   const located = site?.latitude != null && site?.longitude != null
   const weather = useQuery({
@@ -77,11 +77,10 @@ export function SiteOverview({ siteId }: { siteId: number }) {
                   <span className="block truncate text-fg">{a.description || '告警'}</span>
                   <span className="block truncate text-fg-tertiary text-xs">
                     {a.deviceName}
-                    {a.alarmCount > 1 && `，${a.alarmCount} 次`}
                   </span>
                 </span>
-                <span className="shrink-0 text-fg-tertiary text-xs" title={fmtDateTime(a.lastAlarmAt)}>
-                  {agoText(a.lastAlarmAt)}
+                <span className="shrink-0 text-fg-tertiary text-xs" title={fmtDateTime(a.createdAt)}>
+                  {agoText(a.createdAt)}
                 </span>
               </button>
             </li>
@@ -121,7 +120,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
         <Link to={alarmsLink} className="no-underline">
           <Stat
             label="未处理告警"
-            value={alarm ? (alarm.capped ? '999+' : alarm.count) : '…'}
+            value={alarm ? (alarm.capped ? '99+' : alarm.count) : '…'}
             tone={alarm?.count ? 'danger' : undefined}
           />
         </Link>
@@ -202,7 +201,7 @@ function DeviceTile({
   const sensors = byChannel(d.sensors).slice(0, 3)
   const { ref, inView } = useInView<HTMLButtonElement>()
   const rt = useQuery({
-    ...realtimeQuery(companyId, d.id),
+    ...realtimeQuery(companyId, d.deviceSn),
     enabled: inView && !video && sensors.length > 0,
     refetchInterval: 30_000,
   }).data

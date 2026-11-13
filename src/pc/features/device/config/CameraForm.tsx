@@ -53,7 +53,8 @@ export function CameraForm({
       className="max-w-2xl"
       onValuesChange={() => onDirtyChange?.(true)}
       onFinish={async (v) => {
-        await onSave({ ...v, vendor: v.vendor ?? '', appSecret: v.appSecret ?? '' })
+        const vendor = VENDORS.find((item) => item.value === v.vendor)?.value as CameraBody['vendor']
+        await onSave({ ...v, vendor, appSecret: v.appSecret ?? '' })
         onDirtyChange?.(false)
       }}
     >

@@ -16,10 +16,6 @@ vi.mock('@shared/api/device', () => ({
     queryFn: async () => ({
       deviceCount: 100,
       siteCount: 4,
-      onlineCount: 80,
-      offlineCount: 20,
-      onlineKnown: true,
-      unknownCount: 0,
       deviceTypes: [
         { deviceTypeId: 1, count: 60 },
         { deviceTypeId: 2, count: 40 },
@@ -52,7 +48,7 @@ function setup() {
 describe('H5 首页', () => {
   it('显示全范围类型图表与在线率，默认仅显示拇指区快捷按钮', async () => {
     setup()
-    expect(await screen.findByText('80.0%')).toBeInTheDocument()
+    expect(await screen.findByText('气象站')).toBeInTheDocument()
     expect(screen.getByText('气象站')).toBeInTheDocument()
     expect(screen.getByText('土壤站')).toBeInTheDocument()
     expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
@@ -62,7 +58,7 @@ describe('H5 首页', () => {
   })
   it('滚动时不随滚动交互展开，手动点开后滚动即收起', async () => {
     const { container } = setup()
-    await screen.findByText('80.0%')
+    await screen.findByText('气象站')
     const el = container.querySelector('.h5-scroll') as HTMLDivElement
     Object.defineProperties(el, {
       scrollHeight: { configurable: true, value: 1000 },

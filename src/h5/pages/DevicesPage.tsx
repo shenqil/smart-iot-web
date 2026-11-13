@@ -81,12 +81,10 @@ function DeviceList() {
       const p = new URLSearchParams(old)
       if (value) p.set(key, value)
       else p.delete(key)
-      if (key === 'deviceTypeId') p.delete('unclassified')
-      if (key === 'unclassified') p.delete('deviceTypeId')
       return p
     })
   const devices = useMemo(
-    () => [...new Map((query.data?.pages.flatMap((p) => p.records) ?? []).map((d) => [d.id, d])).values()],
+    () => [...new Map((query.data?.pages.flatMap((p) => p.records ?? []) ?? []).map((d) => [d.id, d])).values()],
     [query.data?.pages],
   )
   const favoriteIds = useMemo(() => new Set((entry?.favorites ?? []).map((f) => f.id)), [entry?.favorites])
@@ -162,7 +160,6 @@ function DeviceList() {
           <div className="h5-filter-summary">
             <span>
               {filters.deviceTypeId ? types.nameOf(filters.deviceTypeId) : '全部类型'}
-              {filters.unclassified ? ' · 未分类' : ''}
               {filters.capability ? ` · ${{ sensor: '采集', relay: '控制', camera: '视频' }[filters.capability]}` : ''}
               {filters.hasAlarm ? ' · 有告警' : ''}
             </span>
@@ -217,13 +214,12 @@ function DeviceList() {
         />
         <Choice
           label="类型"
-          value={filters.unclassified ? 'none' : filters.deviceTypeId ? String(filters.deviceTypeId) : ''}
+          value={filters.deviceTypeId ? String(filters.deviceTypeId) : ''}
           options={[
             { label: '全部类型', value: '' },
-            { label: '未分类', value: 'none' },
             ...types.list.map((t) => ({ label: t.name, value: String(t.id) })),
           ]}
-          onChange={(v) => (v === 'none' ? setFilter('unclassified', 'true') : setFilter('deviceTypeId', v))}
+          onChange={(v) => setFilter('deviceTypeId', v)}
         />
         <Choice
           label="业务能力"

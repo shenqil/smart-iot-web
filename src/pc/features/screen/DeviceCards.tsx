@@ -305,8 +305,8 @@ export function TrendCard({ device, rect }: { device: AppDevice; rect: Rect }) {
   const [channel, setChannel] = useState(sensors[0]?.channel ?? 0)
   const today = bizNow().format('YYYY-MM-DD')
   const yesterday = bizNow().subtract(1, 'day').format('YYYY-MM-DD')
-  const t = useQuery({ ...dailyComparisonQuery(companyId, device.id, today), refetchInterval: 5 * 60_000 })
-  const y = useQuery(dailyComparisonQuery(companyId, device.id, yesterday))
+  const t = useQuery({ ...dailyComparisonQuery(companyId, device.deviceSn, today), refetchInterval: 5 * 60_000 })
+  const y = useQuery(dailyComparisonQuery(companyId, device.deviceSn, yesterday))
   const config: AppSensor | undefined = sensors.find((s) => s.channel === channel) ?? sensors[0]
   const digits = decimalsOf(config?.resolution)
   const todayVals = hourlySeries(t.data?.records, config?.channel ?? 0)
