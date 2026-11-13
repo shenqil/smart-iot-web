@@ -7,7 +7,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BIZ_TZ, bizNow } from '@/lib/time'
 import AnalysisPanel from './AnalysisPanel'
 
-vi.mock('@shared/telemetry/history', () => ({ downloadHistory: vi.fn(async () => new Uint8Array()) }))
+vi.mock('@shared/telemetry/history', () => ({
+  downloadHistory: vi.fn(async () => ({ frames: 0, records: [] })),
+  HISTORY_POINTS: 2000,
+  toSeries: () => new Map(),
+  mergeWindow: (_base: [number, number][], detail: [number, number][]) => detail,
+}))
 vi.mock('@shared/telemetry/history/historyWorker', () => ({
   HistoryWorker: class {
     async load() {

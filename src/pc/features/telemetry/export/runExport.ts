@@ -1,5 +1,5 @@
 import { BIZ_TZ } from '@/lib/time'
-import { downloadHistory } from '../history'
+import { downloadHistoryExport } from '../history'
 import type { ExportChannel } from '../lib/exportData'
 import type { ExportMessage, ExportRequest } from '../workers/export.worker'
 
@@ -38,7 +38,7 @@ export function runExport(job: ExportJob): { done: Promise<ExportResult | null>;
   const abortError = () => new DOMException('已取消', 'AbortError')
 
   const done = (async () => {
-    const bytes = await downloadHistory({
+    const bytes = await downloadHistoryExport({
       companyId: job.companyId,
       deviceSn: job.deviceSn,
       start: job.start,

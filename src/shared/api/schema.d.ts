@@ -812,8 +812,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 流式查询设备历史数据 */
+        /** 查询设备历史曲线 */
         get: operations["app-device-history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/devices/{deviceSn}/history/export": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 导出设备原始历史数据 */
+        get: operations["app-device-history-export"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1933,6 +1953,11 @@ export interface components {
             count: number;
             /** Format: int64 */
             deviceTypeId: number | null;
+        };
+        AppHistorySample: {
+            /** Format: int64 */
+            frames: number;
+            records: components["schemas"]["AppReadingRecord"][];
         };
         AppHoldRelease: {
             released: boolean;
@@ -5414,6 +5439,7 @@ export interface operations {
             query: {
                 start: string;
                 end: string;
+                points?: number;
             };
             header: {
                 "X-Company-ID": number;
@@ -5426,7 +5452,44 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description 历史数据 */
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppHistorySample"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-device-history-export": {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header: {
+                "X-Company-ID": number;
+                "X-Company-Role"?: string;
+            };
+            path: {
+                deviceSn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 原始历史数据 */
             200: {
                 headers: {
                     [name: string]: unknown;

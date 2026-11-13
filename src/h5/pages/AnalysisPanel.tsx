@@ -1,7 +1,13 @@
 import type { AppDevice } from '@shared/api/device'
 import { dailyComparisonQuery, monthlyComparisonQuery } from '@shared/telemetry/comparison/api'
 import { earliestDate } from '@shared/telemetry/export/timeRange'
-import { downloadHistory } from '@shared/telemetry/history'
+import {
+  downloadHistory,
+  downloadHistoryExport,
+  HISTORY_POINTS,
+  mergeWindow,
+  toSeries,
+} from '@shared/telemetry/history'
 import { HistoryWorker } from '@shared/telemetry/history/historyWorker'
 import { channelColor, groupByUnit } from '@shared/telemetry/lib/channelColor'
 import { dailySeries, hourlySeries } from '@shared/telemetry/lib/comparison'
@@ -19,7 +25,7 @@ import { comparisonDate, parseBizTime, validateRange } from '../analysisRange'
 import { Card, Choice, mobileDialog as Dialog, Empty, Failure, Sheet, showFailure, mobileToast as Toast } from '../ui'
 
 type Series = Map<number, [number, number][]>
-type Phase = 'loading' | 'parsing' | 'ready' | 'error' | 'canceled'
+type Phase = 'loading' | 'ready' | 'error' | 'canceled'
 export default function AnalysisPanel({ device, mode }: { device: AppDevice; mode: 'history' | 'comparison' }) {
   const [params, setParams] = useSearchParams(),
     sensors = byChannel(device.sensors),
@@ -251,31 +257,26 @@ function History({
   const cid = useCompanyId(),
     [phase, setPhase] = useState<Phase>('loading'),
     [message, setMessage] = useState(''),
-    [received, setReceived] = useState(0),
     [count, setCount] = useState(0),
     [reload, setReload] = useState(0),
     [series, setSeries] = useState<Series>(new Map()),
     [zoom, setZoom] = useState<[number, number] | null>(null),
     [exporting, setExporting] = useState(false)
-  const worker = useRef<HistoryWorker | null>(null),
-    ctrl = useRef<AbortController | null>(null),
+  const ctrl = useRef<AbortController | null>(null),
     alive = useRef(true),
-    exportVersion = useRef(0)
-  const channelKey = channels.join(','),
-    allKey = device.sensors.map((s) => s.channel).join(','),
-    range = useMemo(
-      () => [parseBizTime(start).valueOf(), parseBizTime(end).valueOf()] as [number, number],
-      [start, end],
-    )
+    exportVersion = useRef(0),
+    overview = useRef<ReturnType<typeof toSeries>>(new Map())
+  const range = useMemo(
+    () => [parseBizTime(start).valueOf(), parseBizTime(end).valueOf()] as [number, number],
+    [start, end],
+  )
   // biome-ignore lint/correctness/useExhaustiveDependencies: reload intentionally starts a fresh download
   useEffect(() => {
     alive.current = true
     const controller = new AbortController()
     ctrl.current = controller
-    let local: HistoryWorker | null = null,
-      disposed = false
+    let disposed = false
     setPhase('loading')
-    setReceived(0)
     setSeries(new Map())
     setZoom(null)
     setCount(0)
@@ -291,25 +292,20 @@ function History({
     }
     const run = async () => {
       try {
-        local = new HistoryWorker()
-        worker.current = local
-        const bytes = await downloadHistory({
+        const sample = await downloadHistory({
           companyId: cid,
           deviceSn: device.deviceSn,
           start: dayjs.tz(start, BIZ_TZ).format(),
           end: dayjs.tz(end, BIZ_TZ).format(),
+          points: HISTORY_POINTS,
           signal: controller.signal,
-          onProgress: (n) => {
-            if (!disposed) setReceived(n)
-          },
         })
         if (disposed) return
-        setPhase('parsing')
-        const result = await local.load(bytes, allKey.split(',').map(Number))
-        if (!disposed) {
-          setCount(result.count)
-          setPhase('ready')
-        }
+        const next = toSeries(sample)
+        overview.current = next
+        setSeries(next)
+        setCount(sample.frames)
+        setPhase('ready')
       } catch (e) {
         if (disposed) return
         if (controller.signal.aborted) setPhase('canceled')
@@ -325,53 +321,67 @@ function History({
       alive.current = false
       exportVersion.current++
       controller.abort()
-      local?.terminate()
-      if (worker.current === local) worker.current = null
     }
-  }, [cid, device.id, start, end, allKey, reload])
+  }, [cid, device.id, start, end, reload])
   useEffect(() => {
-    if (phase !== 'ready' || !worker.current) return
+    if (phase !== 'ready') return
+    if (!zoom) {
+      setSeries(overview.current)
+      return
+    }
+    const request = new AbortController()
     let stale = false
-    void worker.current
-      .sample(channelKey.split(',').filter(Boolean).map(Number), 1200, zoom?.[0], zoom?.[1])
-      .then((r) => {
-        if (!stale)
-          setSeries(
-            new Map(
-              r.series.map((s) => [
-                s.channel,
-                Array.from(
-                  { length: s.data.length / 2 },
-                  (_, i) => [s.data[i * 2], s.data[i * 2 + 1]] as [number, number],
-                ),
-              ]),
-            ),
-          )
+    void downloadHistory({
+      companyId: cid,
+      deviceSn: device.deviceSn,
+      start: dayjs(zoom[0]).tz(BIZ_TZ).format(),
+      end: dayjs(zoom[1]).tz(BIZ_TZ).format(),
+      points: HISTORY_POINTS,
+      signal: request.signal,
+    })
+      .then((sample) => {
+        if (stale) return
+        const detail = toSeries(sample)
+        const merged = new Map(overview.current)
+        for (const [channel, points] of detail) {
+          merged.set(channel, mergeWindow(overview.current.get(channel) ?? [], points, zoom[0], zoom[1]))
+        }
+        setSeries(merged)
       })
       .catch((e) => {
-        if (!stale) {
-          setPhase('error')
-          setMessage(errorText(e))
-        }
+        if (stale || request.signal.aborted) return
+        setPhase('error')
+        setMessage(errorText(e))
       })
     return () => {
       stale = true
+      request.abort()
     }
-  }, [phase, channelKey, zoom])
+  }, [phase, zoom, cid, device.deviceSn])
   const cancel = () => {
     exportVersion.current++
     ctrl.current?.abort()
-    worker.current?.terminate()
-    worker.current = null
     setExporting(false)
     setPhase('canceled')
   }
   const doExport = async () => {
-    if (!worker.current || phase !== 'ready' || !count || !channels.length) return
+    if (phase !== 'ready' || !count || !channels.length) return
     const version = ++exportVersion.current
+    const worker = new HistoryWorker()
     setExporting(true)
     try {
-      const r = await worker.current.csv(
+      const bytes = await downloadHistoryExport({
+        companyId: cid,
+        deviceSn: device.deviceSn,
+        start: dayjs.tz(start, BIZ_TZ).format(),
+        end: dayjs.tz(end, BIZ_TZ).format(),
+        signal: ctrl.current?.signal,
+      })
+      await worker.load(
+        bytes,
+        device.sensors.map((sensor) => sensor.channel),
+      )
+      const r = await worker.csv(
         byChannel(device.sensors)
           .filter((s) => channels.includes(s.channel))
           .map((s) => ({
@@ -398,15 +408,15 @@ function History({
     } catch (e) {
       if (alive.current && version === exportVersion.current) showFailure(e)
     } finally {
+      worker.terminate()
       if (alive.current && version === exportVersion.current) setExporting(false)
     }
   }
   const selected = byChannel(device.sensors).filter((s) => channels.includes(s.channel))
   return (
     <>
-      {phase === 'loading' || phase === 'parsing' ? (
-        <Card title={phase === 'parsing' ? '正在解析数据' : '正在下载数据'}>
-          <p role="status">已接收 {(received / 1024 / 1024).toFixed(2)} MB</p>
+      {phase === 'loading' ? (
+        <Card title="正在加载曲线">
           <Button block onClick={cancel}>
             取消
           </Button>

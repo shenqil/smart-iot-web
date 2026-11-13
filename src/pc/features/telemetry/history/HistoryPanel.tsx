@@ -11,15 +11,12 @@ import { BIZ_TZ, bizNow, dayjs } from '@/lib/time'
 import { ChannelPicker } from '../ChannelPicker'
 import { saveBlob } from '../export/runExport'
 import { bizToPicker, earliestDate, MAX_RANGE_DAYS, pickerToBiz, type Range } from '../export/timeRange'
-import { downloadHistory } from '../history'
+import { downloadHistory, downloadHistoryExport, HISTORY_POINTS, mergeWindow, toSeries } from '../history'
 import { channelColor } from '../lib/channelColor'
 import { type AppSensor, byChannel, channelName } from '../lib/realtime'
 import { HistoryWorker } from './historyWorker'
 
-/** 每个通道降采样后的点数 (FRONTEND_DESIGN §5.3：约 2,000 点 / 通道) */
-const POINTS = 2000
-const MB = 1024 * 1024
-const fmtMB = (n: number) => `${(n / MB).toFixed(n < 10 * MB ? 1 : 0)} MB`
+const EMPTY_SERIES: [number, number][] = []
 
 type Preset = '1h' | 'today' | '7d' | '31d' | 'custom'
 const PRESETS: { value: Preset; label: string }[] = [
@@ -44,24 +41,19 @@ function presetRange(p: Exclude<Preset, 'custom'>): [number, number] {
 }
 
 type Status =
-  | { kind: 'loading'; received: number; parsing: boolean }
+  | { kind: 'loading' }
   | { kind: 'ready'; count: number }
   | { kind: 'error'; message: string }
   | { kind: 'canceled' }
 
 type Series = Map<number, [number, number][]>
 
-const toPairs = (a: Float64Array) =>
-  Array.from({ length: a.length / 2 }, (_, i) => [a[i * 2], a[i * 2 + 1]] as [number, number])
-
 const sameWindow = (a: [number, number] | null, b: [number, number] | null) =>
   a === b || Boolean(a && b && Math.abs(a[0] - b[0]) < 1000 && Math.abs(a[1] - b[1]) < 1000)
 
 /**
- * 历史曲线 (FRONTEND_DESIGN §5.3)
- * - fetch 流式下载显示进度、可取消；Worker 解析 JSON 并 LTTB 降采样 (约 2,000 点 / 通道)
- * - 每个通道独立卡片展现，单独滚动缩放，各带数据缩放滑块与指标统计
- * - 导出 CSV 在 Worker 内生成
+ * 历史曲线：服务端按时间分桶，每个桶返回最早的一帧。
+ * 缩放时按可见窗口再请求一次；窗口外保留第一次的概览。CSV 走原始导出。
  */
 export function HistoryPanel({
   device,
@@ -77,37 +69,35 @@ export function HistoryPanel({
   const [preset, setPreset] = useState<Preset>('today')
   const [range, setRange] = useState<[number, number]>(() => presetRange('today'))
   const [custom, setCustom] = useState<Range | null>(null)
-  const [status, setStatus] = useState<Status>({ kind: 'loading', received: 0, parsing: false })
+  const [status, setStatus] = useState<Status>({ kind: 'loading' })
   const [series, setSeries] = useState<Series>(new Map())
   const [exporting, setExporting] = useState(false)
-  const workerRef = useRef<HistoryWorker | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const overviewRef = useRef(new Map<number, [number, number][]>())
   const [reloadKey, setReloadKey] = useState(0)
 
-  // 下载 + 解析：设备或时间范围变化时重新加载 (所有已配置通道一起解析，切换通道不用重新下载)
-  const allChannels = sensors.map((s) => s.channel).join(',')
+  // 设备或时间范围变化时重新加载。切换通道只改变展示，不重新请求。
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 用于手动刷新
   useEffect(() => {
     const ctrl = new AbortController()
     abortRef.current = ctrl
-    const worker = new HistoryWorker()
-    workerRef.current = worker
-    setStatus({ kind: 'loading', received: 0, parsing: false })
+    setStatus({ kind: 'loading' })
     setSeries(new Map())
     ;(async () => {
       try {
-        const bytes = await downloadHistory({
+        const sample = await downloadHistory({
           companyId,
           deviceSn: device.deviceSn,
           start: dayjs(range[0]).tz(BIZ_TZ).format(),
           end: dayjs(range[1]).tz(BIZ_TZ).format(),
+          points: HISTORY_POINTS,
           signal: ctrl.signal,
-          onProgress: (received) => setStatus({ kind: 'loading', received, parsing: false }),
         })
         if (ctrl.signal.aborted) return
-        setStatus((s) => (s.kind === 'loading' ? { ...s, parsing: true } : s))
-        const r = await worker.load(bytes, allChannels ? allChannels.split(',').map(Number) : [])
-        if (!ctrl.signal.aborted) setStatus({ kind: 'ready', count: r.count })
+        const next = toSeries(sample)
+        overviewRef.current = next
+        setSeries(next)
+        setStatus({ kind: 'ready', count: sample.frames })
       } catch (e) {
         if (ctrl.signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) return
         handleGlobalError(e, true)
@@ -116,36 +106,23 @@ export function HistoryPanel({
     })()
     return () => {
       ctrl.abort()
-      worker.terminate()
-      if (workerRef.current === worker) workerRef.current = null
     }
-  }, [companyId, device.id, range, allChannels, reloadKey])
+  }, [companyId, device.id, range, reloadKey])
 
-  // 初始全量降采样：数据就绪或通道变化时为每个通道采样概览数据
-  const channelKey = channels.join(',')
-  useEffect(() => {
-    const worker = workerRef.current
-    if (status.kind !== 'ready' || !status.count || !worker || !channelKey) return
-    let stale = false
-    worker
-      .sample(channelKey.split(',').map(Number), POINTS)
-      .then((r) => {
-        if (!stale) setSeries(new Map(r.series.map((s) => [s.channel, toPairs(s.data)])))
+  const sampleChannel = useCallback(
+    async (channel: number, from?: number, to?: number) => {
+      if (from == null || to == null) return overviewRef.current.get(channel) ?? []
+      const sample = await downloadHistory({
+        companyId,
+        deviceSn: device.deviceSn,
+        start: dayjs(from).tz(BIZ_TZ).format(),
+        end: dayjs(to).tz(BIZ_TZ).format(),
+        points: HISTORY_POINTS,
       })
-      .catch(() => {})
-    return () => {
-      stale = true
-    }
-  }, [status, channelKey])
-
-  // 单通道独立缩放时的细粒度降采样接口
-  const sampleChannel = useCallback(async (channel: number, from?: number, to?: number) => {
-    const worker = workerRef.current
-    if (!worker) return []
-    const r = await worker.sample([channel], POINTS, from, to)
-    const found = r.series.find((s) => s.channel === channel)
-    return found ? toPairs(found.data) : []
-  }, [])
+      return mergeWindow(overviewRef.current.get(channel) ?? [], toSeries(sample).get(channel) ?? [], from, to)
+    },
+    [companyId, device.deviceSn],
+  )
 
   const choosePreset = (p: Preset) => {
     setPreset(p)
@@ -154,10 +131,19 @@ export function HistoryPanel({
   }
 
   const exportCsv = async () => {
-    const worker = workerRef.current
-    if (!worker) return
     setExporting(true)
+    const worker = new HistoryWorker()
     try {
+      const bytes = await downloadHistoryExport({
+        companyId,
+        deviceSn: device.deviceSn,
+        start: dayjs(range[0]).tz(BIZ_TZ).format(),
+        end: dayjs(range[1]).tz(BIZ_TZ).format(),
+      })
+      await worker.load(
+        bytes,
+        sensors.map((sensor) => sensor.channel),
+      )
       const columns = sensors
         .filter((s) => channels.includes(s.channel))
         .map((s) => ({
@@ -174,6 +160,7 @@ export function HistoryPanel({
     } catch (e) {
       notify.error(`导出失败：${e instanceof Error ? e.message : String(e)}`)
     } finally {
+      worker.terminate()
       setExporting(false)
     }
   }
@@ -232,7 +219,7 @@ export function HistoryPanel({
         <div className="rounded-lg bg-container px-5 py-4">
           <div className="flex h-72 flex-col items-center justify-center gap-3 text-fg-secondary">
             <Spin />
-            <span>{status.parsing ? '正在处理数据…' : `正在下载数据… 已接收 ${fmtMB(status.received)}`}</span>
+            <span>正在加载曲线…</span>
             <Button
               size="small"
               onClick={() => {
@@ -277,7 +264,7 @@ export function HistoryPanel({
           <div className="flex items-center justify-between px-1 text-fg-tertiary text-xs">
             <span>
               共 {status.count.toLocaleString()} 帧
-              {status.count > POINTS && '，曲线已按形状抽稀；拖动各通道下方滑块或滚轮可单独缩放查看细节'}
+              {status.count > HISTORY_POINTS && '，曲线按时间桶取样，每个桶显示最早的一帧；拖动各通道下方滑块或滚轮可单独缩放查看细节'}
             </span>
           </div>
           <div className="flex flex-col gap-4">
@@ -287,7 +274,7 @@ export function HistoryPanel({
                 sensor={sensor}
                 allSensors={sensors}
                 range={range}
-                initialData={series.get(sensor.channel) ?? []}
+                initialData={series.get(sensor.channel) ?? EMPTY_SERIES}
                 onSample={(from, to) => sampleChannel(sensor.channel, from, to)}
               />
             ))}
@@ -439,7 +426,7 @@ function ChannelHistoryCard({
             setZoom(nextZoom)
             try {
               const sampled = await onSampleRef.current(from, to)
-              if (sampled.length > 0) setData(sampled)
+              if (sameWindow(zoomRef.current, nextZoom)) setData(sampled)
             } catch {}
           }
         }
