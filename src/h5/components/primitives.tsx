@@ -101,22 +101,26 @@ export function Pagination({
   page,
   hasMore,
   busy,
-  onChange,
+  canPrev = page > 1,
+  onPrev,
+  onNext,
 }: {
   page: number
   hasMore: boolean
   busy: boolean
-  onChange: (page: number) => void
+  canPrev?: boolean
+  onPrev: () => void
+  onNext: () => void
 }) {
   return (
     <nav className="h5-pagination" aria-label="列表分页">
-      <Button fill="outline" size="small" disabled={page <= 1 || busy} onClick={() => onChange(page - 1)}>
+      <Button fill="outline" size="small" disabled={!canPrev || busy} onClick={onPrev}>
         上一页
       </Button>
       <span>
         第 <b>{page}</b> 页
       </span>
-      <Button fill="outline" size="small" disabled={!hasMore || busy} onClick={() => onChange(page + 1)}>
+      <Button fill="outline" size="small" disabled={!hasMore || busy} onClick={onNext}>
         下一页
       </Button>
     </nav>

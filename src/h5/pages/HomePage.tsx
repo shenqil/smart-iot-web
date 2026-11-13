@@ -27,7 +27,7 @@ export default function HomePage() {
   const summary = useQuery(appDeviceSummaryQuery(cid)),
     sites = useQuery(appSitesQuery(cid))
   const count = useQuery(scopedUnprocessedCountQuery(cid, {}))
-  const alarms = useQuery(alarmsQuery(cid, { processed: 'false', sort: 'level,-createdAt', page: 1, pageSize: 3 }))
+  const alarms = useQuery(alarmsQuery(cid, { processed: 'false', pageSize: 3 }))
   const types = useDeviceTypes(),
     entry = useMobilePreferences((s) => s.entries[preferenceKey(me.id, cid)])
   const stats = summary.data,

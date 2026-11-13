@@ -23,16 +23,22 @@ const SOURCES: Record<string, string> = {
 const STATUS: Record<string, string> = { pending: '执行中', success: '成功', failed: '失败', timeout: '未应答' }
 export default function OperationsPage() {
   const cid = useCompanyId(),
-    { params, patch, goPage } = useUrlFilters(),
+    { params, patch, goCursor } = useUrlFilters(),
     [open, setOpen] = useState(false),
     [search, setSearch] = useState(params.get('keyword') ?? ''),
     sites = useQuery(appSitesQuery(cid)),
-    page = positiveId(params.get('page')) ?? 1
+    cursor = params.get('cursor') || undefined
   const source = params.get('source'),
     status = params.get('status'),
     keyword = params.get('keyword') ?? ''
+  const listKey = new URLSearchParams(params)
+  listKey.delete('cursor')
+  listKey.delete('page')
+  const filterKey = listKey.toString()
+  const [history, setHistory] = useState<{ key: string; prev: string[] }>({ key: filterKey, prev: [] })
+  if (history.key !== filterKey) setHistory({ key: filterKey, prev: [] })
   const q: OperationQuery = {
-    page,
+    cursor,
     pageSize: 20,
     siteId: positiveId(params.get('siteId')),
     deviceId: positiveId(params.get('deviceId')),
@@ -41,7 +47,6 @@ export default function OperationsPage() {
     keyword: keyword || undefined,
     start: params.get('start') || undefined,
     end: params.get('end') || undefined,
-    sort: '-createdAt',
   }
   const query = useQuery(operationsQuery(cid, q)),
     now = useNow(10_000)
@@ -118,10 +123,21 @@ export default function OperationsPage() {
         )}
         footer={
           <Pagination
-            page={page}
-            hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+            page={history.prev.length + 1}
+            hasMore={!!query.data?.hasMore && !!query.data?.nextCursor && !query.isError && !query.isPlaceholderData}
+            canPrev={history.prev.length > 0 || !!cursor}
             busy={query.isFetching}
-            onChange={goPage}
+            onPrev={() => {
+              const prev = history.prev.at(-1)
+              setHistory((h) => ({ ...h, prev: h.prev.slice(0, -1) }))
+              goCursor(prev || undefined)
+            }}
+            onNext={() => {
+              const next = query.data?.nextCursor
+              if (!next || query.isPlaceholderData) return
+              setHistory((h) => ({ ...h, prev: [...h.prev, cursor ?? ''] }))
+              goCursor(next)
+            }}
           />
         }
       />

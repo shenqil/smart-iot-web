@@ -241,7 +241,7 @@ const OP_COLOR: Record<string, { label: string; color: string }> = {
 export function OperationsCard({ device, rect }: { device: AppDevice; rect: Rect }) {
   const companyId = useCompanyId()
   const ops = useQuery({
-    ...operationsQuery(companyId, { deviceId: device.id, sort: '-createdAt', page: 1, pageSize: 30 }),
+    ...operationsQuery(companyId, { deviceId: device.id, pageSize: 30 }),
     refetchInterval: 30_000,
   })
   const relayName = (ch: number) => {

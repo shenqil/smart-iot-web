@@ -1,11 +1,11 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { useCursorPager } from '@shared/hooks/useCursorPager'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Input, Select, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useState } from 'react'
 import { type RangeValue, RetentionRangePicker } from '@/components/RetentionRangePicker'
 import { SlicePager } from '@/components/SlicePager'
-import { sortOrderOf, toSortParam } from '@/components/table/usePageQuery'
 import type { AppDevice } from '@/features/device/api'
 import { channelName } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
@@ -22,7 +22,7 @@ export interface OperationTableProps {
   deviceOf?: (deviceId: number) => AppDevice | undefined
 }
 
-/** 继电器操作记录 (FRONTEND_DESIGN §5.5)：包含其他企业成员对同一设备的操作；不返回总数，简单分页 */
+/** 继电器操作记录：包含其他企业成员对同一设备的操作。按时间游标翻页，不返回总数。 */
 export function OperationTable({
   siteId,
   deviceId,
@@ -37,8 +37,13 @@ export function OperationTable({
   const [range, setRange] = useState<RangeValue>()
   const [kwInput, setKwInput] = useState('')
   const [keyword, setKeyword] = useState<string>()
-  const [sort, setSort] = useState('-createdAt')
-  const [page, setPage] = useState({ page: 1, pageSize: ps })
+  const cursorPager = useCursorPager(ps)
+  const scopeKey = `${siteId ?? ''}:${deviceId ?? ''}`
+  const [seenScope, setSeenScope] = useState(scopeKey)
+  if (seenScope !== scopeKey) {
+    setSeenScope(scopeKey)
+    cursorPager.reset()
+  }
 
   const q: OperationQuery = {
     siteId: siteId ?? undefined,
@@ -48,8 +53,8 @@ export function OperationTable({
     start: range?.start,
     end: range?.end,
     keyword,
-    sort,
-    ...page,
+    pageSize: cursorPager.pageSize,
+    cursor: cursorPager.cursor,
   }
   const { data, isFetching, isPending, refetch } = useQuery(operationsQuery(companyId, q))
   const records = data?.records ?? []
@@ -57,7 +62,7 @@ export function OperationTable({
     <T,>(set: (v: T) => void) =>
     (v: T) => {
       set(v)
-      setPage((p) => ({ ...p, page: 1 }))
+      cursorPager.reset()
     }
 
   const columns: ColumnsType<RelayOp> = [
@@ -66,8 +71,6 @@ export function OperationTable({
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      sorter: true,
-      sortOrder: sortOrderOf(sort, 'createdAt'),
       render: (v) => <span className="whitespace-nowrap">{fmtDateTime(v)}</span>,
     },
     ...(deviceId
@@ -193,21 +196,19 @@ export function OperationTable({
         dataSource={records}
         pagination={false}
         scroll={full ? { x: 'max-content', y: 400 } : { x: 'max-content' }}
-        onChange={(_p, _f, sorter, extra) => {
-          if (extra.action !== 'sort') return
-          const s = Array.isArray(sorter) ? sorter[0] : sorter
-          setSort(toSortParam(s.columnKey as string | undefined, s.order) ?? '-createdAt')
-          setPage((p) => ({ ...p, page: 1 }))
-        }}
         locale={{ emptyText: '暂无操作记录' }}
       />
       <SlicePager
-        page={page.page}
-        pageSize={page.pageSize}
-        hasMore={Boolean(data?.hasMore)}
+        page={cursorPager.page}
+        pageSize={cursorPager.pageSize}
+        hasMore={Boolean(data?.hasMore && data.nextCursor)}
         count={records.length}
         disabled={isFetching}
-        onChange={(p, size) => setPage({ page: p, pageSize: size })}
+        onChange={(p, size) => {
+          if (size !== cursorPager.pageSize) cursorPager.setSize(size)
+          else if (p < cursorPager.page) cursorPager.prev()
+          else if (data?.nextCursor) cursorPager.next(data.nextCursor)
+        }}
       />
     </div>
   )

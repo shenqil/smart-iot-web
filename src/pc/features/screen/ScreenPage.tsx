@@ -89,7 +89,7 @@ function ScreenBody() {
   const device = candidates.find((d) => d.id === Number(params.get('deviceId'))) ?? candidates[0]
 
   const alarmsQ = useQuery({
-    ...alarmsQuery(companyId, { siteId, processed: 'false', sort: '-createdAt', page: 1, pageSize: 200 }),
+    ...alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 200 }),
     enabled: Boolean(site),
     refetchInterval: 30_000,
     meta: { silent: true },

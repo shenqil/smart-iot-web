@@ -1,4 +1,5 @@
 import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { useCursorPager } from '@shared/hooks/useCursorPager'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Modal, Segmented, Select, Table, Tag, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -7,16 +8,10 @@ import { notify } from '@/app/notify'
 import { handleGlobalError } from '@/app/queryClient'
 import { type RangeValue, RetentionRangePicker } from '@/components/RetentionRangePicker'
 import { SlicePager } from '@/components/SlicePager'
-import { sortOrderOf, toSortParam } from '@/components/table/usePageQuery'
 import { useCompanyId } from '@/hooks/session'
 import { fmtDateTime } from '@/lib/time'
 import { type AlarmQuery, type AlarmView, alarmsQuery, processAlarms } from './api'
-import {
-  ALARM_TYPE,
-  AlarmLevelTag,
-  alarmLevelOptions,
-  alarmTypeOptions,
-} from './enums'
+import { ALARM_TYPE, AlarmLevelTag, alarmLevelOptions, alarmTypeOptions } from './enums'
 
 type Processed = 'all' | 'false' | 'true'
 
@@ -30,7 +25,7 @@ export interface AlarmTableProps {
   pageSize?: number
 }
 
-/** 告警列表 + 批量处理 (FRONTEND_DESIGN §5.4)：不返回总数，简单分页 */
+/** 告警列表 + 批量处理。按触发时间倒序，用游标翻页。 */
 export function AlarmTable({
   siteId,
   deviceId,
@@ -47,10 +42,15 @@ export function AlarmTable({
   const [range, setRange] = useState<RangeValue>()
   const [kwInput, setKwInput] = useState('')
   const [keyword, setKeyword] = useState<string>()
-  const [sort, setSort] = useState('-createdAt')
-  const [page, setPage] = useState({ page: 1, pageSize: ps })
+  const cursorPager = useCursorPager(ps)
   const [selected, setSelected] = useState<number[]>([])
   const [processing, setProcessing] = useState<number[] | null>(null)
+  const scopeKey = `${siteId ?? ''}:${deviceId ?? ''}`
+  const [seenScope, setSeenScope] = useState(scopeKey)
+  if (seenScope !== scopeKey) {
+    setSeenScope(scopeKey)
+    cursorPager.reset()
+  }
 
   const q: AlarmQuery = {
     siteId: siteId ?? undefined,
@@ -61,18 +61,18 @@ export function AlarmTable({
     start: range?.start,
     end: range?.end,
     keyword,
-    sort,
-    ...page,
+    pageSize: cursorPager.pageSize,
+    cursor: cursorPager.cursor,
   }
   const { data, isFetching, isPending, refetch } = useQuery(alarmsQuery(companyId, q))
   const records = data?.records ?? []
 
-  /** 修改筛选回到第 1 页 */
+  /** 修改筛选回到第一页 */
   const filter =
     <T,>(set: (v: T) => void) =>
     (v: T) => {
       set(v)
-      setPage((p) => ({ ...p, page: 1 }))
+      cursorPager.reset()
       setSelected([])
     }
 
@@ -82,8 +82,6 @@ export function AlarmTable({
       dataIndex: 'level',
       key: 'level',
       width: 84,
-      sorter: true,
-      sortOrder: sortOrderOf(sort, 'level'),
       render: (v) => <AlarmLevelTag level={v} />,
     },
     {
@@ -118,15 +116,14 @@ export function AlarmTable({
     {
       title: '触发值',
       key: 'value',
-      render: (_, a) => a.type === 'threshold' && a.triggerValue != null ? <b className="text-danger">{a.triggerValue}</b> : '—',
+      render: (_, a) =>
+        a.type === 'threshold' && a.triggerValue != null ? <b className="text-danger">{a.triggerValue}</b> : '—',
     },
     {
       title: '触发时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      sorter: true,
-      sortOrder: sortOrderOf(sort, 'createdAt'),
       render: (v) => <span className="whitespace-nowrap">{fmtDateTime(v)}</span>,
     },
     {
@@ -239,21 +236,19 @@ export function AlarmTable({
           onChange: (keys) => setSelected(keys as number[]),
           getCheckboxProps: (a) => ({ disabled: a.processed }),
         }}
-        onChange={(_p, _f, sorter, extra) => {
-          if (extra.action !== 'sort') return
-          const s = Array.isArray(sorter) ? sorter[0] : sorter
-          setSort(toSortParam(s.columnKey as string | undefined, s.order) ?? '-createdAt')
-          setPage((p) => ({ ...p, page: 1 }))
-        }}
         locale={{ emptyText: processed === 'false' ? '没有未处理的告警' : '暂无告警' }}
       />
       <SlicePager
-        page={page.page}
-        pageSize={page.pageSize}
-        hasMore={Boolean(data?.hasMore)}
+        page={cursorPager.page}
+        pageSize={cursorPager.pageSize}
+        hasMore={Boolean(data?.hasMore && data.nextCursor)}
         count={records.length}
         disabled={isFetching}
-        onChange={(p, size) => setPage({ page: p, pageSize: size })}
+        onChange={(p, size) => {
+          if (size !== cursorPager.pageSize) cursorPager.setSize(size)
+          else if (p < cursorPager.page) cursorPager.prev()
+          else if (data?.nextCursor) cursorPager.next(data.nextCursor)
+        }}
       />
       <ProcessModal
         ids={processing}

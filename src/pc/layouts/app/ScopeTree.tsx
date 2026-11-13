@@ -66,7 +66,7 @@ export function ScopeTree() {
   // 设备级告警数：展开的园区各取前 200 条未处理告警
   const alarmQueries = useQueries({
     queries: expanded.map((id) => ({
-      ...alarmsQuery(companyId, { siteId: id, processed: 'false', page: 1, pageSize: 200 }),
+      ...alarmsQuery(companyId, { siteId: id, processed: 'false', pageSize: 200 }),
       meta: { silent: true },
     })),
   })

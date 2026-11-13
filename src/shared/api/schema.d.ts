@@ -8,6 +8,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -26,6 +27,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -47,6 +49,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -67,6 +70,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -86,6 +90,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -105,6 +110,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -126,6 +132,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -145,6 +152,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -164,6 +172,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -182,6 +191,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -200,6 +210,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -218,6 +229,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -236,6 +248,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -254,6 +267,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -272,6 +286,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -290,6 +305,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -308,6 +324,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -327,6 +344,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -345,6 +363,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -363,6 +382,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -381,6 +401,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -399,6 +420,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -417,6 +439,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -435,6 +458,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -453,6 +477,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -471,6 +496,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -489,6 +515,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -507,6 +534,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -528,6 +556,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -547,6 +576,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -568,6 +598,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -588,6 +619,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -608,6 +640,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -627,6 +660,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -647,6 +681,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -667,6 +702,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -687,6 +723,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -707,6 +744,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -727,6 +765,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -747,6 +786,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -767,6 +807,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -787,6 +828,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -807,6 +849,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -827,6 +870,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -847,6 +891,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -867,6 +912,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -887,6 +933,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -907,6 +954,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -927,6 +975,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -947,6 +996,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -967,6 +1017,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -987,6 +1038,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1007,6 +1059,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1027,6 +1080,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1047,6 +1101,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1067,6 +1122,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1087,6 +1143,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1290,6 +1347,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1310,6 +1368,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1329,6 +1388,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1350,6 +1410,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1371,6 +1432,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1390,6 +1452,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1409,6 +1472,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1428,6 +1492,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1447,6 +1512,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1466,6 +1532,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1485,6 +1552,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1504,6 +1572,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1523,6 +1592,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1544,6 +1614,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1564,6 +1635,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1584,6 +1656,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1603,6 +1676,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1625,6 +1699,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1646,6 +1721,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1668,6 +1744,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1688,6 +1765,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1710,6 +1788,7 @@ export interface paths {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -1895,10 +1974,7 @@ export interface components {
         };
         AppAlarmPage: {
             hasMore: boolean;
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            pageSize: number;
+            nextCursor?: string;
             records: components["schemas"]["AppAlarm"][];
         };
         AppDailyComparison: {
@@ -1983,10 +2059,7 @@ export interface components {
         };
         AppOperationsPage: {
             hasMore: boolean;
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            pageSize: number;
+            nextCursor?: string;
             records: components["schemas"]["AppRelayOperation"][];
         };
         AppReadingRecord: {
@@ -2863,6 +2936,7 @@ export interface components {
         };
         TenantAlarmPage: {
             hasMore: boolean;
+            nextCursor?: string;
             records: components["schemas"]["TenantAlarm"][];
         };
         TenantDeviceRelayInput: {
@@ -3142,6 +3216,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3185,6 +3260,7 @@ export interface operations {
                 status?: "active" | "inactive";
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3216,6 +3292,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3251,6 +3328,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3286,6 +3364,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3319,6 +3398,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3361,6 +3441,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3399,6 +3480,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3437,6 +3519,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3470,6 +3553,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3507,6 +3591,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3549,6 +3634,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3587,6 +3673,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3625,6 +3712,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3656,6 +3744,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3691,6 +3780,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3726,6 +3816,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3768,6 +3859,7 @@ export interface operations {
                 deviceTypeId?: number;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3799,6 +3891,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3834,6 +3927,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3869,6 +3963,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -3904,6 +3999,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3937,6 +4033,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -3974,6 +4071,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4007,6 +4105,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4047,6 +4146,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4085,6 +4185,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4118,6 +4219,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4151,6 +4253,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4184,6 +4287,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4221,6 +4325,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4258,6 +4363,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4291,6 +4397,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4328,6 +4435,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4365,6 +4473,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4401,6 +4510,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4432,6 +4542,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4467,6 +4578,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4502,6 +4614,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4542,6 +4655,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4573,6 +4687,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4608,6 +4723,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4643,6 +4759,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4683,6 +4800,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4714,6 +4832,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4749,6 +4868,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4784,6 +4904,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4826,6 +4947,7 @@ export interface operations {
                 systemRole?: "admin" | "none";
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4857,6 +4979,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4892,6 +5015,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path?: never;
@@ -4927,6 +5051,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -4960,6 +5085,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -5002,6 +5128,7 @@ export interface operations {
                 sort?: string;
             };
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -5035,6 +5162,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -5072,6 +5200,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -5108,6 +5237,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description 不参与授权 */
                 "X-System-Role"?: string;
             };
             path: {
@@ -5142,10 +5272,10 @@ export interface operations {
     "app-list-alarms": {
         parameters: {
             query?: {
-                page?: number;
                 pageSize?: number;
                 keyword?: string;
-                sort?: string;
+                /** @description 时间序游标。不传从最新一条开始 */
+                cursor?: string;
                 siteId?: number;
                 deviceId?: number;
                 level?: number;
@@ -5156,6 +5286,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5188,6 +5319,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5228,6 +5360,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5260,6 +5393,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5303,6 +5437,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5335,6 +5470,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5369,6 +5505,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5405,6 +5542,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5443,6 +5581,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5480,6 +5619,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5516,6 +5656,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5550,6 +5691,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5584,6 +5726,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5618,6 +5761,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5654,6 +5798,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5688,6 +5833,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5722,6 +5868,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5761,6 +5908,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5800,6 +5948,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5839,6 +5988,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -5876,10 +6026,10 @@ export interface operations {
     "app-list-operations": {
         parameters: {
             query?: {
-                page?: number;
                 pageSize?: number;
                 keyword?: string;
-                sort?: string;
+                /** @description 时间序游标。不传从最新一条开始 */
+                cursor?: string;
                 siteId?: number;
                 deviceId?: number;
                 source?: "manual" | "linkage" | "schedule" | "hold" | "release";
@@ -5889,6 +6039,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5926,6 +6077,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -5958,6 +6110,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6372,11 +6525,13 @@ export interface operations {
     "tenant-list-alarms": {
         parameters: {
             query?: {
-                page?: number;
                 size?: number;
+                /** @description 时间序游标。不传从最新一条开始 */
+                cursor?: string;
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6409,6 +6564,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6447,6 +6603,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6479,6 +6636,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6523,6 +6681,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6555,6 +6714,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6591,6 +6751,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -6627,6 +6788,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6661,6 +6823,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6699,6 +6862,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6733,6 +6897,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6769,6 +6934,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6803,6 +6969,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6837,6 +7004,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6875,6 +7043,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6913,6 +7082,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6947,6 +7117,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -6990,6 +7161,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7024,6 +7196,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7067,6 +7240,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7108,6 +7282,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7140,6 +7315,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7178,6 +7354,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7216,6 +7393,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7248,6 +7426,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7284,6 +7463,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7320,6 +7500,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7354,6 +7535,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7395,6 +7577,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7429,6 +7612,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7467,6 +7651,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7510,6 +7695,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {
@@ -7551,6 +7737,7 @@ export interface operations {
             };
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7583,6 +7770,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7619,6 +7807,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path?: never;
@@ -7655,6 +7844,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Company-ID": number;
+                /** @description 不参与授权 */
                 "X-Company-Role"?: string;
             };
             path: {

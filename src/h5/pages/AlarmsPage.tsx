@@ -41,8 +41,7 @@ function AlarmList() {
   const cid = useCompanyId(),
     location = useLocation(),
     isTabActive = location.pathname.endsWith('/alarms'),
-    { params, setParams, patch, goPage } = useUrlFilters(),
-    page = positiveId(params.get('page')) ?? 1,
+    { params, setParams, patch, goCursor } = useUrlFilters(),
     processed = ['true', 'all'].includes(params.get('processed') ?? '') ? (params.get('processed') ?? 'false') : 'false'
   const sites = useQuery(appSitesQuery(cid)),
     [filter, setFilter] = useState(false),
@@ -52,8 +51,15 @@ function AlarmList() {
     [text, setText] = useState(params.get('keyword') ?? '')
   const keyword = params.get('keyword') ?? '',
     signature = params.toString(),
+    cursor = params.get('cursor') || undefined,
     level = Number(params.get('level')),
     type = params.get('type')
+  const listKey = new URLSearchParams(params)
+  listKey.delete('cursor')
+  listKey.delete('page')
+  const filterKey = listKey.toString()
+  const [history, setHistory] = useState<{ key: string; prev: string[] }>({ key: filterKey, prev: [] })
+  if (history.key !== filterKey) setHistory({ key: filterKey, prev: [] })
   const currentQ: AlarmQuery = {
     siteId: positiveId(params.get('siteId')),
     deviceId: positiveId(params.get('deviceId')),
@@ -63,9 +69,8 @@ function AlarmList() {
     keyword: keyword || undefined,
     start: params.get('start') || undefined,
     end: params.get('end') || undefined,
-    page,
+    cursor,
     pageSize: 20,
-    sort: '-createdAt',
   }
   const qRef = useRef(currentQ)
   if (isTabActive) {
@@ -166,9 +171,7 @@ function AlarmList() {
             <small>
               {a.deviceName} · SN {a.deviceSn} · {TYPES[a.type]}
             </small>
-            <small className="h5-muted">
-              触发于 {fmtDateTime(a.createdAt)}
-            </small>
+            <small className="h5-muted">触发于 {fmtDateTime(a.createdAt)}</small>
             {!a.processed && !multi && (
               <Button size="small" fill="outline" onClick={() => setProcessing([a.id])}>
                 处理
@@ -183,10 +186,21 @@ function AlarmList() {
         )}
         footer={
           <Pagination
-            page={page}
-            hasMore={!!query.data?.hasMore && !query.isError && !query.isPlaceholderData}
+            page={history.prev.length + 1}
+            hasMore={!!query.data?.hasMore && !!query.data?.nextCursor && !query.isError && !query.isPlaceholderData}
+            canPrev={history.prev.length > 0 || !!cursor}
             busy={query.isFetching}
-            onChange={goPage}
+            onPrev={() => {
+              const prev = history.prev.at(-1)
+              setHistory((h) => ({ ...h, prev: h.prev.slice(0, -1) }))
+              goCursor(prev || undefined)
+            }}
+            onNext={() => {
+              const next = query.data?.nextCursor
+              if (!next || query.isPlaceholderData) return
+              setHistory((h) => ({ ...h, prev: [...h.prev, cursor ?? ''] }))
+              goCursor(next)
+            }}
           />
         }
       />

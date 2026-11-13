@@ -22,7 +22,7 @@ export default function SitesPage() {
     enabled: site?.latitude != null && site?.longitude != null,
   })
   const latest = useQuery({
-    ...alarmsQuery(cid, { siteId: id, processed: 'false', sort: 'level,-createdAt', page: 1, pageSize: 3 }),
+    ...alarmsQuery(cid, { siteId: id, processed: 'false', pageSize: 3 }),
     enabled: !!site,
   })
   const base = `/h5/${cid}`,

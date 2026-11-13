@@ -46,8 +46,8 @@ export interface AlarmQuery {
   start?: string
   end?: string
   keyword?: string
-  sort?: string
-  page: number
+  /** 时间序位置。不传从最新一条开始 */
+  cursor?: string
   pageSize: number
 }
 

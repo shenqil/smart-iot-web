@@ -28,11 +28,11 @@ export function SiteOverview({ siteId }: { siteId: number }) {
   const alarm = useQuery(scopedUnprocessedCountQuery(companyId, { siteId })).data
   // 设备级未处理告警数 (与设备树共用同一个查询)
   const unprocessed = useQuery({
-    ...alarmsQuery(companyId, { siteId, processed: 'false', page: 1, pageSize: 200 }),
+    ...alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 200 }),
     meta: { silent: true },
   }).data
   const latest = useQuery(
-    alarmsQuery(companyId, { siteId, processed: 'false', sort: '-createdAt', page: 1, pageSize: 8 }),
+    alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 8 }),
   )
   const located = site?.latitude != null && site?.longitude != null
   const weather = useQuery({
