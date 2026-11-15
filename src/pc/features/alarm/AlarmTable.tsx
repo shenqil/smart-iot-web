@@ -116,15 +116,44 @@ export function AlarmTable({
     {
       title: '触发值',
       key: 'value',
-      render: (_, a) =>
-        a.type === 'threshold' && a.triggerValue != null ? <b className="text-danger">{a.triggerValue}</b> : '—',
+      render: (_, a) => {
+        if (a.type !== 'threshold' || a.triggerValue == null) return '—'
+        const showPeak = a.peakValue != null && a.peakValue !== a.triggerValue
+        return (
+          <span className="whitespace-nowrap tabular-nums">
+            <b className="text-danger">{a.triggerValue}</b>
+            {showPeak && <span className="ml-1 text-fg-tertiary text-xs">(峰值 {a.peakValue})</span>}
+          </span>
+        )
+      },
+    },
+    {
+      title: '次数',
+      dataIndex: 'alarmCount',
+      key: 'alarmCount',
+      width: 72,
+      render: (v: number) =>
+        v > 1 ? (
+          <Tag color="volcano" className="m-0 tabular-nums">
+            {v} 次
+          </Tag>
+        ) : (
+          <span className="text-fg-tertiary tabular-nums">1 次</span>
+        ),
     },
     {
       title: '触发时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 150,
-      render: (v) => <span className="whitespace-nowrap">{fmtDateTime(v)}</span>,
+      width: 165,
+      render: (v: string, a) => (
+        <div className="whitespace-nowrap">
+          <div>{fmtDateTime(v)}</div>
+          {a.lastAlarmAt && a.lastAlarmAt !== v && (
+            <div className="text-fg-tertiary text-xs">最近 {fmtDateTime(a.lastAlarmAt)}</div>
+          )}
+        </div>
+      ),
     },
     {
       title: '处理',

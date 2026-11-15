@@ -29,6 +29,7 @@ import {
 export const LEVELS: Record<number, string> = { 1: '紧急', 2: '重要', 3: '警告', 4: '提示' }
 const TYPES: Record<string, string> = {
   threshold: '越限',
+  online: '上线',
   offline: '离线',
   fault: '故障',
   relay_failed: '定时开关失败',

@@ -2,7 +2,7 @@ import { SearchOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Empty, Input, Spin, Tooltip, Tree, type TreeDataNode } from 'antd'
 import { useState } from 'react'
-import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
@@ -138,7 +138,7 @@ export function ScopeTree() {
             <span className="truncate">{s.name}</span>
             {SITE_STATUS[s.status] && <span className="shrink-0 text-xs">({SITE_STATUS[s.status]})</span>}
             <span className="ml-auto flex shrink-0 items-center gap-1.5 pr-1">
-              {alarm && alarm.count > 0 && <AlarmBadge count={alarm.capped ? '99+' : alarm.count} />}
+              {alarm && alarm.count > 0 && <AlarmBadge count={formatUnprocessedCount(alarm)} />}
               {all && (
                 <span className="text-fg-tertiary text-xs">
                   {online}/{all.length}

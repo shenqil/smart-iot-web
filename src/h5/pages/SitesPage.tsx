@@ -1,4 +1,4 @@
-import { alarmsQuery, scopedUnprocessedCountQuery } from '@shared/api/alarm'
+import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@shared/api/alarm'
 import { appSiteSummaryQuery } from '@shared/api/device'
 import { appSitesQuery, weatherQuery } from '@shared/api/site'
 import { useQuery } from '@tanstack/react-query'
@@ -72,7 +72,7 @@ export default function SitesPage() {
                 <div className="h5-stack">
                   <span>设备 {s.deviceCount} 台</span>
                   <Link to={`${base}/alarms?siteId=${id}&processed=false`}>
-                    未处理告警 {counts.data ? (counts.data.capped ? '99+' : counts.data.count) : '—'} ›
+                    未处理告警 {counts.data ? formatUnprocessedCount(counts.data) : '—'} ›
                   </Link>
                 </div>
               ) : (

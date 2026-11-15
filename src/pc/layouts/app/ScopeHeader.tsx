@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Breadcrumb, Tag } from 'antd'
 import { Link } from 'react-router'
 import { OnlineTag } from '@/components/StatusTag'
-import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
@@ -35,7 +35,7 @@ export function ScopeHeader({ showStatus = true, heroVisible = true, onScrollToT
     ...scopedUnprocessedCountQuery(companyId, { deviceId: deviceId ?? 0 }),
     enabled: Boolean(deviceId && !isVideo),
   })
-  const alarmCount = !isVideo && alarm ? (alarm.capped ? '99+' : String(alarm.count)) : null
+  const alarmCount = !isVideo && alarm && alarm.count > 0 ? formatUnprocessedCount(alarm) : null
 
   const items = [{ key: 'c', title: <Link to={{ search: '' }}>{company?.name ?? '企业'}</Link> }]
   if (siteId)
@@ -67,7 +67,7 @@ export function ScopeHeader({ showStatus = true, heroVisible = true, onScrollToT
             </Tag>
           )}
           <span className="font-mono text-fg-tertiary text-xs">SN {device.deviceSn}</span>
-          {!isVideo && alarmCount != null && Number(alarmCount) > 0 && (
+          {!isVideo && alarmCount != null && (
             <Tag color="error" className="m-0 text-xs">
               ⚠ {alarmCount}
             </Tag>

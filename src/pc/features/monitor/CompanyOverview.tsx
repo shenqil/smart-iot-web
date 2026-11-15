@@ -2,7 +2,7 @@ import { EnvironmentOutlined } from '@ant-design/icons'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Card, Empty, Skeleton } from 'antd'
 import { EnumTag, SITE_STATUS } from '@/components/StatusTag'
-import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { appSiteDevicesQuery } from '@/features/device/api'
 import { appSitesQuery } from '@/features/site/api'
 import { useCompanyId } from '@/hooks/session'
@@ -50,7 +50,7 @@ export function CompanyOverview() {
                   )}
                   {c && c.count > 0 && (
                     <span className="absolute top-2 right-2 rounded-full bg-danger px-2 py-0.5 text-white text-xs">
-                      ⚠ {c.capped ? '99+' : c.count} 条未处理告警
+                      ⚠ {formatUnprocessedCount(c)} 条未处理告警
                     </span>
                   )}
                 </div>

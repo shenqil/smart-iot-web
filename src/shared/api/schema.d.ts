@@ -1946,6 +1946,8 @@ export interface components {
         };
         AppAlarm: {
             /** Format: int64 */
+            alarmCount: number;
+            /** Format: int64 */
             channel: number | null;
             /** Format: date-time */
             createdAt: string;
@@ -1956,8 +1958,12 @@ export interface components {
             deviceSn: string;
             /** Format: int64 */
             id: number;
+            /** Format: date-time */
+            lastAlarmAt: string;
             /** Format: int32 */
             level: number;
+            /** Format: double */
+            peakValue: number | null;
             processRemark: string;
             processed: boolean;
             /** Format: date-time */
@@ -1970,7 +1976,7 @@ export interface components {
             /** Format: double */
             triggerValue: number | null;
             /** @enum {string} */
-            type: "threshold" | "offline" | "fault" | "relay_failed";
+            type: "threshold" | "online" | "offline" | "fault" | "relay_failed";
         };
         AppAlarmPage: {
             hasMore: boolean;
@@ -2051,6 +2057,8 @@ export interface components {
         AppManualControl: {
             /** Format: int64 */
             actualState: number | null;
+            /** Format: int64 */
+            channel: number;
             errorMessage: string;
             status: string;
         };
@@ -2748,7 +2756,7 @@ export interface components {
         };
         ProcessAlarmsReqBody: {
             ids: number[] | null;
-            operatorName: string;
+            operatorName?: string;
             remark?: string;
         };
         Profile: {
@@ -2908,6 +2916,8 @@ export interface components {
         };
         TenantAlarm: {
             /** Format: int64 */
+            alarmCount: number;
+            /** Format: int64 */
             channel: number | null;
             /** Format: date-time */
             createdAt: string;
@@ -2918,8 +2928,12 @@ export interface components {
             deviceSn: string;
             /** Format: int64 */
             id: number;
+            /** Format: date-time */
+            lastAlarmAt: string;
             /** Format: int32 */
             level: number;
+            /** Format: double */
+            peakValue: number | null;
             processRemark: string;
             processed: boolean;
             /** Format: date-time */
@@ -2932,7 +2946,7 @@ export interface components {
             /** Format: double */
             triggerValue: number | null;
             /** @enum {string} */
-            type: "threshold" | "offline" | "fault" | "relay_failed";
+            type: "threshold" | "online" | "offline" | "fault" | "relay_failed";
         };
         TenantAlarmPage: {
             hasMore: boolean;
@@ -5279,7 +5293,7 @@ export interface operations {
                 siteId?: number;
                 deviceId?: number;
                 level?: number;
-                type?: "threshold" | "offline" | "fault" | "relay_failed";
+                type?: "threshold" | "online" | "offline" | "fault" | "relay_failed";
                 processed?: "true" | "false";
                 start?: string;
                 end?: string;

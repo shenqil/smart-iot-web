@@ -1,4 +1,4 @@
-import { alarmsQuery, scopedUnprocessedCountQuery } from '@shared/api/alarm'
+import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@shared/api/alarm'
 import { appDeviceSummaryQuery } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
@@ -83,7 +83,7 @@ export default function HomePage() {
                   />
                   <Link className="h5-alarm-strip" to={`${base}/alarms?processed=false`}>
                     <span>待处理告警</span>
-                    <b>{count.data ? `${count.data.capped ? '99+' : count.data.count} 条` : '—'} ›</b>
+                    <b>{count.data ? `${formatUnprocessedCount(count.data)} 条` : '—'} ›</b>
                   </Link>
                 </Card>
               )
@@ -125,9 +125,7 @@ export default function HomePage() {
                     </span>
                     <div>
                       <strong>{a.description || '设备告警'}</strong>
-                      <small>
-                        {a.deviceName}
-                      </small>
+                      <small>{a.deviceName}</small>
                     </div>
                     <span>›</span>
                   </Link>

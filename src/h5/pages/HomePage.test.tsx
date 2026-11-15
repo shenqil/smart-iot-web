@@ -24,7 +24,8 @@ vi.mock('@shared/api/device', () => ({
   }),
 }))
 vi.mock('@shared/api/site', () => ({ appSitesQuery: () => ({ queryKey: ['sites'], queryFn: async () => [] }) }))
-vi.mock('@shared/api/alarm', () => ({
+vi.mock('@shared/api/alarm', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shared/api/alarm')>()),
   scopedUnprocessedCountQuery: () => ({ queryKey: ['count'], queryFn: async () => ({ count: 2, capped: false }) }),
   alarmsQuery: () => ({ queryKey: ['alarms'], queryFn: async () => ({ records: [], hasMore: false }) }),
 }))

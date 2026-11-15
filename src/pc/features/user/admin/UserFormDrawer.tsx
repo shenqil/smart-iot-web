@@ -69,11 +69,7 @@ export function UserFormDrawer({
         <Input />
       </Form.Item>
       <div className="grid grid-cols-2 gap-x-4">
-        <Form.Item
-          name="systemRole"
-          label="系统角色"
-          tooltip="平台管理员可进入平台管理端"
-        >
+        <Form.Item name="systemRole" label="系统角色" tooltip="平台管理员可进入平台管理端">
           <Radio.Group
             optionType="button"
             options={[

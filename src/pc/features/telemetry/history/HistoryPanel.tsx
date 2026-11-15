@@ -264,7 +264,8 @@ export function HistoryPanel({
           <div className="flex items-center justify-between px-1 text-fg-tertiary text-xs">
             <span>
               共 {status.count.toLocaleString()} 帧
-              {status.count > HISTORY_POINTS && '，曲线按时间桶取样，每个桶显示最早的一帧；拖动各通道下方滑块或滚轮可单独缩放查看细节'}
+              {status.count > HISTORY_POINTS &&
+                '，曲线按时间桶取样，每个桶显示最早的一帧；拖动各通道下方滑块或滚轮可单独缩放查看细节'}
             </span>
           </div>
           <div className="flex flex-col gap-4">

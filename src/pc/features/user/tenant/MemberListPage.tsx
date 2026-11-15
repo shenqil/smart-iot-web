@@ -97,12 +97,7 @@ export default function MemberListPage() {
 
   return (
     <>
-      <Alert
-        className="mb-4"
-        type="info"
-        showIcon
-        title="修改成员资料、密码或角色请联系平台管理员。"
-      />
+      <Alert className="mb-4" type="info" showIcon title="修改成员资料、密码或角色请联系平台管理员。" />
       <PageTable<Member>
         queryKey={tenantUserKeys.list(cid)}
         fetcher={api.list}

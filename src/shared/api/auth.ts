@@ -28,10 +28,26 @@ export async function login(username: string, password: string) {
   return r
 }
 
-/** 退出登录：清理本地会话并跳到登录页 */
-export function logout() {
-  useSession.getState().clear()
-  navigateTo(loginPath(), { replace: true })
-  // 等登录页渲染后再清缓存，避免仍挂载的页面因缓存清空重新请求
-  setTimeout(() => queryClient.clear(), 0)
+let logoutPromise: Promise<void> | null = null
+
+/** 退出登录：吊销后端令牌、清理本地会话并跳到登录页（并发调用复用同一流程） */
+export function logout(): Promise<void> {
+  if (logoutPromise) return logoutPromise
+  const p = (async () => {
+    if (useSession.getState().token) {
+      try {
+        await api.POST('/api/v1/auth/logout', { signal: AbortSignal.timeout(3000) })
+      } catch {
+        // 网络异常或令牌已失效时仍继续清理本地会话
+      }
+    }
+    useSession.getState().clear()
+    navigateTo(loginPath(), { replace: true })
+    // 等登录页渲染后再清缓存，避免仍挂载的页面因缓存清空重新请求
+    setTimeout(() => queryClient.clear(), 0)
+  })().finally(() => {
+    logoutPromise = null
+  })
+  logoutPromise = p
+  return p
 }

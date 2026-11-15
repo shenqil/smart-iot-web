@@ -10,6 +10,7 @@ export const ALARM_LEVEL: Record<number, { label: string; color: string }> = {
 
 export const ALARM_TYPE: Record<string, { label: string; color?: string }> = {
   threshold: { label: '越限', color: 'orange' },
+  online: { label: '上线', color: 'green' },
   offline: { label: '离线' },
   fault: { label: '故障', color: 'red' },
   relay_failed: { label: '定时开关失败', color: 'magenta' },

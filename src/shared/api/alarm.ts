@@ -4,7 +4,7 @@ import { currentOperatorName } from '@/lib/operator'
 
 export type AlarmView = Schemas['AppAlarm']
 
-/** 未处理告警数 (顶栏数字，后端最多数到 100，超出显示 99+)，60s 刷新；失败不打扰用户 */
+/** 未处理告警数 (顶栏数字，后端最多数到 1000)，60s 刷新；失败不打扰用户 */
 export const unprocessedAlarmCountQuery = (companyId: number) =>
   queryOptions({
     queryKey: ['app', companyId, 'alarms', 'unprocessed-count'],
@@ -37,11 +37,15 @@ export const scopedUnprocessedCountQuery = (
     meta: { silent: true },
   })
 
+/** 格式化未处理告警数 (超过 99 或后端达到上限 capped=true 时统一显示 99+) */
+export const formatUnprocessedCount = (c: { count: number; capped: boolean }) =>
+  c.capped || c.count > 99 ? '99+' : String(c.count)
+
 export interface AlarmQuery {
   siteId?: number
   deviceId?: number
   level?: number
-  type?: 'threshold' | 'offline' | 'fault' | 'relay_failed'
+  type?: AlarmView['type']
   processed?: 'true' | 'false'
   start?: string
   end?: string

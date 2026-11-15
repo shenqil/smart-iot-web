@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Tag } from 'antd'
 import { Link } from 'react-router'
 import { DEVICE_STATUS, EnumTag, OnlineTag } from '@/components/StatusTag'
-import { scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import type { AppDevice } from '@/features/device/api'
 import type { DeviceType } from '@/features/dict/api'
 import { isVideoDeviceType } from '@/features/telemetry/lib/realtime'
@@ -33,7 +33,7 @@ export function DeviceHero({
     ...scopedUnprocessedCountQuery(companyId, { deviceId: device.id }),
     enabled: !isVideo,
   })
-  const alarmCount = !isVideo && alarm ? (alarm.capped ? '99+' : String(alarm.count)) : null
+  const alarmCount = !isVideo && alarm ? formatUnprocessedCount(alarm) : null
   const alarmsLink = `/app/${companyId}/alarms?deviceId=${device.id}${siteId ? `&siteId=${siteId}` : ''}`
 
   return (

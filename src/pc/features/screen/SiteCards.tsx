@@ -1,6 +1,6 @@
 import { FlagOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { type AlarmView, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { type AlarmView, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { ALARM_LEVEL } from '@/features/alarm/enums'
 import type { AppDevice } from '@/features/device/api'
 import { type SiteView, weatherQuery } from '@/features/site/api'
@@ -232,7 +232,7 @@ function useLevelCounts(siteId: number) {
   return [useQuery(q(1)).data, useQuery(q(2)).data, useQuery(q(3)).data, useQuery(q(4)).data]
 }
 
-const countText = (c: { count: number; capped: boolean } | undefined) => (c ? (c.capped ? '99+' : c.count) : '…')
+const countText = (c: { count: number; capped: boolean } | undefined) => (c ? formatUnprocessedCount(c) : '…')
 
 /** ③ 设备告警 (固定)：四个级别的未处理数 + 最新告警 (可滚动，不显示滚动条)；点击告警切换到该设备 */
 export function AlarmCard({
@@ -277,27 +277,31 @@ export function AlarmCard({
         </PanelEmpty>
       ) : (
         <div className="screen-scroll">
-          {(alarms ?? []).map((a) => (
-            <button key={a.id} type="button" className="screen-row" onClick={() => onPick(a.deviceId)}>
-              <span
-                className="w-9 flex-none rounded-[3px] border border-solid py-px text-center text-[12px]"
-                style={{ color: LEVEL_COLOR[a.level], borderColor: LEVEL_COLOR[a.level] }}
-              >
-                {ALARM_LEVEL[a.level]?.label ?? a.level}
-              </span>
-              <span className="screen-num w-[52px] flex-none text-[14px] text-[var(--sc-text-2)]" title={a.createdAt}>
-                {dayjs(a.createdAt).isSame(dayjs(), 'day')
-                  ? dayjs(a.createdAt).format('HH:mm')
-                  : agoText(a.createdAt)}
-              </span>
-              <span className="w-[96px] flex-none truncate" title={a.deviceName}>
-                {a.deviceName}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[var(--sc-text-2)]" title={a.description}>
-                {a.description || '告警'}
-              </span>
-            </button>
-          ))}
+          {(alarms ?? []).map((a) => {
+            const at = a.lastAlarmAt || a.createdAt
+            return (
+              <button key={a.id} type="button" className="screen-row" onClick={() => onPick(a.deviceId)}>
+                <span
+                  className="w-9 flex-none rounded-[3px] border border-solid py-px text-center text-[12px]"
+                  style={{ color: LEVEL_COLOR[a.level], borderColor: LEVEL_COLOR[a.level] }}
+                >
+                  {ALARM_LEVEL[a.level]?.label ?? a.level}
+                </span>
+                <span className="screen-num w-[52px] flex-none text-[14px] text-[var(--sc-text-2)]" title={at}>
+                  {dayjs(at).isSame(dayjs(), 'day') ? dayjs(at).format('HH:mm') : agoText(at)}
+                </span>
+                <span className="w-[96px] flex-none truncate" title={a.deviceName}>
+                  {a.deviceName}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[var(--sc-text-2)]" title={a.description}>
+                  {a.description || '告警'}
+                </span>
+                {a.alarmCount > 1 && (
+                  <span className="screen-num flex-none text-[12px] text-[var(--sc-warn)]">×{a.alarmCount}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </Panel>

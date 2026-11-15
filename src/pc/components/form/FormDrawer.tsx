@@ -68,7 +68,7 @@ export function FormDrawer<V extends object>(props: FormDrawerProps<V>) {
         const rest = applyFormErrors(form, e)
         notify.error(rest[0] ?? '请检查表单中标红的字段')
       } else {
-        if (isApiError(e) && e.status === 409 && props.conflictField) {
+        if (isApiError(e) && e.status === 409 && e.code === 'DUPLICATE' && props.conflictField) {
           form.setFields([{ name: props.conflictField as never, errors: [e.message] }])
         }
         handleGlobalError(e)

@@ -4,7 +4,7 @@ import { Card, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { DeviceMap } from '@/components/map/DeviceMap'
 import { DEVICE_STATUS, EnumTag, SITE_STATUS } from '@/components/StatusTag'
-import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { AlarmLevelTag } from '@/features/alarm/enums'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
@@ -31,9 +31,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
     ...alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 200 }),
     meta: { silent: true },
   }).data
-  const latest = useQuery(
-    alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 8 }),
-  )
+  const latest = useQuery(alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 8 }))
   const located = site?.latitude != null && site?.longitude != null
   const weather = useQuery({
     ...weatherQuery(site?.latitude ?? 0, site?.longitude ?? 0),
@@ -75,9 +73,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
                 <AlarmLevelTag level={a.level} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-fg">{a.description || '告警'}</span>
-                  <span className="block truncate text-fg-tertiary text-xs">
-                    {a.deviceName}
-                  </span>
+                  <span className="block truncate text-fg-tertiary text-xs">{a.deviceName}</span>
                 </span>
                 <span className="shrink-0 text-fg-tertiary text-xs" title={fmtDateTime(a.createdAt)}>
                   {agoText(a.createdAt)}
@@ -120,7 +116,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
         <Link to={alarmsLink} className="no-underline">
           <Stat
             label="未处理告警"
-            value={alarm ? (alarm.capped ? '99+' : alarm.count) : '…'}
+            value={alarm ? formatUnprocessedCount(alarm) : '…'}
             tone={alarm?.count ? 'danger' : undefined}
           />
         </Link>
