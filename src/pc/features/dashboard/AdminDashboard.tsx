@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import { api, unwrap } from '@/api/client'
 import { ExpireTag, OnlineTag } from '@/components/StatusTag'
 import { useDeviceTypes } from '@/features/dict/api'
+import { useMonitoring } from '@/features/monitoring/api'
 import { dayjs, fmtDateTime } from '@/lib/time'
 
 interface StatDef {
@@ -94,6 +95,15 @@ function SimpleList<T>({
  */
 export default function AdminDashboard() {
   const types = useDeviceTypes()
+  const monitoring = useMonitoring('1h', undefined, true)
+  const targets = monitoring.data?.series.up ?? []
+  const abnormal = targets.filter(
+    (target) =>
+      target.values?.[0]?.value === 0 ||
+      monitoring.data?.series.ready?.some(
+        (probe) => probe.labels.instance === target.labels.instance && probe.values?.[0]?.value === 0,
+      ),
+  ).length
   const stats = useQueries({
     queries: STATS.map((s) => ({
       queryKey: ['admin', 0, 'dashboard', s.key],
@@ -122,7 +132,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="layout-fill gap-4 max-xl:flex-none">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         {STATS.map((s, i) => (
           <Link key={s.key} to={s.to}>
             <Card variant="borderless" hoverable>
@@ -135,6 +145,16 @@ export default function AdminDashboard() {
             </Card>
           </Link>
         ))}
+        <Link to="/admin/monitoring">
+          <Card variant="borderless" hoverable>
+            <Statistic
+              title="系统状态"
+              loading={monitoring.isPending}
+              value={monitoring.isError ? '查询失败' : targets.length ? `${abnormal} 个异常实例` : '暂无采集数据'}
+              styles={{ content: { fontSize: 18 } }}
+            />
+          </Card>
+        </Link>
       </div>
       <div className="layout-fill grid gap-4 max-xl:flex-none xl:grid-cols-2 xl:grid-rows-[minmax(0,1fr)]">
         <Card

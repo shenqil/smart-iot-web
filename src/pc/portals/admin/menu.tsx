@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   BankOutlined,
   BookOutlined,
+  CloudServerOutlined,
   DashboardOutlined,
   SettingOutlined,
   TeamOutlined,
@@ -11,6 +12,7 @@ import type { PortalMenuItem } from '@/layouts/menu'
 
 export const adminMenu: PortalMenuItem[] = [
   { path: '', label: '工作台', icon: <DashboardOutlined /> },
+  { path: 'monitoring', label: '系统监控', icon: <CloudServerOutlined /> },
   { path: 'companies', label: '企业管理', icon: <BankOutlined /> },
   { path: 'users', label: '用户管理', icon: <TeamOutlined /> },
   { path: 'devices', label: '设备管理', icon: <AppstoreOutlined /> },

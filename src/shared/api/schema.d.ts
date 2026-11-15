@@ -435,6 +435,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/monitoring": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description 不参与授权 */
+                "X-System-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询系统监控 */
+        get: operations["admin-get-monitoring"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/relay-schedules/{id}": {
         parameters: {
             query?: never;
@@ -1869,6 +1889,71 @@ export interface components {
         };
         AdminDisconnectNotice: {
             notice: string;
+        };
+        AdminMonitoringDisk: {
+            /** Format: int64 */
+            available: number;
+            mount: string;
+            paths: string[] | null;
+            /** Format: double */
+            percent: number;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            used: number;
+        };
+        AdminMonitoringMemory: {
+            scope: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            used: number;
+        };
+        AdminMonitoringPoint: {
+            /** Format: double */
+            time: number;
+            /** Format: double */
+            value: number;
+        };
+        AdminMonitoringResource: {
+            /** Format: double */
+            cpuPercent?: number;
+            cpuScope: string;
+            disks: components["schemas"]["AdminMonitoringDisk"][] | null;
+            history: components["schemas"]["AdminMonitoringResourcePoint"][] | null;
+            memory?: components["schemas"]["AdminMonitoringMemory"];
+            node: string;
+            /** Format: double */
+            processCores?: number;
+            /** Format: int64 */
+            processRss?: number;
+        };
+        AdminMonitoringResourcePoint: {
+            /** Format: double */
+            cpuPercent?: number;
+            /** Format: double */
+            memoryPercent?: number;
+            /** Format: double */
+            processCores?: number;
+            /** Format: int64 */
+            processRss?: number;
+            /** Format: int64 */
+            time: number;
+        };
+        AdminMonitoringSample: {
+            labels: {
+                [key: string]: string;
+            };
+            values: components["schemas"]["AdminMonitoringPoint"][] | null;
+        };
+        AdminMonitoringSnapshot: {
+            /** Format: int64 */
+            at: number;
+            combined: boolean;
+            resources: components["schemas"]["AdminMonitoringResource"][] | null;
+            series: {
+                [key: string]: components["schemas"]["AdminMonitoringSample"][] | null;
+            };
         };
         AdminSensorBody: {
             iconUrl?: string;
@@ -4432,6 +4517,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "admin-get-monitoring": {
+        parameters: {
+            query?: {
+                window?: "15m" | "1h" | "24h";
+                statusOnly?: boolean;
+                instance?: string;
+            };
+            header?: {
+                /** @description 不参与授权 */
+                "X-System-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminMonitoringSnapshot"];
                 };
             };
             /** @description Error */

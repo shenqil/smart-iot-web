@@ -3,6 +3,11 @@ import type { RouteObject } from 'react-router'
 export const adminRoutes: RouteObject[] = [
   { index: true, lazy: async () => ({ Component: (await import('@/features/dashboard/AdminDashboard')).default }) },
   {
+    path: 'monitoring',
+    handle: { crumb: '系统监控' },
+    lazy: async () => ({ Component: (await import('@/features/monitoring/MonitoringPage')).default }),
+  },
+  {
     path: 'companies',
     handle: { crumb: '企业管理' },
     children: [

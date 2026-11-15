@@ -8,8 +8,8 @@
   --sc-text-2: #9fb6ca;
   --sc-text-3: #7f9bb3;
   --sc-num: "DIN Alternate", "Bahnschrift", "Roboto Condensed", "Arial Narrow", sans-serif;
-  position: fixed;
-  inset: 0;
+  position: relative;
+  height: 100%;
   overflow: hidden;
   background: var(--sc-bg);
   color: var(--sc-text);

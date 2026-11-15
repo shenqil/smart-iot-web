@@ -25,10 +25,14 @@ import './screen.css'
 /** 长时间运行释放内存：每 6 小时刷新页面 (FRONTEND_DESIGN §5.7) */
 const RELOAD_MS = 6 * 3600_000
 
+function readViewport() {
+  return { w: document.body.clientWidth, h: document.body.clientHeight }
+}
+
 function useViewport() {
-  const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
+  const [size, setSize] = useState(readViewport)
   useEffect(() => {
-    const on = () => setSize({ w: window.innerWidth, h: window.innerHeight })
+    const on = () => setSize(readViewport)
     window.addEventListener('resize', on)
     return () => window.removeEventListener('resize', on)
   }, [])
@@ -37,7 +41,7 @@ function useViewport() {
 
 /**
  * 数据大屏 (FRONTEND_DESIGN §5.7) `/screen/:companyId?siteId&deviceId`
- * - 地图铺满视口；面板按 1920 × 1080 设计稿等比缩放后叠在地图上，画布随屏幕比例伸缩，卡片贴住左、右、下边
+ * - 地图铺满页面；面板按 1920 × 1080 设计稿等比缩放后叠在地图上，画布随屏幕比例伸缩，卡片贴住左、右、下边
  * - 左栏 (园区) 与「设备信息」固定；其余卡片按当前设备的通道配置与园区有无摄像头编排 (layout.ts)
  */
 export default function ScreenPage() {
