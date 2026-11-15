@@ -8,10 +8,12 @@ import { useDeviceTypes } from '@/features/dict/api'
 export function BasicFields({
   showFault = false,
   isVideo = false,
+  disableDeviceType = false,
   onDeviceTypeChange,
 }: {
   showFault?: boolean
   isVideo?: boolean
+  disableDeviceType?: boolean
   onDeviceTypeChange?: (id: number | null | undefined) => void
 }) {
   const types = useDeviceTypes()
@@ -25,9 +27,14 @@ export function BasicFields({
         <Input />
       </Form.Item>
       <div className="grid grid-cols-2 gap-x-4">
-        <Form.Item name="deviceTypeId" label="设备类型">
+        <Form.Item
+          name="deviceTypeId"
+          label="设备类型"
+          tooltip={disableDeviceType ? '设备登记后不可修改类型' : undefined}
+        >
           <Select
-            allowClear
+            allowClear={!disableDeviceType}
+            disabled={disableDeviceType}
             placeholder="未分类"
             options={types.options}
             showSearch

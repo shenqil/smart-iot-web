@@ -24,7 +24,7 @@ const toForm = (d: DeviceDetail): FormValues => ({
   status: d.status,
 })
 
-/** 基本信息：接口为部分更新 (未传不修改)，提交时带上全部字段；清空的设备类型与坐标显式传 null */
+/** 基本信息：接口为部分更新 (未传不修改)，提交时带上可修改字段；设备类型登记后不可修改，不随表单提交；清空的坐标显式传 null */
 export function BasicForm({
   device,
   saving,
@@ -59,14 +59,13 @@ export function BasicForm({
             onDeviceTypeChange?.(changed.deviceTypeId)
           }
         }}
-        onFinish={async ({ location, status, ...v }) => {
+        onFinish={async ({ location, status, deviceTypeId: _deviceTypeId, ...v }) => {
           await onSave({
             ...v,
             readInterval: v.readInterval ?? device.readInterval ?? 60,
             // 损坏 (fault) 只能由系统设置：未改为启用 / 停用时不提交状态
             ...(status === 'fault' ? {} : { status }),
             name: v.name.trim(),
-            deviceTypeId: v.deviceTypeId ?? null,
             longitude: location ? location[0] : null,
             latitude: location ? location[1] : null,
           })
@@ -81,7 +80,12 @@ export function BasicForm({
             description="设备上报的传感器 / 继电器路数少于登记的通道数，已断开且不能接入 (详情见告警记录)。通道数登记后不可修改：请更换为相符的设备，或删除后按实际规格重新登记；处理后把状态改为「启用」并保存，设备重连即可上线。"
           />
         )}
-        <BasicFields showFault={device.status === 'fault'} isVideo={isVideo} onDeviceTypeChange={onDeviceTypeChange} />
+        <BasicFields
+          showFault={device.status === 'fault'}
+          isVideo={isVideo}
+          disableDeviceType
+          onDeviceTypeChange={onDeviceTypeChange}
+        />
         <Button type="primary" htmlType="submit" loading={saving}>
           保存基本信息
         </Button>
