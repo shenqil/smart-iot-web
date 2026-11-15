@@ -30,17 +30,17 @@ describe('卡片编排', () => {
     expect(p.bottom[0].rect.width).toBeGreaterThan(900)
   })
 
-  it('只有传感器且无摄像头：右侧只有实时数据，第二个槽位空着', () => {
+  it('只有传感器且无摄像头：右侧由实时数据和节点 CPU 使用率填满', () => {
     expect(cards(plan({ sensors: true, relays: false, cameras: false }))).toEqual({
-      right: ['realtime'],
+      right: ['realtime', 'cpu'],
       bottom: ['trend'],
       omitted: [],
     })
   })
 
-  it('都没有：右侧只剩固定的设备信息，底部隐藏', () => {
+  it('都没有：右侧补上节点 CPU 和内存使用率，底部隐藏', () => {
     const p = plan({ sensors: false, relays: false, cameras: false })
-    expect(p.right).toEqual([])
+    expect(cards(p).right).toEqual(['cpu', 'memory'])
     expect(p.bottom).toEqual([])
     expect(p.bottomTop).toBeNull()
   })

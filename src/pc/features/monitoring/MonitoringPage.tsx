@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Drawer, Segmented, Select, Skeleton, Statistic, Table, Tabs, Tag } from 'antd'
 import { useState } from 'react'
+import type { Schemas } from '@/api/client'
 import { useMonitoring } from './api'
 import { memoryPercent, nodeLabel, ResourcePanel } from './ResourcePanel'
 import { format, type Sample, Trend, type Window } from './Trend'
@@ -11,6 +12,30 @@ const latency = [
   ['继电器下发至 ACK', 'relay'],
 ] as const
 
+type Resource = Schemas['AdminMonitoringResource']
+
+function ResourceMetrics({ resource }: { resource?: Resource }) {
+  const disks = resource?.disks
+  const metrics = [
+    { label: 'CPU', value: resource?.cpuPercent },
+    { label: '内存', value: memoryPercent(resource?.memory) },
+    { label: '最高磁盘', value: disks?.length ? Math.max(...disks.map(({ percent }) => percent)) : undefined },
+  ].filter(({ value }) => value !== undefined)
+
+  if (metrics.length === 0) return <p className="m-0 text-fg-tertiary text-xs">暂无资源采样</p>
+
+  return (
+    <dl className="m-0 grid grid-cols-3 gap-2">
+      {metrics.map(({ label, value }) => (
+        <div key={label} className="rounded-md bg-fill-tertiary px-2 py-2">
+          <dt className="text-fg-tertiary text-xs">{label}</dt>
+          <dd className="m-0 mt-1 font-semibold tabular-nums">{format(value)}%</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 const first = (series?: Sample) => series?.values?.[0]?.value
 
 function health(value: number | undefined, ok: string, failed: string) {
@@ -19,7 +44,7 @@ function health(value: number | undefined, ok: string, failed: string) {
 }
 
 export default function MonitoringPage() {
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab] = useState('resources')
   const [resourceNode, setResourceNode] = useState<string>()
   const [window, setWindow] = useState<Window>('1h')
   const [instance, setInstance] = useState<string>()
@@ -98,6 +123,11 @@ export default function MonitoringPage() {
             destroyOnHidden
             items={[
               {
+                key: 'resources',
+                label: '资源监控',
+                children: <ResourcePanel resource={selectedResource} at={at} window={window} />,
+              },
+              {
                 key: 'overview',
                 label: '运行总览',
                 children: (
@@ -155,77 +185,65 @@ export default function MonitoringPage() {
                         </Button>
                       }
                     >
-                      {data.combined && (
-                        <div className="mb-2 text-fg-tertiary text-xs">单进程模式，资源统计由三个组件共享。</div>
-                      )}
-                      <Table
-                        size="small"
-                        rowKey="instance"
-                        dataSource={onlyFailures ? failed : targets}
-                        pagination={false}
-                        expandable={{
-                          rowExpandable: (row) => row.dependencies.length > 0,
-                          expandedRowRender: (row) =>
-                            row.dependencies.map((sample) => (
-                              <span key={sample.labels.dependency} className="mr-3">
-                                {sample.labels.dependency} {health(first(sample), '正常', '异常')}
-                              </span>
-                            )),
-                        }}
-                        columns={[
-                          {
-                            title: '服务',
-                            render: (_, row) => (
-                              <Button
-                                type="link"
-                                onClick={() => {
-                                  setResourceNode(data.combined ? 'server' : row.instance)
-                                  setTab('resources')
-                                }}
-                              >
-                                {nodeLabel(row.instance)}
-                              </Button>
-                            ),
-                          },
-                          { title: '就绪', render: (_, row) => health(row.ready, '就绪', '未就绪') },
-                          { title: '采集', render: (_, row) => health(row.up, '正常', '失败') },
-                          {
-                            title: 'CPU',
-                            render: (_, row) => {
-                              const value = resources.find(({ node }) => node === row.instance)?.cpuPercent
-                              return value === undefined ? '—' : `${format(value)}%`
-                            },
-                          },
-                          {
-                            title: '内存',
-                            render: (_, row) => {
-                              const value = memoryPercent(resources.find(({ node }) => node === row.instance)?.memory)
-                              return value === undefined ? '—' : `${format(value)}%`
-                            },
-                          },
-                          {
-                            title: '最高磁盘',
-                            render: (_, row) => {
-                              const mounts = resources.find(({ node }) => node === row.instance)?.disks
-                              return mounts?.length
-                                ? `${format(Math.max(...mounts.map(({ percent }) => percent)))}%`
-                                : '—'
-                            },
-                          },
-                          {
-                            title: '采样时间',
-                            render: (_, row) => (row.time ? new Date(row.time * 1000).toLocaleTimeString() : '—'),
-                          },
-                        ]}
-                      />
+                      <div className="space-y-3">
+                        {data.combined && (
+                          <div>
+                            <div className="mb-2 text-fg-tertiary text-xs">三个服务共享进程资源</div>
+                            <ResourceMetrics resource={resources.find(({ node }) => node === 'server')} />
+                          </div>
+                        )}
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {(onlyFailures ? failed : targets).map((target) => (
+                            <Card
+                              key={target.instance}
+                              size="small"
+                              title={nodeLabel(target.instance)}
+                              extra={
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  onClick={() => {
+                                    setResourceNode(data.combined ? 'server' : target.instance)
+                                    setTab('resources')
+                                  }}
+                                >
+                                  查看资源
+                                </Button>
+                              }
+                            >
+                              <div className="space-y-3">
+                                <div className="flex flex-wrap gap-x-3 gap-y-2 text-xs">
+                                  <span>就绪 {health(target.ready, '就绪', '未就绪')}</span>
+                                  <span>采集 {health(target.up, '正常', '失败')}</span>
+                                </div>
+                                {!data.combined && (
+                                  <ResourceMetrics resource={resources.find(({ node }) => node === target.instance)} />
+                                )}
+                                {target.dependencies.length > 0 && (
+                                  <div className="flex flex-wrap gap-x-2 gap-y-2 text-xs">
+                                    {target.dependencies.map((sample) => (
+                                      <span key={sample.labels.dependency}>
+                                        {sample.labels.dependency} {health(first(sample), '正常', '异常')}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {target.time ? (
+                                  <div className="text-fg-tertiary text-xs">
+                                    采样于 {new Date(target.time * 1000).toLocaleTimeString()}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                        {onlyFailures && failed.length === 0 && (
+                          <p className="m-0 text-fg-tertiary text-sm">暂无异常服务</p>
+                        )}
+                      </div>
                     </Card>
                   </div>
                 ),
-              },
-              {
-                key: 'resources',
-                label: '资源监控',
-                children: <ResourcePanel resource={selectedResource} at={at} window={window} />,
               },
               {
                 key: 'performance',

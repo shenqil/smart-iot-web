@@ -7,7 +7,7 @@
  * - 底部卡片贴下边，宽度占满两栏之间，高度同比例伸缩
  *
  * 左栏 3 张、右上「设备信息」固定，其余按当前设备的通道配置与园区有无摄像头出现：
- * - 右侧 2 个槽位，按 实时数据 → 实时监控 → 操作记录 依次填入，填满后其余省略；没填满时空着 (露出地图)
+ * - 右侧 2 个槽位，按 实时数据 → 实时监控 → 操作记录 依次填入，填满后其余省略；空位按 节点 CPU 使用率 → 节点内存使用率 补齐
  * - 底部按 今日曲线 → 继电器控制 排列；只有一张时占满宽度；都没有时隐藏底部
  */
 
@@ -34,7 +34,8 @@ const DESIGN_COL_H = LEFT_H[0] + LEFT_H[1] + LEFT_H[2]
 /** 底部两张并排时 曲线 : 继电器 = 588 : 368 */
 const TREND_RATIO = 588 / (588 + 368)
 
-export type RightCard = 'realtime' | 'camera' | 'operations'
+type DeviceRightCard = 'realtime' | 'camera' | 'operations'
+export type RightCard = DeviceRightCard | 'cpu' | 'memory'
 export type BottomCard = 'trend' | 'relay'
 
 export interface ScreenLayout {
@@ -45,7 +46,7 @@ export interface ScreenLayout {
   right: { card: RightCard; rect: Rect }[]
   bottom: { card: BottomCard; rect: Rect }[]
   /** 因槽位已满而省略的卡片 (操作记录省略时继电器卡片给入口) */
-  omitted: RightCard[]
+  omitted: DeviceRightCard[]
   /** 底部区域的顶边 (隐藏时为 null)；图例、地图视野据此避让 */
   bottomTop: number | null
   /** 两栏之间的地图可见区域 (左右边界与顶边) */
@@ -77,14 +78,15 @@ export function computeLayout(width: number, height: number, f: ScreenFeatures):
     deviceInfo: col(COL_TOP, h0, rightX),
   }
 
-  const queue: RightCard[] = []
+  const queue: DeviceRightCard[] = []
   if (f.sensors) queue.push('realtime')
   if (f.cameras) queue.push('camera')
   if (f.relays) queue.push('operations')
   // 右侧两个槽位平分设备信息以下的高度
   const slotTop = COL_TOP + h0 + GAP
   const slotH = Math.floor((colBottom - slotTop - GAP) / 2)
-  const right = queue.slice(0, 2).map((card, i) => ({
+  const slots: RightCard[] = [...queue, 'cpu', 'memory']
+  const right = slots.slice(0, 2).map((card, i) => ({
     card,
     rect: col(i === 0 ? slotTop : colBottom - slotH, slotH, rightX),
   }))

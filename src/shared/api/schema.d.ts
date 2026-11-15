@@ -1116,6 +1116,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/node-usage": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询节点资源使用率 */
+        get: operations["app-node-usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/operations": {
         parameters: {
             query?: never;
@@ -2960,6 +2981,13 @@ export interface components {
             base: number;
             /** Format: double */
             jitter: number;
+        };
+        ServiceNodeUsage: {
+            /** Format: double */
+            cpuPercent?: number;
+            /** Format: double */
+            memoryPercent?: number;
+            node: string;
         };
         SetMountedSitesReqBody: {
             siteIds: number[];
@@ -6145,6 +6173,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppRelayRelease"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-node-usage": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceNodeUsage"][] | null;
                 };
             };
             /** @description Error */

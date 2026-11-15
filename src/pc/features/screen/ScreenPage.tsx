@@ -17,6 +17,7 @@ import { screenTheme } from '@/pc/theme'
 import { CameraCard } from './CameraCard'
 import { DeviceInfoCard, OperationsCard, RealtimeCard, RelayCard, TrendCard, useRelayUnlock } from './DeviceCards'
 import { computeLayout, fitScreen, HEADER_H, type ScreenLayout } from './layout'
+import { NodeUsageCard } from './NodeUsageCard'
 import { ScreenHeader } from './ScreenHeader'
 import { type FitPadding, fitSite, ScreenMap, type ScreenMapPoint } from './ScreenMap'
 import { AlarmCard, DeviceTypeCard, KpiBar, WeatherSiteCard } from './SiteCards'
@@ -389,6 +390,8 @@ function SiteStage({
       {plan.right.map(({ card, rect }) =>
         card === 'camera' ? (
           <CameraCard key="camera" cameras={cameras} cameraId={cameraId} onChange={onCamera} rect={rect} />
+        ) : card === 'cpu' || card === 'memory' ? (
+          <NodeUsageCard key={card} metric={card} rect={rect} />
         ) : !device ? null : card === 'realtime' ? (
           <RealtimeCard
             key={`rt-${device.id}`}
