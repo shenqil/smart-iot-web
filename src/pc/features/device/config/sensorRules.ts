@@ -22,15 +22,14 @@ export const MAX_RULES = 16
 /** 编辑中的告警规则：key 为表格行键 (不提交)；已有规则带 id (保存后 id 不变，联动动作随之保留) */
 export type RuleDraft = RuleBody & { key: string; actionCount?: number }
 
-/** 编辑中的传感器通道：standardName 只用于显示 (不提交) */
-export type SensorDraft = Omit<SensorBody, 'rules'> & { standardName?: string; rules: RuleDraft[] }
+/** 编辑中的传感器通道：rules 使用本地行键与 actionCount */
+export type SensorDraft = Omit<SensorBody, 'rules'> & { rules: RuleDraft[] }
 
 const isIdentity = (c: Calibration | undefined) => !c || (c.scale === 1 && c.offset === 0)
 
 /** 详情 → 编辑草稿 */
 export const toDraft = (v: SensorView): SensorDraft => ({
   channel: v.channel,
-  standardName: v.standardName || undefined,
   name: v.name || undefined,
   unit: v.unit || undefined,
   rangeMin: v.rangeMin,
@@ -66,11 +65,11 @@ export const copyChannel = (src: SensorDraft, target: number): SensorDraft => ({
   rules: src.rules.map(cloneRule),
 })
 
-/** 草稿 → 请求体：去掉只用于显示的字段，空白文本不提交，按通道号排序 */
+/** 草稿 → 请求体：去掉行键与只读字段，空白文本不提交，按通道号排序 */
 export function prepareSensors(list: SensorDraft[]): SensorBody[] {
   return [...list]
     .sort((a, b) => a.channel - b.channel)
-    .map(({ standardName: _s, rules, ...s }) => ({
+    .map(({ rules, ...s }) => ({
       ...s,
       name: s.name?.trim() || undefined,
       unit: s.unit?.trim() || undefined,
@@ -81,15 +80,14 @@ export function prepareSensors(list: SensorDraft[]): SensorBody[] {
 }
 
 /** 通道显示名 */
-export const channelLabel = (s: Pick<SensorDraft, 'channel' | 'name' | 'standardName'>) =>
-  s.name?.trim() || s.standardName || `通道 ${s.channel}`
+export const channelLabel = (s: Pick<SensorDraft, 'channel' | 'name'>) => s.name?.trim() || `通道 ${s.channel}`
 
 /** 前端校验 (与后端一致，提前给出可读的中文提示) */
 export function validateSensors(list: SensorDraft[], maxChannels: number): string[] {
   const errs: string[] = []
   const seen = new Set<number>()
   for (const s of list) {
-    const name = `通道 ${s.channel}${s.name || s.standardName ? ` (${channelLabel(s)})` : ''}`
+    const name = `通道 ${s.channel}${s.name?.trim() ? ` (${channelLabel(s)})` : ''}`
     if (s.channel < 0 || s.channel >= maxChannels) errs.push(`${name}：通道号超出范围 0~${maxChannels - 1}`)
     if (seen.has(s.channel)) errs.push(`${name}：通道重复`)
     seen.add(s.channel)

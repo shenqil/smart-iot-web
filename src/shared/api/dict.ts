@@ -8,10 +8,9 @@ export type StandardRelay = Schemas['StandardRelay']
 
 const all = <T>(
   path: '/api/v1/common/device-types' | '/api/v1/common/standard-sensors' | '/api/v1/common/standard-relays',
+  sort = 'sort',
 ) =>
-  fetchAllPages<T>(
-    (page, pageSize) => unwrap(api.GET(path, { params: { query: { page, pageSize, sort: 'sort' } } })) as never,
-  )
+  fetchAllPages<T>((page, pageSize) => unwrap(api.GET(path, { params: { query: { page, pageSize, sort } } })) as never)
 
 /** 字典全量 (只读接口，任意登录用户)，缓存 10 分钟；字典页增删改后失效 ['dict'] */
 export const dictQueries = {
@@ -22,12 +21,12 @@ export const dictQueries = {
   }),
   sensors: queryOptions({
     queryKey: ['dict', 'standard-sensors'],
-    queryFn: () => all<StandardSensor>('/api/v1/common/standard-sensors'),
+    queryFn: () => all<StandardSensor>('/api/v1/common/standard-sensors', 'createdAt,id'),
     staleTime: 10 * 60_000,
   }),
   relays: queryOptions({
     queryKey: ['dict', 'standard-relays'],
-    queryFn: () => all<StandardRelay>('/api/v1/common/standard-relays'),
+    queryFn: () => all<StandardRelay>('/api/v1/common/standard-relays', 'createdAt,id'),
     staleTime: 10 * 60_000,
   }),
 }

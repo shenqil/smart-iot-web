@@ -9,11 +9,12 @@ import {
 import { Alert, Badge, Button, Dropdown, Input, InputNumber, Select, Space, Switch, Table, Tag, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useState } from 'react'
-import { useStandardSensors } from '@/features/dict/api'
+import { type StandardSensor, useStandardSensors } from '@/features/dict/api'
 import { RESOLUTION_OPTIONS } from '@/lib/resolution'
 import { AlertRulesEditor } from './AlertRulesEditor'
 import type { SensorBody, SensorView } from './api'
 import { CalibrationModal } from './CalibrationModal'
+import { PresetNameInput } from './PresetNameInput'
 import {
   calibrationSummary,
   copyChannel,
@@ -65,17 +66,15 @@ export function SensorsEditor({
     ? Array.from({ length: maxChannels }, (_, i) => ({ channel: i, cfg: byChannel.get(i) }))
     : [...list].sort((a, b) => a.channel - b.channel).map((s) => ({ channel: s.channel, cfg: s }))
 
-  const applyStandard = (ch: number, id: number | undefined) => {
-    const d = id != null ? std.byId.get(id) : undefined
-    if (!d) return patch(ch, { standardName: undefined })
+  const applyStandard = (ch: number, d: StandardSensor) =>
     patch(ch, {
-      standardName: d.name,
+      name: d.name,
       unit: d.unit || undefined,
       rangeMin: d.rangeMin,
       rangeMax: d.rangeMax,
       resolution: (d.resolution || undefined) as SensorBody['resolution'],
+      iconUrl: d.iconUrl || undefined,
     })
-  }
 
   const save = async () => {
     const errs = validateSensors(list, maxChannels)
@@ -95,37 +94,21 @@ export function SensorsEditor({
       ),
     },
     {
-      title: '标准传感器',
-      width: 170,
+      title: '名称',
+      width: 240,
       render: (_, r) =>
         r.cfg ? (
-          <Select
-            size="small"
-            className="w-40"
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="选择后自动带出"
-            value={std.list.find((s) => s.name === r.cfg?.standardName)?.id}
-            options={std.list.map((s) => ({ value: s.id, label: s.name }))}
-            onChange={(v) => applyStandard(r.channel, v)}
+          <PresetNameInput
+            value={r.cfg.name}
+            placeholder="输入名称或选择标准传感器"
+            buttonTooltip="选择标准传感器填入（可再修改）"
+            options={std.list}
+            renderMeta={(s) => s.unit || undefined}
+            onChange={(name) => patch(r.channel, { name })}
+            onSelectPreset={(d) => applyStandard(r.channel, d)}
           />
         ) : (
           <span className="text-fg-tertiary">未配置</span>
-        ),
-    },
-    {
-      title: '显示名称',
-      width: 180,
-      render: (_, r) =>
-        r.cfg && (
-          <Input
-            size="small"
-            placeholder={r.cfg.standardName || '如 1 号棚空气温度'}
-            maxLength={100}
-            value={r.cfg.name ?? ''}
-            onChange={(e) => patch(r.channel, { name: e.target.value })}
-          />
         ),
     },
     {

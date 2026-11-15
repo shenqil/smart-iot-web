@@ -59,16 +59,16 @@ describe('传感器配置', () => {
     expect(temp.rules[0].threshold).toBe(35)
     expect(cloneRule(temp.rules[0]).threshold).toBe(35)
   })
-  it('保存前：去掉显示字段与行键，空白文本不提交，按通道排序', () => {
+  it('保存前：去掉行键，空白文本不提交，按通道排序', () => {
     const out = prepareSensors([
       { channel: 5, rules: [{ ...newRule(), condition: 'less', threshold: 1 }] },
-      { channel: 1, name: '  ', standardName: 'x', rules: [], calibration: { scale: 1, offset: 0 } },
+      { channel: 1, name: '  ', rules: [], calibration: { scale: 1, offset: 0 } },
       temp,
     ])
     expect(out.map((s) => s.channel)).toEqual([0, 1, 5])
     expect(out[1].name).toBeUndefined()
     expect(out[1].calibration).toBeUndefined()
-    expect('standardName' in out[1]).toBe(false)
+    expect('standardName' in out[0]).toBe(false)
     expect(out[0].rules?.[0]).toEqual({
       id: 7,
       enabled: true,

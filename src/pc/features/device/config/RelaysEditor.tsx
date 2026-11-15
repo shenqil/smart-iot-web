@@ -1,17 +1,15 @@
 import { DeleteOutlined, PlusOutlined, UndoOutlined } from '@ant-design/icons'
-import { Badge, Button, Input, Select, Space, Switch, Table, Tooltip } from 'antd'
+import { Badge, Button, Space, Switch, Table, Tooltip } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { OssUpload } from '@/components/form/OssUpload'
 import { useStandardRelays } from '@/features/dict/api'
 import type { RelayFields, RelayView } from './api'
+import { PresetNameInput } from './PresetNameInput'
 
-/** 编辑中的继电器通道：standardName 只用于显示 (不提交) */
-type RelayDraft = RelayFields & { standardName?: string }
-type Row = { channel: number; cfg?: RelayDraft }
+type Row = { channel: number; cfg?: RelayFields }
 
-const toDraft = (r: RelayView): RelayDraft => ({
+const toDraft = (r: RelayView): RelayFields => ({
   channel: r.channel,
-  standardName: r.standardName || undefined,
   name: r.name || undefined,
   iconUrl: r.iconUrl || undefined,
 })
@@ -32,14 +30,14 @@ export function RelaysEditor({
 }) {
   const std = useStandardRelays()
   const original = useMemo(() => relays.map(toDraft), [relays])
-  const [list, setList] = useState<RelayDraft[]>(original)
+  const [list, setList] = useState<RelayFields[]>(original)
   const [showEmpty, setShowEmpty] = useState(maxChannels <= 64)
   useEffect(() => setList(original), [original])
   const dirty = JSON.stringify(list) !== JSON.stringify(original)
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
 
   const byChannel = new Map(list.map((r) => [r.channel, r]))
-  const patch = (ch: number, p: Partial<RelayDraft>) =>
+  const patch = (ch: number, p: Partial<RelayFields>) =>
     setList((l) => l.map((r) => (r.channel === ch ? { ...r, ...p } : r)))
   const free = Array.from({ length: maxChannels }, (_, i) => i).filter((i) => !byChannel.has(i))
   const rows: Row[] = showEmpty
@@ -47,11 +45,7 @@ export function RelaysEditor({
     : [...list].sort((a, b) => a.channel - b.channel).map((r) => ({ channel: r.channel, cfg: r }))
 
   const save = () =>
-    onSave(
-      [...list]
-        .sort((a, b) => a.channel - b.channel)
-        .map(({ standardName: _s, ...r }) => ({ ...r, name: r.name?.trim() || undefined })),
-    )
+    onSave([...list].sort((a, b) => a.channel - b.channel).map((r) => ({ ...r, name: r.name?.trim() || undefined })))
 
   return (
     <div className="layout-fill">
@@ -109,40 +103,26 @@ export function RelaysEditor({
               ),
           },
           {
-            title: '标准继电器',
-            width: 180,
+            title: '名称',
             render: (_, r) =>
               r.cfg ? (
-                <Select
-                  size="small"
-                  className="w-40"
-                  allowClear
-                  showSearch
-                  optionFilterProp="label"
-                  placeholder="选择后自动带出"
-                  value={std.list.find((s) => s.name === r.cfg?.standardName)?.id}
-                  options={std.list.map((s) => ({ value: s.id, label: s.name }))}
-                  onChange={(id) => {
-                    const d = id != null ? std.byId.get(id) : undefined
-                    patch(r.channel, { standardName: d?.name, iconUrl: r.cfg?.iconUrl })
-                  }}
-                />
+                <div className="max-w-80">
+                  <PresetNameInput
+                    value={r.cfg.name}
+                    placeholder="输入名称或选择标准继电器"
+                    buttonTooltip="选择标准继电器填入（可再修改）"
+                    options={std.list}
+                    onChange={(name) => patch(r.channel, { name })}
+                    onSelectPreset={(d) =>
+                      patch(r.channel, {
+                        name: d.name,
+                        iconUrl: d.iconUrl || r.cfg?.iconUrl,
+                      })
+                    }
+                  />
+                </div>
               ) : (
                 <span className="text-fg-tertiary">未配置 (数据端不可控制)</span>
-              ),
-          },
-          {
-            title: '显示名称',
-            render: (_, r) =>
-              r.cfg && (
-                <Input
-                  size="small"
-                  className="max-w-72"
-                  maxLength={100}
-                  placeholder={r.cfg.standardName || '如 1 号棚灌溉主阀'}
-                  value={r.cfg.name ?? ''}
-                  onChange={(e) => patch(r.channel, { name: e.target.value })}
-                />
               ),
           },
           {

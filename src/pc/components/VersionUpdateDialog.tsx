@@ -12,7 +12,7 @@ export function VersionUpdateDialog() {
       width={400}
       centered
       closable={false}
-      maskClosable={false}
+      mask={{ closable: false }}
       keyboard={false}
       footer={
         <div style={{ textAlign: 'center', width: '100%' }}>

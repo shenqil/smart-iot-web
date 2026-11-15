@@ -85,7 +85,7 @@ export function FormDrawer<V extends object>(props: FormDrawerProps<V>) {
       size={props.width ?? 560}
       onClose={close}
       destroyOnHidden
-      maskClosable={!dirty}
+      mask={{ closable: !dirty }}
       footer={
         <Space className="flex justify-end">
           <Button onClick={close}>取消</Button>
