@@ -260,7 +260,7 @@ function CardGrid<T extends object>(p: {
     typeof p.rowKey === 'function' ? p.rowKey(row) : ((row as Record<string, unknown>)[p.rowKey] as Key)
   return (
     <div className="layout-fill">
-      <Spin spinning={p.loading} wrapperClassName="layout-fill min-h-0 overflow-y-auto">
+      <Spin spinning={p.loading} classNames={{ root: 'layout-fill min-h-0 overflow-y-auto' }}>
         {p.rows.length === 0 && !p.loading ? (
           <Empty className="py-12" />
         ) : (

@@ -148,7 +148,7 @@ export function RelayActionsModal({
         规则每次触发与重复推送时，依次对下列继电器执行开 / 关 (已是目标状态的跳过，手动接管中的跳过)；条件解除时不执行。
         需要滞回控制时配置两条规则，例如 &gt; 35 开风机、&lt; 34 关风机。保存后立即生效。
       </div>
-      {error && <Alert type="error" showIcon className="mb-3" message={error} />}
+      {error && <Alert type="error" showIcon className="mb-3" title={error} />}
       <Table<Row>
         size="small"
         pagination={false}

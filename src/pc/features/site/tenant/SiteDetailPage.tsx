@@ -1,12 +1,19 @@
-import { DeleteOutlined, DisconnectOutlined, EditOutlined, LinkOutlined } from '@ant-design/icons'
+import {
+  BorderOuterOutlined,
+  DeleteOutlined,
+  DisconnectOutlined,
+  EditOutlined,
+  LinkOutlined,
+  ProfileOutlined,
+  SaveOutlined,
+} from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Card, Descriptions, Empty, Image, Result } from 'antd'
+import { Button, Card, Descriptions, Empty, Image, Result, Tabs } from 'antd'
 import type { Key } from 'react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { isApiError } from '@/api/errors'
 import { notify } from '@/app/notify'
-import { DetailHeader } from '@/components/DetailHeader'
 import { SiteMap } from '@/components/map/SiteMap'
 import { DEVICE_STATUS, EnumTag, enumOptions, OnlineTag, SITE_STATUS } from '@/components/StatusTag'
 import { type PageColumn, PageTable } from '@/components/table/PageTable'
@@ -19,11 +26,13 @@ import { affectedText, confirmAction } from '@/lib/confirm'
 import { invalidateTenant } from '@/lib/tenant'
 import { fmtDateTime } from '@/lib/time'
 import { type SiteDevice, tenantSiteApi, tenantSiteDetailQuery, tenantSiteKeys } from './api'
+import { type FenceChrome, GeofencePanel } from './geofence/GeofencePanel'
+import { parseGeofences } from './geofence/model'
 import { SiteCover } from './SiteCover'
 import { SiteFormDrawer } from './SiteFormDrawer'
 import { SITE_DELETE_TIP } from './SiteListPage'
 
-/** 园区详情 (FRONTEND_DESIGN §4.2)：左侧信息 + 小地图 + 图片；右侧园区设备 (挂载 / 解除) */
+/** 园区详情：园区详情与电子围栏两个页签，内容占满剩余高度 */
 export default function SiteDetailPage() {
   const cid = useCompanyId()
   const id = Number(useParams().id)
@@ -31,8 +40,11 @@ export default function SiteDetailPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const types = useDeviceTypes()
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'fence' ? 'fence' : 'detail'
   const [editing, setEditing] = useState(false)
   const [mounting, setMounting] = useState(false)
+  const [chrome, setChrome] = useState<FenceChrome | null>(null)
   const { data: s, isPending, error } = useQuery({ ...tenantSiteDetailQuery(cid, id), meta: { silent: true } })
   const devicePath = `/tenant/${cid}/devices`
 
@@ -82,6 +94,45 @@ export default function SiteDetailPage() {
       },
     })
 
+  const switchTab = (key: string) => {
+    const go = () => setParams(key === 'detail' ? {} : { tab: key }, { replace: true })
+    if (tab === 'fence' && key !== 'fence' && chrome?.saving) return
+    if (tab === 'fence' && key !== 'fence' && chrome?.dirty) {
+      notify.modal()?.confirm({
+        title: '放弃未保存的修改？',
+        okText: '放弃',
+        okButtonProps: { danger: true },
+        cancelText: '继续编辑',
+        onOk: go,
+      })
+      return
+    }
+    go()
+  }
+
+  const areaCount = chrome?.savedCount ?? (s ? parseGeofences(s.properties).length : 0)
+  const detailActions = (
+    <div className="flex gap-2">
+      <Button icon={<EditOutlined />} onClick={() => setEditing(true)} disabled={!s}>
+        编辑
+      </Button>
+      <Button danger icon={<DeleteOutlined />} onClick={remove} disabled={!s}>
+        删除
+      </Button>
+    </div>
+  )
+  const fenceActions = (
+    <Button
+      type="primary"
+      icon={<SaveOutlined />}
+      disabled={!chrome?.canSave}
+      loading={chrome?.saving}
+      onClick={() => chrome?.save()}
+    >
+      {chrome?.saveLabel ?? '保存围栏'}
+    </Button>
+  )
+
   const columns: PageColumn<SiteDevice>[] = [
     ...deviceColumns(types.nameOf, devicePath).filter((c) => c.title !== '创建时间'),
     {
@@ -98,99 +149,138 @@ export default function SiteDetailPage() {
 
   return (
     <>
-      <DetailHeader
-        loading={isPending}
-        backTo={`/tenant/${cid}/sites`}
-        title={s?.name}
-        tags={s && <EnumTag value={s.status} defs={SITE_STATUS} />}
-        subtitle={s && (joinAddress(s) || '未填写地址')}
-        extra={
-          <>
-            <Button icon={<EditOutlined />} onClick={() => setEditing(true)} disabled={!s}>
-              编辑
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={remove} disabled={!s}>
-              删除
-            </Button>
-          </>
-        }
-      />
-      <div className="layout-fill">
-        <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[360px_minmax(0,1fr)] xl:[grid-template-rows:minmax(0,1fr)]">
-          <Card variant="borderless" loading={isPending} className="overflow-y-auto" styles={{ body: { padding: 0 } }}>
-            {s && (
-              <>
-                <SiteCover src={s.coverImage} height={160} />
-                <div className="space-y-4 p-4">
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label="挂载设备">{s.deviceCount} 台</Descriptions.Item>
-                    <Descriptions.Item label="地址">{joinAddress(s) || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="坐标">
-                      {s.longitude != null ? (
-                        <span className="font-mono text-xs">
-                          {s.longitude.toFixed(6)}, {s.latitude?.toFixed(6)}
-                        </span>
-                      ) : (
-                        <span className="text-fg-tertiary">未定位</span>
+      <Card variant="borderless" className="layout-fill overflow-hidden">
+        <Tabs
+          className="layout-fill"
+          activeKey={tab}
+          onChange={switchTab}
+          destroyOnHidden
+          tabBarExtraContent={{ right: tab === 'fence' ? fenceActions : detailActions }}
+          items={[
+            {
+              key: 'detail',
+              icon: <ProfileOutlined />,
+              label: '园区详情',
+              children: (
+                <div className="layout-fill min-h-0">
+                  <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] gap-4">
+                    <Card
+                      variant="borderless"
+                      loading={isPending}
+                      className="h-full min-h-0 overflow-y-auto"
+                      styles={{ body: { padding: 0 } }}
+                    >
+                      {s && (
+                        <>
+                          <SiteCover src={s.coverImage} height={160} />
+                          <div className="space-y-4 p-4">
+                            <Descriptions column={1} size="small">
+                              <Descriptions.Item label="状态">
+                                <EnumTag value={s.status} defs={SITE_STATUS} />
+                              </Descriptions.Item>
+                              <Descriptions.Item label="挂载设备">{s.deviceCount} 台</Descriptions.Item>
+                              <Descriptions.Item label="地址">{joinAddress(s) || '—'}</Descriptions.Item>
+                              <Descriptions.Item label="坐标">
+                                {s.longitude != null ? (
+                                  <span className="font-mono text-xs">
+                                    {s.longitude.toFixed(6)}, {s.latitude?.toFixed(6)}
+                                  </span>
+                                ) : (
+                                  <span className="text-fg-tertiary">未定位</span>
+                                )}
+                              </Descriptions.Item>
+                              <Descriptions.Item label="创建时间">{fmtDateTime(s.createdAt)}</Descriptions.Item>
+                              <Descriptions.Item label="更新时间">{fmtDateTime(s.updatedAt)}</Descriptions.Item>
+                              <Descriptions.Item label="描述">
+                                <span className="whitespace-pre-wrap">{s.description || '—'}</span>
+                              </Descriptions.Item>
+                            </Descriptions>
+                            {s.longitude != null && <SiteMap height={200} sites={[s]} />}
+                            <div>
+                              <div className="mb-2 font-medium">园区图片 ({s.images?.length ?? 0})</div>
+                              {s.images?.length ? (
+                                <Image.PreviewGroup>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {s.images.map((u) => (
+                                      <Image
+                                        key={u}
+                                        src={u}
+                                        height={80}
+                                        width="100%"
+                                        className="rounded object-cover"
+                                      />
+                                    ))}
+                                  </div>
+                                </Image.PreviewGroup>
+                              ) : (
+                                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无图片" />
+                              )}
+                            </div>
+                          </div>
+                        </>
                       )}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="创建时间">{fmtDateTime(s.createdAt)}</Descriptions.Item>
-                    <Descriptions.Item label="更新时间">{fmtDateTime(s.updatedAt)}</Descriptions.Item>
-                    <Descriptions.Item label="描述">
-                      <span className="whitespace-pre-wrap">{s.description || '—'}</span>
-                    </Descriptions.Item>
-                  </Descriptions>
-                  {s.longitude != null && <SiteMap height={200} sites={[s]} />}
-                  <div>
-                    <div className="mb-2 font-medium">园区图片 ({s.images?.length ?? 0})</div>
-                    {s.images?.length ? (
-                      <Image.PreviewGroup>
-                        <div className="grid grid-cols-3 gap-2">
-                          {s.images.map((u) => (
-                            <Image key={u} src={u} height={80} width="100%" className="rounded object-cover" />
-                          ))}
-                        </div>
-                      </Image.PreviewGroup>
-                    ) : (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无图片" />
-                    )}
+                    </Card>
+                    <Card
+                      variant="borderless"
+                      className="layout-fill h-full min-h-0"
+                      title={`园区设备${s ? ` (${s.deviceCount})` : ''}`}
+                    >
+                      <PageTable<SiteDevice>
+                        bare
+                        prefix="d_"
+                        queryKey={tenantSiteKeys.devices(cid, id)}
+                        fetcher={(q) => api.devices(id, q)}
+                        columns={columns}
+                        rowKey="id"
+                        keywordPlaceholder="SN / 名称 / SIM / MAC"
+                        defaultSort="name"
+                        filters={[
+                          {
+                            name: 'deviceTypeId',
+                            type: 'number',
+                            placeholder: '设备类型',
+                            options: types.options,
+                            width: 140,
+                          },
+                          { name: 'status', placeholder: '状态', options: enumOptions(DEVICE_STATUS), width: 100 },
+                        ]}
+                        toolbar={
+                          <Button type="primary" icon={<LinkOutlined />} onClick={() => setMounting(true)}>
+                            挂载设备
+                          </Button>
+                        }
+                        batchActions={(keys, _r, clear) => (
+                          <Button
+                            danger
+                            size="small"
+                            icon={<DisconnectOutlined />}
+                            onClick={() => unmount(keys, clear)}
+                          >
+                            批量解除
+                          </Button>
+                        )}
+                      />
+                    </Card>
                   </div>
                 </div>
-              </>
-            )}
-          </Card>
-          <Card
-            variant="borderless"
-            className="layout-fill min-h-[480px]"
-            title={`园区设备${s ? ` (${s.deviceCount})` : ''}`}
-          >
-            <PageTable<SiteDevice>
-              bare
-              prefix="d_"
-              queryKey={tenantSiteKeys.devices(cid, id)}
-              fetcher={(q) => api.devices(id, q)}
-              columns={columns}
-              rowKey="id"
-              keywordPlaceholder="SN / 名称 / SIM / MAC"
-              defaultSort="name"
-              filters={[
-                { name: 'deviceTypeId', type: 'number', placeholder: '设备类型', options: types.options, width: 140 },
-                { name: 'status', placeholder: '状态', options: enumOptions(DEVICE_STATUS), width: 100 },
-              ]}
-              toolbar={
-                <Button type="primary" icon={<LinkOutlined />} onClick={() => setMounting(true)}>
-                  挂载设备
-                </Button>
-              }
-              batchActions={(keys, _r, clear) => (
-                <Button danger size="small" icon={<DisconnectOutlined />} onClick={() => unmount(keys, clear)}>
-                  批量解除
-                </Button>
-              )}
-            />
-          </Card>
-        </div>
-      </div>
+              ),
+            },
+            {
+              key: 'fence',
+              icon: <BorderOuterOutlined />,
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  电子围栏{areaCount ? ` (${areaCount})` : ''}
+                  {tab === 'fence' && chrome?.dirty ? (
+                    <span className="inline-block size-1.5 rounded-full bg-primary" title="未保存" />
+                  ) : null}
+                </span>
+              ),
+              children: s ? <GeofencePanel key={s.id} site={s} onChrome={setChrome} /> : null,
+            },
+          ]}
+        />
+      </Card>
       <SiteFormDrawer open={editing} site={s} onClose={() => setEditing(false)} />
       <RelationModal<SiteDevice>
         open={mounting}

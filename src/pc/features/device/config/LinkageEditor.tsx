@@ -43,7 +43,7 @@ export function LinkageEditor({ cfg, deviceId }: { cfg: DeviceConfigApi; deviceI
         type="info"
         showIcon
         icon={<ThunderboltOutlined />}
-        message="告警规则每次触发与重复推送时，自动开 / 关配置的继电器 (本设备或其他设备)；手动接管中的继电器跳过。规则在「传感器配置」中维护，联动在这里配置，保存后立即生效。"
+        title="告警规则每次触发与重复推送时，自动开 / 关配置的继电器 (本设备或其他设备)；手动接管中的继电器跳过。规则在「传感器配置」中维护，联动在这里配置，保存后立即生效。"
       />
       <Tabs
         className="layout-fill"

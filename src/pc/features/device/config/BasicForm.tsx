@@ -76,7 +76,7 @@ export function BasicForm({
             className="mb-4"
             type="error"
             showIcon
-            message="设备已被系统标记为损坏"
+            title="设备已被系统标记为损坏"
             description="设备上报的传感器 / 继电器路数少于登记的通道数，已断开且不能接入 (详情见告警记录)。通道数登记后不可修改：请更换为相符的设备，或删除后按实际规格重新登记；处理后把状态改为「启用」并保存，设备重连即可上线。"
           />
         )}

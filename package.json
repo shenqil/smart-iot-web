@@ -38,6 +38,8 @@
     "react-dom": "^19.3.1",
     "react-leaflet": "^5.0.0",
     "react-router": "^8.4.0",
+    "terra-draw": "^1.40.0",
+    "terra-draw-leaflet-adapter": "^1.4.0",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

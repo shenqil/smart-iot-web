@@ -52,7 +52,7 @@ export function SchedulesEditor({ cfg, device }: { cfg: DeviceConfigApi; device:
         </Button>
       </div>
       {!relays.length && (
-        <Alert className="mb-3" type="info" showIcon message="还没有配置继电器通道，请先在「继电器配置」页签中配置。" />
+        <Alert className="mb-3" type="info" showIcon title="还没有配置继电器通道，请先在「继电器配置」页签中配置。" />
       )}
       <Table<RelaySchedule>
         size="small"
