@@ -1,10 +1,11 @@
 import { type Map as LeafletMap, latLngBounds, type PointExpression } from 'leaflet'
 import { type ReactNode, type RefObject, useEffect } from 'react'
-import { Popup, useMap } from 'react-leaflet'
+import { Polygon, Popup, Tooltip, useMap } from 'react-leaflet'
 import { ClusterLayer } from '@/components/map/ClusterLayer'
 import { type DeviceMapPoint, deviceClusterItem } from '@/components/map/DeviceMap'
 import { type TdtLayerName, TdtMap } from '@/components/map/TdtMap'
 import type { SiteView } from '@/features/site/api'
+import { geofenceSignature, parseGeofences } from '@/features/site/tenant/geofence/model'
 
 export interface ScreenMapPoint extends DeviceMapPoint {
   longitude: number
@@ -16,20 +17,29 @@ export interface FitPadding {
   paddingBottomRight: PointExpression
 }
 
-/** 让视野包含全部设备，避开两侧面板与底部卡片；园区没有已定位的设备时以园区坐标为中心 */
+/** 设备坐标加上围栏顶点，供视野框选。围栏环是 [经度, 纬度] */
+function fitLatLngs(site: SiteView, points: ScreenMapPoint[]): [number, number][] {
+  return [
+    ...points.map((p) => [p.latitude, p.longitude] as [number, number]),
+    ...parseGeofences(site.properties).flatMap((area) => area.ring.map(([lng, lat]) => [lat, lng] as [number, number])),
+  ]
+}
+
+/** 让视野包含设备和电子围栏，避开两侧面板与底部卡片；都没有时以园区坐标为中心 */
 export function fitSite(map: LeafletMap, site: SiteView, points: ScreenMapPoint[], padding: FitPadding) {
-  if (points.length) {
-    map.fitBounds(latLngBounds(points.map((p) => [p.latitude, p.longitude])), { ...padding, maxZoom: 17 })
+  const latlngs = fitLatLngs(site, points)
+  if (latlngs.length) {
+    map.fitBounds(latLngBounds(latlngs), { ...padding, maxZoom: 17 })
   } else if (site.latitude != null && site.longitude != null) {
     map.setView([site.latitude, site.longitude], 15)
   }
 }
 
-/** 园区或设备集合变化时自动适配视野 (之后用户拖动缩放不打扰) */
+/** 园区、围栏或设备集合变化时自动适配视野 (之后用户拖动缩放不打扰) */
 function AutoFit({ site, points, padding }: { site: SiteView; points: ScreenMapPoint[]; padding: FitPadding }) {
   const map = useMap()
-  const sig = `${site.id}|${points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')}`
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在园区 / 标点集合变化时调整
+  const sig = `${site.id}|${geofenceSignature(parseGeofences(site.properties))}|${points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在园区、围栏或标点集合变化时调整
   useEffect(() => {
     fitSite(map, site, points, padding)
   }, [sig, map])
@@ -47,7 +57,7 @@ function KeepVisible({ point, padding }: { point: ScreenMapPoint | undefined; pa
 }
 
 /**
- * 大屏地图：天地图影像 (可切矢量)，铺满视口；只显示设备定位针 (聚合) + 选中设备的实时值气泡，不显示园区标点
+ * 大屏地图：天地图影像 (可切矢量)，铺满视口；显示园区电子围栏和设备定位针 (聚合) + 选中设备的实时值气泡，不显示园区标点
  * 点击设备 → onPick；摄像头 → onPickCamera；点击后在该标点上方显示气泡 (默认不显示，点地图空白处关闭)
  */
 export function ScreenMap({
@@ -98,6 +108,7 @@ export function ScreenMap({
       center={siteLocated ? [site.latitude as number, site.longitude as number] : undefined}
       zoom={siteLocated ? 15 : 5}
     >
+      <SiteFences properties={site.properties} />
       <ClusterLayer items={items} maxClusterRadius={40} />
       <AutoFit site={site} points={points} padding={padding} />
       <KeepVisible point={selected} padding={padding} />
@@ -116,5 +127,38 @@ export function ScreenMap({
         </Popup>
       )}
     </TdtMap>
+  )
+}
+
+/** 名称画在围栏之上、设备标点之下，避免挡住定位针 */
+const FENCE_LABEL_PANE = 'screen-fence-label'
+
+function ensureFenceLabelPane(map: LeafletMap) {
+  const pane = map.getPane(FENCE_LABEL_PANE) ?? map.createPane(FENCE_LABEL_PANE)
+  pane.style.zIndex = '450'
+  pane.style.pointerEvents = 'none'
+}
+
+/** 已保存的围栏。不接收点击，避免挡住设备标点和地图空白处关气泡 */
+function SiteFences({ properties }: { properties: SiteView['properties'] }) {
+  const map = useMap()
+  const areas = parseGeofences(properties)
+  if (!areas.length) return null
+  ensureFenceLabelPane(map)
+  return (
+    <>
+      {areas.map((area) => (
+        <Polygon
+          key={area.id}
+          interactive={false}
+          positions={area.ring.map(([lng, lat]) => [lat, lng])}
+          pathOptions={{ color: '#22d3ee', weight: 2, fillColor: '#22d3ee', fillOpacity: 0.14 }}
+        >
+          <Tooltip permanent direction="center" pane={FENCE_LABEL_PANE} className="screen-fence-label" opacity={1}>
+            <span title={area.name}>{area.name}</span>
+          </Tooltip>
+        </Polygon>
+      ))}
+    </>
   )
 }

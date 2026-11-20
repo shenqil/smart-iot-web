@@ -31,6 +31,24 @@
   background: #13241d;
 }
 
+.screen-map .screen-fence-label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgb(34 211 238 / 0.55);
+  border-radius: 2px;
+  background: rgb(4 16 28 / 0.78);
+  color: #e6f1f8;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 1px 6px;
+}
+
+.screen-map .screen-fence-label::before {
+  display: none;
+}
+
 .screen-map::after {
   content: "";
   position: absolute;
