@@ -1,4 +1,5 @@
 import type { Map as LeafletMap } from 'leaflet'
+import { useEffect } from 'react'
 import { Polygon, Tooltip, useMap } from 'react-leaflet'
 import { type ClusterItem, ClusterLayer } from './ClusterLayer'
 import { MapLegend } from './MapLegend'
@@ -28,6 +29,14 @@ export interface MapGeofence {
 
 type Located = DeviceMapPoint & { longitude: number; latitude: number }
 const isLocated = (d: DeviceMapPoint): d is Located => d.longitude != null && d.latitude != null
+
+function SiteCenterView({ center: [lat, lng], zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([lat, lng], zoom)
+  }, [map, lat, lng, zoom])
+  return null
+}
 
 /** 名称画在围栏之上、设备标点之下，避免挡住定位针 */
 const FENCE_LABEL_PANE = 'siot-fence-label'
@@ -126,6 +135,9 @@ export function DeviceMap({
       <GeofenceLayer areas={geofences} />
       <ClusterLayer items={items} />
       <FitBounds points={located} extra={fenceLatLngs} maxZoom={17} />
+      {center && located.length === 0 && fenceLatLngs.length === 0 && (
+        <SiteCenterView center={center} zoom={zoom ?? 15} />
+      )}
     </TdtMap>
   )
   return (

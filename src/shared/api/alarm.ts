@@ -4,7 +4,7 @@ import { currentOperatorName } from '@/lib/operator'
 
 export type AlarmView = Schemas['AppAlarm']
 
-/** 未处理告警数 (顶栏数字，后端最多数到 1000)，60s 刷新；失败不打扰用户 */
+/** 未处理告警数 (顶栏数字，后端最多数到 100，超过显示 99+)，60s 刷新；失败不打扰用户 */
 export const unprocessedAlarmCountQuery = (companyId: number) =>
   queryOptions({
     queryKey: ['app', companyId, 'alarms', 'unprocessed-count'],

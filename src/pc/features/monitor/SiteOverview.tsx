@@ -141,6 +141,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
           }}
         >
           <DeviceMap
+            key={siteId}
             fill
             center={siteCenter}
             geofences={geofences}
