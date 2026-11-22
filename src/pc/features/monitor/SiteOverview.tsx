@@ -1,24 +1,23 @@
-import { AppstoreOutlined, CloudOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { CloudOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Card, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { DeviceMap } from '@/components/map/DeviceMap'
-import { DEVICE_STATUS, EnumTag, SITE_STATUS } from '@/components/StatusTag'
+import { EnumTag, SITE_STATUS } from '@/components/StatusTag'
 import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
 import { AlarmLevelTag } from '@/features/alarm/enums'
-import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
+import { appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery, weatherQuery } from '@/features/site/api'
-import { agoText, byChannel, isVideoDeviceType, readSensor } from '@/features/telemetry/lib/realtime'
-import { realtimeQuery } from '@/features/telemetry/realtime/api'
+import { parseGeofences } from '@/features/site/tenant/geofence/model'
+import { agoText } from '@/features/telemetry/lib/realtime'
 import { useCompanyId } from '@/hooks/session'
-import { useInView } from '@/hooks/useInView'
 import { useScope } from '@/layouts/app/useScope'
 import { fmtDateTime } from '@/lib/time'
 
 /**
  * 园区总览 (FRONTEND_DESIGN §5.2)
- * 概况 (设备 / 在线 / 离线 / 未处理告警 / 天气) → 地图 + 最新告警 → 设备卡片 (可视区域内加载前 3 个传感器当前值)
+ * 概况 (设备 / 在线 / 离线 / 未处理告警 / 天气) → 设备分布 (含电子围栏) + 最新告警，占满剩余高度
  */
 export function SiteOverview({ siteId }: { siteId: number }) {
   const companyId = useCompanyId()
@@ -43,7 +42,11 @@ export function SiteOverview({ siteId }: { siteId: number }) {
   const address = site && [site.province, site.city, site.district, site.address].filter(Boolean).join(' ')
   const alarmsOf = new Map<number, number>()
   for (const a of unprocessed?.records ?? []) alarmsOf.set(a.deviceId, (alarmsOf.get(a.deviceId) ?? 0) + 1)
-  const hasMap = list.some((d) => d.latitude != null && d.longitude != null)
+  const geofences = parseGeofences(site?.properties)
+  const siteCenter =
+    site?.latitude != null && site?.longitude != null
+      ? ([site.latitude, site.longitude] as [number, number])
+      : undefined
   const alarmsLink = { pathname: `/app/${companyId}/alarms`, search: `?siteId=${siteId}` }
 
   const latestCard = (
@@ -55,7 +58,9 @@ export function SiteOverview({ siteId }: { siteId: number }) {
           查看全部
         </Link>
       }
-      className="h-full"
+      className="layout-fill h-full min-h-0 overflow-hidden"
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+      styles={{ body: { display: 'flex', flexDirection: 'column', flex: '1 1 0%', minHeight: 0, overflow: 'auto' } }}
     >
       {latest.isPending ? (
         <Skeleton active />
@@ -87,7 +92,7 @@ export function SiteOverview({ siteId }: { siteId: number }) {
   )
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="layout-fill gap-4">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-lg bg-container px-5 py-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -122,46 +127,33 @@ export function SiteOverview({ siteId }: { siteId: number }) {
         </Link>
       </div>
 
-      {hasMap && (
-        <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Card variant="borderless" title="设备分布">
-            <DeviceMap
-              height={340}
-              devices={list.map((d) => ({
-                ...d,
-                alarms: alarmsOf.get(d.id) ?? 0,
-                typeName: types.nameOf(d.deviceTypeId),
-                iconUrl: d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl || undefined : undefined,
-              }))}
-              onSelect={(id) => select({ siteId, deviceId: id })}
-            />
-          </Card>
-          {latestCard}
-        </div>
-      )}
-
-      <div className={hasMap ? '' : 'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]'}>
-        <Card variant="borderless" title="设备">
-          {devices.isPending ? (
-            <Skeleton active />
-          ) : list.length === 0 ? (
-            <Empty description="该园区还没有挂载设备" />
-          ) : (
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(250px,1fr))]">
-              {list.map((d) => (
-                <DeviceTile
-                  key={d.id}
-                  device={d}
-                  alarms={alarmsOf.get(d.id) ?? 0}
-                  typeName={types.nameOf(d.deviceTypeId)}
-                  icon={d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl : undefined}
-                  onClick={() => select({ siteId, deviceId: d.id })}
-                />
-              ))}
-            </div>
-          )}
+      <div
+        className="layout-fill grid min-h-0 grid-cols-1 grid-rows-2 gap-4 xl:grid-cols-[minmax(0,1fr)_380px] xl:grid-rows-1"
+        style={{ flex: '1 1 0%', minHeight: 0 }}
+      >
+        <Card
+          variant="borderless"
+          title="设备分布"
+          className="layout-fill h-full min-h-0 overflow-hidden"
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+          styles={{
+            body: { display: 'flex', flexDirection: 'column', flex: '1 1 0%', minHeight: 0, overflow: 'hidden' },
+          }}
+        >
+          <DeviceMap
+            fill
+            center={siteCenter}
+            geofences={geofences}
+            devices={list.map((d) => ({
+              ...d,
+              alarms: alarmsOf.get(d.id) ?? 0,
+              typeName: types.nameOf(d.deviceTypeId),
+              iconUrl: d.deviceTypeId != null ? types.byId.get(d.deviceTypeId)?.iconUrl || undefined : undefined,
+            }))}
+            onSelect={(id) => select({ siteId, deviceId: id })}
+          />
         </Card>
-        {!hasMap && latestCard}
+        {latestCard}
       </div>
     </div>
   )
@@ -174,95 +166,5 @@ function Stat({ label, value, tone }: { label: string; value: number | string; t
       <div className={`font-semibold text-2xl tabular-nums leading-tight ${color}`}>{value}</div>
       <div className="text-fg-tertiary text-xs">{label}</div>
     </div>
-  )
-}
-
-/** 设备卡片：进入可视区域后加载实时数据 (30s 刷新)，显示前 3 个传感器当前值 */
-function DeviceTile({
-  device: d,
-  alarms,
-  typeName,
-  icon,
-  onClick,
-}: {
-  device: AppDevice
-  alarms: number
-  typeName: string
-  icon?: string
-  onClick: () => void
-}) {
-  const companyId = useCompanyId()
-  const video = isVideoDeviceType(typeName)
-  const isOnline = video ? true : d.online
-  const sensors = byChannel(d.sensors).slice(0, 3)
-  const { ref, inView } = useInView<HTMLButtonElement>()
-  const rt = useQuery({
-    ...realtimeQuery(companyId, d.deviceSn),
-    enabled: inView && !video && sensors.length > 0,
-    refetchInterval: 30_000,
-  }).data
-  const parts = video
-    ? []
-    : [
-        d.sensors?.length ? `${d.sensors.length} 个传感器` : '',
-        d.relays?.length ? `${d.relays.length} 路继电器` : '',
-      ].filter(Boolean)
-  return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onClick}
-      className="flex cursor-pointer flex-col gap-2.5 rounded-lg border border-line border-solid bg-container px-3 py-3 text-left transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
-    >
-      <span className="flex w-full items-center gap-3">
-        <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-md ${isOnline ? 'bg-primary-bg text-primary' : 'bg-layout text-fg-tertiary'}`}
-        >
-          {icon ? (
-            <img src={icon} alt="" className={`size-6 object-contain ${isOnline ? '' : 'opacity-50 grayscale'}`} />
-          ) : (
-            <AppstoreOutlined />
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
-            <span
-              className={`inline-block size-2 shrink-0 rounded-full ${isOnline ? 'bg-success' : 'border border-fg-tertiary border-solid'}`}
-              title={isOnline ? '在线' : '离线'}
-            />
-            <span className="truncate font-medium text-fg">{d.name}</span>
-            {d.status !== 'active' && <EnumTag value={d.status} defs={DEVICE_STATUS} />}
-          </span>
-          <span className="mt-0.5 block truncate text-fg-tertiary text-xs">
-            {typeName}
-            {parts.length > 0 && `，${parts.join('，')}`}
-          </span>
-        </span>
-        {!video && alarms > 0 && (
-          <span className="shrink-0 rounded-full bg-danger/10 px-2 text-danger text-xs leading-5">⚠ {alarms}</span>
-        )}
-      </span>
-      {sensors.length > 0 && !video && (
-        <span
-          className={`grid w-full grid-cols-3 gap-2 border-0 border-line border-t border-solid pt-2.5 ${d.online ? '' : 'opacity-55'}`}
-        >
-          {sensors.map((s) => {
-            const r = readSensor(s, rt?.sensors)
-            const alert = r.state === 'over' || r.state === 'under'
-            return (
-              <span key={s.channel} className="min-w-0">
-                <span className="block truncate text-fg-tertiary text-[11px]">{r.name}</span>
-                <span className={`block truncate font-medium tabular-nums ${alert ? 'text-warning' : 'text-fg'}`}>
-                  {rt ? r.text : '…'}
-                  {rt && r.value != null && s.unit && (
-                    <span className="ml-0.5 font-normal text-fg-tertiary text-xs">{s.unit}</span>
-                  )}
-                </span>
-              </span>
-            )
-          })}
-        </span>
-      )}
-    </button>
   )
 }

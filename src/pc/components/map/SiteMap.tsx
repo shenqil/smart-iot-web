@@ -33,25 +33,39 @@ const isLocated = (s: SiteMapPoint): s is Located => s.longitude != null && s.la
 /**
  * 视野自动包含全部标点 (只在标点集合变化时调整，用户拖动缩放后不打扰)
  * 标点在锚点上方 (定位针约 56px、园区方牌约 70px)，上边距留大一些；大屏用 padding 让出两侧面板
+ * extra 用来把电子围栏顶点一并框进视野。容器高度晚于挂载时 (铺满剩余高度) 会等尺寸就绪再适配。
  */
 export function FitBounds({
   points,
+  extra = [],
   paddingTopLeft = [40, 84],
   paddingBottomRight = [40, 24],
   maxZoom = 13,
 }: {
   points: { id: number; latitude: number; longitude: number }[]
+  /** 额外纳入视野的坐标，[纬度, 经度] */
+  extra?: [number, number][]
   paddingTopLeft?: [number, number]
   paddingBottomRight?: [number, number]
   maxZoom?: number
 }) {
   const map = useMap()
-  const sig = points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在标点集合 (sig) 变化时调整视野
+  const sig = `${points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')}|${extra.map((p) => p.join(',')).join(';')}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在标点或 extra (sig) 变化时调整视野
   useEffect(() => {
-    if (!points.length) return
-    const bounds = latLngBounds(points.map((p) => [p.latitude, p.longitude]))
-    map.fitBounds(bounds, { paddingTopLeft, paddingBottomRight, maxZoom })
+    const latlngs = [...points.map((p) => [p.latitude, p.longitude] as [number, number]), ...extra]
+    let fitted = false
+    const apply = () => {
+      map.invalidateSize()
+      const size = map.getSize()
+      if (size.x < 20 || size.y < 20 || fitted || !latlngs.length) return
+      fitted = true
+      map.fitBounds(latLngBounds(latlngs), { paddingTopLeft, paddingBottomRight, maxZoom })
+    }
+    apply()
+    const observer = new ResizeObserver(() => apply())
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
   }, [sig, map])
   return null
 }

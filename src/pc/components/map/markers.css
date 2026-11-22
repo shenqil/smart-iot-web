@@ -438,3 +438,23 @@
   border: 1.5px solid #22d3ee;
   background: #0b2236;
 }
+
+/* 电子围栏名称：居中在区域上，不挡设备定位针的点击 */
+.leaflet-tooltip.siot-fence-label {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgb(8 145 178 / 0.4);
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.92);
+  color: #0e7490;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 1px 6px;
+  pointer-events: none;
+}
+
+.leaflet-tooltip.siot-fence-label::before {
+  display: none;
+}
