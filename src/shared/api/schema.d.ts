@@ -759,6 +759,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/alarms/unprocessed-counts": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 按园区和设备统计未处理告警 */
+        get: operations["app-count-unprocessed-alarms-by-site"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/alarms/{id}": {
         parameters: {
             query?: never;
@@ -2275,6 +2296,22 @@ export interface components {
             capped: boolean;
             /** Format: int64 */
             count: number;
+        };
+        AppUnprocessedAlarmCounts: {
+            sites: components["schemas"]["AppUnprocessedAlarmSiteCount"][];
+        };
+        AppUnprocessedAlarmDeviceCount: {
+            /** Format: int64 */
+            count: number;
+            /** Format: int64 */
+            deviceId: number;
+        };
+        AppUnprocessedAlarmSiteCount: {
+            /** Format: int64 */
+            count: number;
+            devices: components["schemas"]["AppUnprocessedAlarmDeviceCount"][];
+            /** Format: int64 */
+            siteId: number;
         };
         AssignCompanyMembersReqBody: {
             members: components["schemas"]["AdminCompanyMemberAssignment"][] | null;
@@ -5538,6 +5575,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppUnprocessedAlarmCount"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-count-unprocessed-alarms-by-site": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppUnprocessedAlarmCounts"];
                 };
             };
             /** @description Error */

@@ -20,6 +20,20 @@ export const unprocessedAlarmCountQuery = (companyId: number) =>
     meta: { silent: true },
   })
 
+/** 当前企业各园区、设备的未处理告警数。每台设备最多 100，园区数是设备数之和。60s 刷新 */
+export const unprocessedAlarmCountsQuery = (companyId: number) =>
+  queryOptions({
+    queryKey: ['app', companyId, 'alarms', 'unprocessed-counts'],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/app/alarms/unprocessed-counts', {
+          params: { header: companyHeader(companyId) },
+        }),
+      ),
+    refetchInterval: 60_000,
+    meta: { silent: true },
+  })
+
 /** 某个范围 (园区 / 设备，可按级别) 的未处理告警数 {count, capped}，60s 刷新 */
 export const scopedUnprocessedCountQuery = (
   companyId: number,

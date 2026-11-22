@@ -2,7 +2,7 @@ import { SearchOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Empty, Input, Spin, Tooltip, Tree, type TreeDataNode } from 'antd'
 import { useState } from 'react'
-import { alarmsQuery, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { formatUnprocessedCount, unprocessedAlarmCountsQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery } from '@/features/site/api'
@@ -38,7 +38,7 @@ function AlarmBadge({ count }: { count: number | string }) {
 /**
  * 园区设备树：数据端的范围选择器 (FRONTEND_DESIGN §5.1)
  * - 园区 / 设备两层；搜索 (已加载的设备)
- * - 未处理告警数：园区级用 unprocessed-count，设备级取该园区前 200 条未处理告警按设备计数 (超出显示"…")
+ * - 未处理告警数：unprocessed-counts 一次返回各园区及设备的条数。每台设备最多 100，园区数是这些设备之和；超过 99 显示 99+
  * - 我的关注：星标设备置顶 (本机保存)
  */
 export function ScopeTree() {
@@ -53,30 +53,18 @@ export function ScopeTree() {
 
   const sites = useQuery(appSitesQuery(companyId))
   const siteList = sites.data ?? []
-  const siteCounts = useQueries({
-    queries: siteList.map((s) => scopedUnprocessedCountQuery(companyId, { siteId: s.id })),
-  })
-  const siteAlarm = new Map(siteList.map((s, i) => [s.id, siteCounts[i]?.data]))
+  const alarmCounts = useQuery(unprocessedAlarmCountsQuery(companyId))
+  const siteAlarm = new Map<number, { count: number; capped: boolean }>()
+  const deviceAlarm = new Map<number, number>()
+  for (const site of alarmCounts.data?.sites ?? []) {
+    siteAlarm.set(site.siteId, { count: site.count, capped: false })
+    for (const device of site.devices) deviceAlarm.set(device.deviceId, device.count)
+  }
 
   // 已展开的园区 + 关注设备所在园区：加载设备列表
   const loadIds = [...new Set([...expanded, ...favorites.map((f) => f.siteId)])]
   const deviceQueries = useQueries({ queries: loadIds.map((id) => appSiteDevicesQuery(companyId, id)) })
   const devicesBySite = new Map<number, AppDevice[] | undefined>(loadIds.map((id, i) => [id, deviceQueries[i].data]))
-
-  // 设备级告警数：展开的园区各取前 200 条未处理告警
-  const alarmQueries = useQueries({
-    queries: expanded.map((id) => ({
-      ...alarmsQuery(companyId, { siteId: id, processed: 'false', pageSize: 200 }),
-      meta: { silent: true },
-    })),
-  })
-  const deviceAlarm = new Map<number, number>()
-  const cappedSites = new Set<number>()
-  expanded.forEach((id, i) => {
-    const d = alarmQueries[i]?.data
-    if (d?.hasMore) cappedSites.add(id)
-    for (const a of d?.records ?? []) deviceAlarm.set(a.deviceId, (deviceAlarm.get(a.deviceId) ?? 0) + 1)
-  })
 
   const kw = keyword.trim().toLowerCase()
   const match = (d: AppDevice) => !kw || d.name.toLowerCase().includes(kw) || d.deviceSn.toLowerCase().includes(kw)
@@ -111,12 +99,7 @@ export function ScopeTree() {
         <OnlineDot online={isOnline} />
         <span className="truncate">{d.name}</span>
         <span className="ml-auto flex items-center">
-          {!isVideo &&
-            (n > 0 ? (
-              <AlarmBadge count={n} />
-            ) : cappedSites.has(sid) ? (
-              <span className="text-fg-tertiary text-xs">…</span>
-            ) : null)}
+          {!isVideo && n > 0 && <AlarmBadge count={formatUnprocessedCount({ count: n, capped: false })} />}
           {star(sid, d)}
         </span>
       </span>
