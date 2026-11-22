@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { formatCensusCount } from '@/features/alarm/api'
 import type { AppDevice } from '@/features/device/api'
 import { operationsQuery } from '@/features/relay/api'
 import { useRelayControl } from '@/features/relay/useRelayControl'
@@ -111,7 +112,7 @@ export function DeviceInfoCard({
                 <span className={online ? 'text-[#22d3ee]' : 'text-[#cbd5e1]'}>{online ? '● 在线' : '○ 离线'}</span>
                 {updated && <span className="text-[var(--sc-text-2)]">{agoText(updated, now)}更新</span>}
                 {!isVideoDeviceType(typeName) && alarms > 0 && (
-                  <span className="text-[#fca5a5]">⚠ {alarms} 条告警</span>
+                  <span className="text-[#fca5a5]">⚠ {formatCensusCount(alarms)} 条告警</span>
                 )}
               </div>
             </div>

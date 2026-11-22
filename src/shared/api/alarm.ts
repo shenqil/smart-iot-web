@@ -20,19 +20,34 @@ export const unprocessedAlarmCountQuery = (companyId: number) =>
     meta: { silent: true },
   })
 
-/** 当前企业各园区、设备的未处理告警数。每台设备最多 100，园区数是设备数之和。60s 刷新 */
-export const unprocessedAlarmCountsQuery = (companyId: number) =>
+/**
+ * 未处理告警普查。每台设备最多 100，园区数是设备数之和。
+ * siteId 只统计这一座园区；levels 为 true 时每个园区带上四级。不带 siteId 时 60s 刷新，带上时 30s。
+ */
+export const unprocessedAlarmCountsQuery = (
+  companyId: number,
+  scope: { siteId?: number; levels?: boolean } = {},
+) =>
   queryOptions({
-    queryKey: ['app', companyId, 'alarms', 'unprocessed-counts'],
+    queryKey: ['app', companyId, 'alarms', 'unprocessed-counts', scope.siteId ?? 0, scope.levels ? 1 : 0],
     queryFn: () =>
       unwrap(
         api.GET('/api/v1/app/alarms/unprocessed-counts', {
-          params: { header: companyHeader(companyId) },
+          params: {
+            header: companyHeader(companyId),
+            query: {
+              ...(scope.siteId ? { siteId: scope.siteId } : {}),
+              ...(scope.levels ? { levels: true } : {}),
+            },
+          },
         }),
       ),
-    refetchInterval: 60_000,
+    refetchInterval: scope.siteId ? 30_000 : 60_000,
     meta: { silent: true },
   })
+
+/** 普查条数：到 100 即上限，超过 99 显示 99+ */
+export const formatCensusCount = (count: number) => formatUnprocessedCount({ count, capped: count >= 100 })
 
 /** 某个范围 (园区 / 设备，可按级别) 的未处理告警数 {count, capped}，60s 刷新 */
 export const scopedUnprocessedCountQuery = (

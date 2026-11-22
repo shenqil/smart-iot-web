@@ -35,24 +35,30 @@ export function fitSite(map: LeafletMap, site: SiteView, points: ScreenMapPoint[
   }
 }
 
-/** 园区、围栏或设备集合变化时自动适配视野 (之后用户拖动缩放不打扰) */
+function padKey(padding: FitPadding) {
+  const part = (p: FitPadding['paddingTopLeft']) => (Array.isArray(p) ? p.join(',') : String(p))
+  return `${part(padding.paddingTopLeft)}|${part(padding.paddingBottomRight)}`
+}
+
+/** 园区、围栏、标点或面板避让变化时自动适配视野 (之后用户拖动缩放不打扰) */
 function AutoFit({ site, points, padding }: { site: SiteView; points: ScreenMapPoint[]; padding: FitPadding }) {
   const map = useMap()
-  const sig = `${site.id}|${geofenceSignature(parseGeofences(site.properties))}|${points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')}`
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在园区、围栏或标点集合变化时调整
+  const sig = `${site.id}|${geofenceSignature(parseGeofences(site.properties))}|${points.map((p) => `${p.id}:${p.longitude},${p.latitude}`).join('|')}|${padKey(padding)}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在签名变化时调整
   useEffect(() => {
     fitSite(map, site, points, padding)
   }, [sig, map])
   return null
 }
 
-/** 选中设备在面板后面时平移到可见区域 */
+/** 选中设备在面板后面时平移到可见区域；底部卡片变化时再移一次 */
 function KeepVisible({ point, padding }: { point: ScreenMapPoint | undefined; padding: FitPadding }) {
   const map = useMap()
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在选中设备变化时
+  const sig = `${point?.id ?? ''}|${padKey(padding)}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 只在选中设备或避让变化时
   useEffect(() => {
     if (point) map.panInside([point.latitude, point.longitude], padding)
-  }, [point?.id, map])
+  }, [sig, map])
   return null
 }
 

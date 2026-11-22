@@ -2306,10 +2306,17 @@ export interface components {
             /** Format: int64 */
             deviceId: number;
         };
+        AppUnprocessedAlarmLevelCount: {
+            /** Format: int64 */
+            count: number;
+            /** Format: int32 */
+            level: number;
+        };
         AppUnprocessedAlarmSiteCount: {
             /** Format: int64 */
             count: number;
             devices: components["schemas"]["AppUnprocessedAlarmDeviceCount"][];
+            levels?: components["schemas"]["AppUnprocessedAlarmLevelCount"][] | null;
             /** Format: int64 */
             siteId: number;
         };
@@ -5590,7 +5597,11 @@ export interface operations {
     };
     "app-count-unprocessed-alarms-by-site": {
         parameters: {
-            query?: never;
+            query?: {
+                siteId?: number;
+                /** @description 为 true 时返回每个园区的四级未处理数 */
+                levels?: boolean;
+            };
             header: {
                 "X-Company-ID": number;
                 /** @description 不参与授权 */

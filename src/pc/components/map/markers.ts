@@ -50,6 +50,8 @@ export const deviceMarkerState = (d: { online: boolean; alarms: number; kind?: D
 
 const STATE_TEXT: Record<DeviceMarkerState, string> = { online: '在线', offline: '离线', alarm: '告警' }
 
+const alarmBadge = (n: number) => (n > 99 ? '99+' : String(n))
+
 export interface DeviceMarkerOptions {
   name: string
   online: boolean
@@ -68,7 +70,7 @@ export const deviceMarkerTitle = (
 ) => {
   if (o.kind === 'camera') return `${o.name} · 在线`
   const s = deviceMarkerState(o)
-  return `${o.name} · ${s === 'alarm' ? `${o.alarms} 条未处理告警` : STATE_TEXT[s]}`
+  return `${o.name} · ${s === 'alarm' ? `${alarmBadge(o.alarms)} 条未处理告警` : STATE_TEXT[s]}`
 }
 
 /** 设备定位针：锚点在针尖；告警、选中时名称常驻，其余在缩放 ≥ 15 级时显示 (见 ZoomLabels) */
@@ -84,7 +86,7 @@ export function deviceMarkerIcon(o: DeviceMarkerOptions): DivIcon {
       : ''
   const badge =
     !isCamera && state === 'alarm'
-      ? `<span class="siot-mk__badge">${o.alarms > 99 ? '99+' : o.alarms}</span>`
+      ? `<span class="siot-mk__badge">${alarmBadge(o.alarms)}</span>`
       : !isCamera && state === 'offline'
         ? '<span class="siot-mk__badge is-off">○</span>'
         : ''

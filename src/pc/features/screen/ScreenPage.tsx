@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { MapLegend } from '@/components/map/MapLegend'
 import type { TdtLayerName } from '@/components/map/TdtMap'
-import { alarmsQuery, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { alarmsQuery, formatCensusCount, unprocessedAlarmCountsQuery } from '@/features/alarm/api'
 import { type AppDevice, appSiteDevicesQuery } from '@/features/device/api'
 import { useDeviceTypes } from '@/features/dict/api'
 import { appSitesQuery, type SiteView } from '@/features/site/api'
@@ -93,19 +93,28 @@ function ScreenBody() {
   // 当前设备：URL 指定的 › 第一个 (摄像头不参与切换，在「实时监控」里看)
   const device = candidates.find((d) => d.id === Number(params.get('deviceId'))) ?? candidates[0]
 
+  const censusQ = useQuery({
+    ...unprocessedAlarmCountsQuery(companyId, site ? { siteId: site.id, levels: true } : {}),
+    enabled: Boolean(site),
+  })
   const alarmsQ = useQuery({
-    ...alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 200 }),
+    ...alarmsQuery(companyId, { siteId, processed: 'false', pageSize: 20 }),
     enabled: Boolean(site),
     refetchInterval: 30_000,
     meta: { silent: true },
   })
-  const alarmsOf = new Map<number, number>()
-  for (const a of alarmsQ.data?.records ?? []) alarmsOf.set(a.deviceId, (alarmsOf.get(a.deviceId) ?? 0) + 1)
-  const siteAlarms = useQuery({
-    ...scopedUnprocessedCountQuery(companyId, { siteId }),
-    enabled: Boolean(site),
-    refetchInterval: 30_000,
-  }).data
+  const censusSite = censusQ.data?.sites[0]
+  const deviceAlarm = new Map<number, number>()
+  for (const d of censusSite?.devices ?? []) deviceAlarm.set(d.deviceId, d.count)
+  const siteTotal = censusQ.data
+    ? { count: censusSite?.count ?? 0, capped: (censusSite?.count ?? 0) >= 100 }
+    : undefined
+  const levels = censusQ.data
+    ? [1, 2, 3, 4].map((level) => {
+        const count = censusSite?.levels?.find((l) => l.level === level)?.count ?? 0
+        return { count, capped: count >= 100 }
+      })
+    : undefined
 
   const hasSensors = Boolean(device?.sensors?.length)
   const hasRelays = Boolean(device?.relays?.length)
@@ -155,7 +164,7 @@ function ScreenBody() {
             ...d,
             longitude: d.longitude,
             latitude: d.latitude,
-            alarms: alarmsOf.get(d.id) ?? 0,
+            alarms: deviceAlarm.get(d.id) ?? 0,
             typeName: typeName(d),
             iconUrl: typeIcon(d),
           },
@@ -235,8 +244,16 @@ function ScreenBody() {
               realtimeFailed={rtQ.isError}
               plan={plan}
               alarms={alarmsQ.data?.records}
-              alarmsOf={alarmsOf}
-              siteAlarms={siteAlarms}
+              alarmsPending={alarmsQ.isPending}
+              alarmsFailed={alarmsQ.isError && !alarmsQ.data}
+              onRetry={() => {
+                void alarmsQ.refetch()
+                void censusQ.refetch()
+              }}
+              deviceAlarm={deviceAlarm}
+              siteTotal={siteTotal}
+              levels={levels}
+              censusFailed={censusQ.isError && !censusQ.data}
               online={online}
               typeName={typeName}
               typeIcon={typeIcon}
@@ -337,8 +354,13 @@ function SiteStage({
   realtimeFailed,
   plan,
   alarms,
-  alarmsOf,
-  siteAlarms,
+  alarmsPending,
+  alarmsFailed,
+  onRetry,
+  deviceAlarm,
+  siteTotal,
+  levels,
+  censusFailed,
   online,
   typeName,
   typeIcon,
@@ -358,8 +380,13 @@ function SiteStage({
   realtimeFailed: boolean
   plan: ScreenLayout
   alarms: Parameters<typeof AlarmCard>[0]['alarms']
-  alarmsOf: Map<number, number>
-  siteAlarms: { count: number; capped: boolean } | undefined
+  alarmsPending: boolean
+  alarmsFailed: boolean
+  onRetry: () => void
+  deviceAlarm: Map<number, number>
+  siteTotal: { count: number; capped: boolean } | undefined
+  levels: Parameters<typeof AlarmCard>[0]['levels']
+  censusFailed: boolean
   online: number
   typeName: (d: AppDevice) => string
   typeIcon: (d: AppDevice) => string | undefined
@@ -374,8 +401,25 @@ function SiteStage({
     <>
       <WeatherSiteCard site={site} devices={devices.length} cameras={cameras.length} rect={plan.fixed.weather} />
       <DeviceTypeCard devices={devices} typeName={typeName} rect={plan.fixed.deviceTypes} />
-      <AlarmCard siteId={site.id} total={siteAlarms} alarms={alarms} onPick={onAlarmPick} rect={plan.fixed.alarms} />
-      <KpiBar total={devices.length} online={online} alarms={siteAlarms} left={plan.width / 2} top={HEADER_H + 16} />
+      <AlarmCard
+        total={siteTotal}
+        levels={levels}
+        censusFailed={censusFailed}
+        alarms={alarms}
+        alarmsPending={alarmsPending}
+        alarmsFailed={alarmsFailed}
+        onRetry={onRetry}
+        onPick={onAlarmPick}
+        rect={plan.fixed.alarms}
+      />
+      <KpiBar
+        total={devices.length}
+        online={online}
+        alarms={siteTotal}
+        failed={censusFailed}
+        left={plan.width / 2}
+        top={HEADER_H + 16}
+      />
       <DeviceInfoCard
         rect={plan.fixed.deviceInfo}
         device={device}
@@ -385,7 +429,7 @@ function SiteStage({
         typeIcon={device ? typeIcon(device) : undefined}
         siteName={site.name}
         realtime={realtime}
-        alarms={device ? (alarmsOf.get(device.id) ?? 0) : 0}
+        alarms={device ? (deviceAlarm.get(device.id) ?? 0) : 0}
       />
       {plan.right.map(({ card, rect }) =>
         card === 'camera' ? (
@@ -436,7 +480,7 @@ function Bubble({ point }: { point: ScreenMapPoint }) {
         <span className={isOnline ? 'text-[#67e8f9]' : 'text-[#cbd5e1]'}>{isOnline ? '● 在线' : '○ 离线'}</span>
         {!isVideo &&
           (point.alarms > 0 ? (
-            <span className="text-[#fca5a5]">⚠ {point.alarms} 条告警</span>
+            <span className="text-[#fca5a5]">⚠ {formatCensusCount(point.alarms)} 条告警</span>
           ) : (
             <span className="text-[var(--sc-text-3)]">无告警</span>
           ))}

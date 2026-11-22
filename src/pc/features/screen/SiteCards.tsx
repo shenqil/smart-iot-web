@@ -1,15 +1,14 @@
 import { FlagOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { type AlarmView, formatUnprocessedCount, scopedUnprocessedCountQuery } from '@/features/alarm/api'
+import { type AlarmView, formatUnprocessedCount } from '@/features/alarm/api'
 import { ALARM_LEVEL } from '@/features/alarm/enums'
 import type { AppDevice } from '@/features/device/api'
 import { type SiteView, weatherQuery } from '@/features/site/api'
 import { agoText } from '@/features/telemetry/lib/realtime'
-import { useCompanyId } from '@/hooks/session'
 import { joinAddress } from '@/lib/address'
 import { dayjs } from '@/lib/time'
 import type { Rect } from './layout'
-import { Panel, PanelEmpty } from './Panel'
+import { Panel, PanelEmpty, PanelError } from './Panel'
 
 const SITE_STATUS: Record<string, { label: string; color: string }> = {
   active: { label: '运营中', color: '#67e8f9' },
@@ -223,37 +222,36 @@ export function DeviceTypeCard({
 
 const LEVEL_COLOR: Record<number, string> = { 1: '#f87171', 2: '#fb923c', 3: '#facc15', 4: '#60a5fa' }
 
-function useLevelCounts(siteId: number) {
-  const companyId = useCompanyId()
-  const q = (level: number) => ({
-    ...scopedUnprocessedCountQuery(companyId, { siteId, level }),
-    refetchInterval: 30_000,
-  })
-  return [useQuery(q(1)).data, useQuery(q(2)).data, useQuery(q(3)).data, useQuery(q(4)).data]
-}
+const countText = (c: { count: number; capped: boolean } | undefined, failed = false) =>
+  c ? formatUnprocessedCount(c) : failed ? '—' : '…'
 
-const countText = (c: { count: number; capped: boolean } | undefined) => (c ? formatUnprocessedCount(c) : '…')
-
-/** ③ 设备告警 (固定)：四个级别的未处理数 + 最新告警 (可滚动，不显示滚动条)；点击告警切换到该设备 */
+/** ③ 设备告警 (固定)：四个级别的未处理数 + 最近告警 (可滚动，不显示滚动条)；点击告警切换到该设备 */
 export function AlarmCard({
-  siteId,
   total,
+  levels,
+  censusFailed,
   alarms,
+  alarmsPending,
+  alarmsFailed,
+  onRetry,
   onPick,
   rect,
 }: {
   rect: Rect
-  siteId: number
   total: { count: number; capped: boolean } | undefined
+  levels: ({ count: number; capped: boolean } | undefined)[] | undefined
+  censusFailed: boolean
   alarms: AlarmView[] | undefined
+  alarmsPending: boolean
+  alarmsFailed: boolean
+  onRetry: () => void
   onPick: (deviceId: number) => void
 }) {
-  const levels = useLevelCounts(siteId)
   return (
     <Panel
       title="设备告警"
       rect={rect}
-      extra={<span className="text-[12px] text-[var(--sc-text-3)]">未处理 {countText(total)} 条</span>}
+      extra={<span className="text-[12px] text-[var(--sc-text-3)]">未处理 {countText(total, censusFailed)} 条</span>}
     >
       <div className="mb-2.5 grid grid-cols-4 gap-2">
         {[1, 2, 3, 4].map((lv, i) => (
@@ -263,13 +261,17 @@ export function AlarmCard({
             style={{ borderColor: `${LEVEL_COLOR[lv]}73`, background: `${LEVEL_COLOR[lv]}1a` }}
           >
             <div className="screen-num font-bold text-[24px] leading-tight" style={{ color: LEVEL_COLOR[lv] }}>
-              {countText(levels[i])}
+              {countText(levels?.[i], censusFailed)}
             </div>
             <div className="text-[#cbd5e1] text-[12px]">{ALARM_LEVEL[lv].label}</div>
           </div>
         ))}
       </div>
-      {alarms && alarms.length === 0 ? (
+      {alarmsFailed && !alarms ? (
+        <PanelError onRetry={onRetry} />
+      ) : alarmsPending && !alarms ? (
+        <PanelEmpty>正在加载</PanelEmpty>
+      ) : alarms && alarms.length === 0 ? (
         <PanelEmpty>
           <SafetyCertificateOutlined className="text-[40px] text-[var(--sc-accent)]" />
           <span className="text-[14px] text-white">暂无未处理告警</span>
@@ -278,7 +280,7 @@ export function AlarmCard({
       ) : (
         <div className="screen-scroll">
           {(alarms ?? []).map((a) => {
-            const at = a.lastAlarmAt || a.createdAt
+            const at = a.createdAt
             return (
               <button key={a.id} type="button" className="screen-row" onClick={() => onPick(a.deviceId)}>
                 <span
@@ -313,12 +315,14 @@ export function KpiBar({
   total,
   online,
   alarms,
+  failed,
   left,
   top,
 }: {
   total: number
   online: number
   alarms: { count: number; capped: boolean } | undefined
+  failed?: boolean
   left: number
   top: number
 }) {
@@ -343,7 +347,7 @@ export function KpiBar({
       </div>
       <div className={cell}>
         <div className="text-[12px] text-[var(--sc-text-2)]">⚠ 未处理告警</div>
-        <div className="screen-num font-bold text-[#f87171] text-[30px] leading-tight">{countText(alarms)}</div>
+        <div className="screen-num font-bold text-[#f87171] text-[30px] leading-tight">{countText(alarms, failed)}</div>
       </div>
       <div className="flex min-w-[150px] flex-col justify-center gap-1.5 px-6 py-2.5">
         <div className="flex justify-between text-[12px] text-[var(--sc-text-2)]">
