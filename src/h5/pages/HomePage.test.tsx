@@ -1,13 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import HomePage from './HomePage'
+import { deviceTypeColor } from './home/deviceTypeColor'
 
 vi.mock('@/hooks/session', () => ({
   useCompanyId: () => 3,
   useMe: () => ({ id: 1 }),
-  useCurrentCompany: () => ({ name: '智慧农业', companyId: 3 }),
+  useCurrentCompany: () => ({
+    name: '智慧农业',
+    companyId: 3,
+    role: 'admin',
+    status: 'active',
+    expiredAt: null,
+    logo: '',
+  }),
   useMyCompanies: () => [{ name: '智慧农业', companyId: 3, accessible: true }],
 }))
 vi.mock('@shared/api/device', () => ({
@@ -47,54 +55,20 @@ function setup() {
   )
 }
 describe('H5 首页', () => {
-  it('显示全范围类型图表与在线率，默认仅显示拇指区快捷按钮', async () => {
+  it('显示类型分布，不显示欢迎语、顶栏和快捷按钮', async () => {
     setup()
+    expect(screen.getByText('智慧农业')).toBeInTheDocument()
+    expect(screen.getByText('管理员 · 正常 · 长期有效')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '企业资料 ›' })).toBeInTheDocument()
     expect(await screen.findByText('气象站')).toBeInTheDocument()
-    expect(screen.getByText('气象站')).toBeInTheDocument()
+    expect(screen.queryByText('园区尽在掌握')).not.toBeInTheDocument()
+    expect(screen.queryByText('智能物联网')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '我的账户' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '打开快捷入口' })).not.toBeInTheDocument()
+    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
     expect(screen.getByText('土壤站')).toBeInTheDocument()
-    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '打开快捷入口' }))
-    expect(screen.getByText('远程控制')).toBeInTheDocument()
-    expect(screen.queryByText('水肥一体化')).not.toBeInTheDocument()
-  })
-  it('滚动时不随滚动交互展开，手动点开后滚动即收起', async () => {
-    const { container } = setup()
-    await screen.findByText('气象站')
-    const el = container.querySelector('.h5-scroll') as HTMLDivElement
-    Object.defineProperties(el, {
-      scrollHeight: { configurable: true, value: 1000 },
-      clientHeight: { configurable: true, value: 400 },
+    expect(screen.getByText('气象站').closest('a')?.querySelector('i')).toHaveStyle({
+      backgroundColor: deviceTypeColor(1),
     })
-    const scroll = (y: number) => {
-      Object.defineProperty(el, 'scrollTop', { configurable: true, writable: true, value: y })
-      fireEvent.scroll(el)
-    }
-    // 默认悬浮，滚动时不随滚动交互展开
-    await act(async () => {
-      scroll(50)
-      scroll(90)
-    })
-    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
-
-    await act(async () => {
-      scroll(70)
-      scroll(40)
-    })
-    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-
-    await act(async () => scroll(600))
-    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-
-    // 手动点开
-    fireEvent.click(screen.getByRole('button', { name: '打开快捷入口' }))
-    expect(screen.getByText('远程控制')).toBeInTheDocument()
-
-    // 滚动收起
-    await act(async () => {
-      scroll(500)
-    })
-    expect(screen.queryByText('远程控制')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '打开快捷入口' })).toBeInTheDocument()
   })
 })

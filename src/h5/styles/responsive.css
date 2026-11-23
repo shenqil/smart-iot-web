@@ -29,9 +29,6 @@
   .h5-card .h5-card-body {
     padding: 14px;
   }
-  .h5-home-welcome h1 {
-    font-size: 23px;
-  }
   .h5-distribution {
     gap: 12px;
   }
@@ -40,25 +37,12 @@
     height: 104px;
     padding: 11px;
   }
-  .h5-ring,
-  .h5-overview .h5-ring {
+  .h5-ring {
     width: 88px;
     height: 88px;
   }
-  .h5-overview h3 {
-    font-size: 14px;
-  }
   .h5-brand {
     display: none;
-  }
-  .h5-quick-dock {
-    padding: 8px;
-  }
-  .h5-shortcuts a {
-    font-size: 9px;
-  }
-  .h5-shortcuts svg {
-    padding: 8px;
   }
   .h5-row {
     gap: 8px;

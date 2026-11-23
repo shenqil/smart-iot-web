@@ -89,6 +89,10 @@
   display: none;
 }
 
+.h5-page-bare .h5-scroll {
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+
 .h5-bottom {
   position: fixed;
   bottom: 0;

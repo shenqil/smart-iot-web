@@ -19,6 +19,7 @@ export function Page({
   right,
   onScroll,
   titleClick,
+  header = true,
 }: {
   title: ReactNode
   children: ReactNode
@@ -29,6 +30,7 @@ export function Page({
   right?: ReactNode
   onScroll?: (el: HTMLElement) => void
   titleClick?: () => void
+  header?: boolean
 }) {
   const navigate = useNavigate(),
     location = useLocation(),
@@ -123,30 +125,32 @@ export function Page({
     }
   }, [key, onScroll])
   return (
-    <div className="h5-page">
-      <header className="h5-chrome">
-        <NavBar
-          back={back ? undefined : null}
-          onBack={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate(`/h5/${cid}/home`))}
-          right={right}
-        >
-          {titleClick ? (
-            <button type="button" className="h5-title h5-title-switch" onClick={titleClick}>
-              {title}
-              <span aria-hidden="true">⌄</span>
-            </button>
-          ) : (
-            <span className="h5-title">{title}</span>
+    <div className={`h5-page${header ? '' : ' h5-page-bare'}`}>
+      {header && (
+        <header className="h5-chrome">
+          <NavBar
+            back={back ? undefined : null}
+            onBack={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate(`/h5/${cid}/home`))}
+            right={right}
+          >
+            {titleClick ? (
+              <button type="button" className="h5-title h5-title-switch" onClick={titleClick}>
+                {title}
+                <span aria-hidden="true">⌄</span>
+              </button>
+            ) : (
+              <span className="h5-title">{title}</span>
+            )}
+          </NavBar>
+          {!!tabs?.length && (
+            <Tabs activeKey={tab} onChange={onTab}>
+              {tabs.map((t) => (
+                <Tabs.Tab key={t.key} title={t.title} />
+              ))}
+            </Tabs>
           )}
-        </NavBar>
-        {!!tabs?.length && (
-          <Tabs activeKey={tab} onChange={onTab}>
-            {tabs.map((t) => (
-              <Tabs.Tab key={t.key} title={t.title} />
-            ))}
-          </Tabs>
-        )}
-      </header>
+        </header>
+      )}
       <main
         className="h5-scroll"
         ref={ref}

@@ -31,25 +31,24 @@ export function MetricGrid({ items }: { items: { label: string; value: React.Rea
     </Grid>
   )
 }
-const palette = ['#147d64', '#63aa8a', '#5e91b8', '#b4a66a', '#8e8db7', '#d09b79', '#7eaaa8', '#a5b6a9']
 export function DistributionChart({
   items,
   total,
 }: {
-  items: { key: string; label: string; count: number; to: string }[]
+  items: { key: string; label: string; count: number; to: string; color: string }[]
   total: number
 }) {
   let cursor = 0
   const gradient = items
-    .map((item, index) => {
+    .map((item) => {
       const start = cursor
       cursor += total > 0 ? (item.count / total) * 100 : 0
-      return `${palette[index % palette.length]} ${start}% ${cursor}%`
+      return `${item.color} ${start}% ${cursor}%`
     })
     .join(',')
-  const row = (item: (typeof items)[number], i: number) => (
+  const row = (item: (typeof items)[number]) => (
     <Link key={item.key} to={item.to}>
-      <i style={{ background: palette[i % palette.length] }} />
+      <i style={{ backgroundColor: item.color }} />
       <span>{item.label}</span>
       <b>{item.count}</b>
       <small>{total ? ((item.count / total) * 100).toFixed(0) : '0'}%</small>
@@ -73,7 +72,7 @@ export function DistributionChart({
         {items.length > 5 && (
           <Collapse className="h5-type-more">
             <Collapse.Panel key="types" title={`另外 ${items.length - 5} 种类型`}>
-              {items.slice(5).map((item, i) => row(item, i + 5))}
+              {items.slice(5).map(row)}
             </Collapse.Panel>
           </Collapse>
         )}
