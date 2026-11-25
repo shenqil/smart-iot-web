@@ -17,7 +17,7 @@ export interface UsePtzControlReturn {
   speed: Speed
   setSpeed: (speed: Speed) => void
   uncertain: number | null
-  start: (direction: number) => void
+  start: (direction: number, speed?: Speed) => void
   stop: () => Promise<void>
   retryStop: () => Promise<void>
   bindDirection: (direction: number) => {
@@ -166,8 +166,12 @@ export function usePtzControl({
   }, [companyId, deviceId, onError, startLock])
 
   const start = useCallback(
-    (direction: number) => {
+    (direction: number, nextSpeed?: Speed) => {
       if (lockedRef.current || moveRef.current || stoppingRef.current || uncertain !== null || document.hidden) return
+      if (nextSpeed !== undefined) {
+        speedRef.current = nextSpeed
+        setSpeed(nextSpeed)
+      }
 
       if (retryTimer1Ref.current) {
         clearTimeout(retryTimer1Ref.current)

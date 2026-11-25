@@ -32,5 +32,16 @@ export const controlPTZ = (companyId: number, deviceId: number, body: PTZBody) =
     signal: AbortSignal.timeout(10_000),
   })
 
-/** 云台方向码 (萤石开放平台) */
-export const PTZ = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3, ZOOM_IN: 8, ZOOM_OUT: 9 } as const
+/** 云台方向码 (萤石开放平台)：0–3 四向，4–7 斜向，8–9 变焦 */
+export const PTZ = {
+  UP: 0,
+  DOWN: 1,
+  LEFT: 2,
+  RIGHT: 3,
+  UP_LEFT: 4,
+  DOWN_LEFT: 5,
+  UP_RIGHT: 6,
+  DOWN_RIGHT: 7,
+  ZOOM_IN: 8,
+  ZOOM_OUT: 9,
+} as const

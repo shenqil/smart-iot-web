@@ -121,35 +121,51 @@ export default function DevicePage({ id }: { id: number }) {
       ) : (
         d && (
           <>
-            <div className="h5-hero">
-              <h1>{d.name}</h1>
-              <p>
-                {siteId ? `${sites.data?.find((s) => s.id === siteId)?.name ?? '当前园区'} · ` : ''}
-                {types.nameOf(d.deviceTypeId)} ·{' '}
-                {d.status === 'active' ? '启用' : d.status === 'inactive' ? '停用' : '故障'}
-              </p>
-              <p>
-                SN {d.deviceSn}
-                {!isVideo && ` · 采集周期 ${d.readInterval} 秒`}
-              </p>
-              {!isVideo && <p>数据更新 {fmtDateTime(rt.data?.sensorsAt ?? rt.data?.relaysAt)}</p>}
-            </div>
-            <div className="h5-row">
-              <Button
-                size="small"
-                fill="outline"
-                onClick={() => prefs.toggle(me.id, cid, { id: d.id, name: d.name, siteId })}
-              >
-                {fav ? '★ 已关注' : '☆ 关注'}
-              </Button>
-              <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
-            </div>
+            {!isVideo && (
+              <div className="h5-hero">
+                <h1>{d.name}</h1>
+                <p>
+                  {siteId ? `${sites.data?.find((s) => s.id === siteId)?.name ?? '当前园区'} · ` : ''}
+                  {types.nameOf(d.deviceTypeId)} ·{' '}
+                  {d.status === 'active' ? '启用' : d.status === 'inactive' ? '停用' : '故障'}
+                </p>
+                <p>
+                  SN {d.deviceSn}
+                  {` · 采集周期 ${d.readInterval} 秒`}
+                </p>
+                <p>数据更新 {fmtDateTime(rt.data?.sensorsAt ?? rt.data?.relaysAt)}</p>
+              </div>
+            )}
+            {!isVideo && (
+              <div className="h5-row">
+                <Button
+                  size="small"
+                  fill="outline"
+                  onClick={() => prefs.toggle(me.id, cid, { id: d.id, name: d.name, siteId })}
+                >
+                  {fav ? '★ 已关注' : '☆ 关注'}
+                </Button>
+                <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
+              </div>
+            )}
             {isVideo || active === 'video' ? (
-              <LocalErrorBoundary fallbackTitle="视频监控加载异常">
-                <Suspense fallback={<Loading />}>
-                  <Video key={d.id} device={d} />
-                </Suspense>
-              </LocalErrorBoundary>
+              <>
+                <LocalErrorBoundary fallbackTitle="视频监控加载异常">
+                  <Suspense fallback={<Loading />}>
+                    <Video key={d.id} device={d} />
+                  </Suspense>
+                </LocalErrorBoundary>
+                <div className="h5-row">
+                  <Button
+                    size="small"
+                    fill="outline"
+                    onClick={() => prefs.toggle(me.id, cid, { id: d.id, name: d.name, siteId })}
+                  >
+                    {fav ? '★ 已关注' : '☆ 关注'}
+                  </Button>
+                  <Link to={`${base}/device-info?deviceId=${id}`}>设备详情 ›</Link>
+                </div>
+              </>
             ) : active === 'history' || active === 'comparison' ? (
               <LocalErrorBoundary fallbackTitle="图表组件加载异常">
                 <Suspense fallback={<Loading />}>

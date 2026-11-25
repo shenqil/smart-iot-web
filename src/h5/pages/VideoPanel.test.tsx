@@ -34,7 +34,7 @@ describe('移动端云台控制', () => {
         }),
     )
     setup()
-    const button = screen.getByRole('button', { name: '← 向左' })
+    const button = screen.getByRole('button', { name: '向左' })
     await act(async () => {
       fireEvent.keyDown(button, { key: 'Enter' })
       fireEvent.keyDown(button, { key: 'Enter', repeat: true })
@@ -46,7 +46,7 @@ describe('移动端云台控制', () => {
   })
   it('卸载也发送对应停止', async () => {
     const { unmount } = setup()
-    await act(async () => fireEvent.keyDown(screen.getByRole('button', { name: '＋ 放大' }), { key: ' ' }))
+    await act(async () => fireEvent.keyDown(screen.getByRole('button', { name: '放大' }), { key: ' ' }))
     await act(async () => unmount())
     expect(controlPTZ).toHaveBeenNthCalledWith(2, 3, 7, { action: 'stop', direction: 8, speed: 1 })
   })
@@ -55,7 +55,7 @@ describe('移动端云台控制', () => {
       .mockResolvedValueOnce({ data: undefined } as never)
       .mockRejectedValueOnce(new Error('弱网'))
     setup()
-    const button = screen.getByRole('button', { name: '↑ 向上' })
+    const button = screen.getByRole('button', { name: '向上' })
     await act(async () => {
       fireEvent.keyDown(button, { key: 'Enter' })
       fireEvent.keyUp(button, { key: 'Enter' })
@@ -70,7 +70,7 @@ describe('移动端云台控制', () => {
     vi.useFakeTimers()
     try {
       setup()
-      const button = screen.getByRole('button', { name: '← 向左' })
+      const button = screen.getByRole('button', { name: '向左' })
       await act(async () => {
         fireEvent.keyDown(button, { key: 'Enter' })
         fireEvent.keyUp(button, { key: 'Enter' })
@@ -95,8 +95,8 @@ describe('移动端云台控制', () => {
     vi.useFakeTimers()
     try {
       setup()
-      const left = screen.getByRole('button', { name: '← 向左' })
-      const right = screen.getByRole('button', { name: '→ 向右' })
+      const left = screen.getByRole('button', { name: '向左' })
+      const right = screen.getByRole('button', { name: '向右' })
       await act(async () => {
         fireEvent.pointerDown(left, { button: 0, pointerId: 1 })
         fireEvent.pointerUp(left, { pointerId: 1 })
@@ -106,7 +106,7 @@ describe('移动端云台控制', () => {
       expect(left).toBeDisabled()
       expect(right).toBeDisabled()
 
-      // 200ms 尝试点击被拦截
+      // 200ms 尝试转向被拦截
       await act(async () => {
         vi.advanceTimersByTime(200)
         fireEvent.pointerDown(right, { button: 0, pointerId: 2 })
@@ -132,7 +132,7 @@ describe('移动端云台控制', () => {
       expect(left).not.toBeDisabled()
       expect(right).not.toBeDisabled()
 
-      // 第二次点击
+      // 第二次转向
       await act(async () => {
         fireEvent.pointerDown(right, { button: 0, pointerId: 3 })
       })

@@ -1,8 +1,8 @@
 import { cameraLiveQuery, PTZ } from '@shared/api/camera'
 import type { AppDevice } from '@shared/api/device'
-import { usePtzControl } from '@shared/hooks/usePtzControl'
+import { type Speed, usePtzControl } from '@shared/hooks/usePtzControl'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Selector } from 'antd-mobile'
+import { Button } from 'antd-mobile'
 import type { EZUIKitPlayer } from 'ezuikit-js'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useCompanyId } from '@/hooks/session'
@@ -134,6 +134,12 @@ function Ezviz({ url, token }: { url: string; token: string }) {
   )
 }
 
+const SPEEDS: { value: Speed; label: string }[] = [
+  { value: 0, label: '慢' },
+  { value: 1, label: '中' },
+  { value: 2, label: '快' },
+]
+
 export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean }) {
   const cid = useCompanyId()
   const { active, locked, speed, setSpeed, uncertain, retryStop, bindDirection } = usePtzControl({
@@ -142,60 +148,56 @@ export function Ptz({ id, ptz, zoom }: { id: number; ptz: boolean; zoom: boolean
     initialSpeed: 1,
     onError: showFailure,
   })
-
-  const button = (direction: number, label: string) => (
+  const blocked = locked || uncertain !== null
+  const hold = (direction: number, label: string, symbol: string, place?: string) => (
     <button
       type="button"
-      className={active === direction ? 'h5-ptz active' : locked ? 'h5-ptz locked' : 'h5-ptz'}
       key={direction}
       aria-label={label}
-      disabled={locked || uncertain !== null}
+      disabled={blocked}
+      className={[place, active === direction ? 'active' : undefined].filter(Boolean).join(' ') || undefined}
       {...bindDirection(direction)}
     >
-      {label}
+      {symbol}
     </button>
   )
 
   return (
     <div className="h5-ptz-panel">
-      <div className="h5-ptz-compact">
+      <div className="h5-ptz-band">
         {ptz && (
-          <div className="h5-ptz-col">
-            <div className="h5-grid-two">
-              {button(PTZ.UP, '↑ 向上')}
-              {button(PTZ.DOWN, '↓ 向下')}
-              {button(PTZ.LEFT, '← 向左')}
-              {button(PTZ.RIGHT, '→ 向右')}
-            </div>
+          <div className="h5-ptz-pad">
+            {hold(PTZ.UP, '向上', '↑', 'up')}
+            {hold(PTZ.LEFT, '向左', '←', 'left')}
+            {hold(PTZ.RIGHT, '向右', '→', 'right')}
+            {hold(PTZ.DOWN, '向下', '↓', 'down')}
+            <span className={active != null ? 'h5-ptz-hub live' : 'h5-ptz-hub'} />
           </div>
         )}
-        <div className="h5-ptz-col">
-          {zoom && (
-            <div className="h5-grid-two">
-              {button(PTZ.ZOOM_IN, '＋ 放大')}
-              {button(PTZ.ZOOM_OUT, '－ 缩小')}
-            </div>
-          )}
-          <Selector
-            disabled={active !== null || locked}
-            options={[
-              { label: '慢', value: 0 },
-              { label: '中', value: 1 },
-              { label: '快', value: 2 },
-            ]}
-            value={[speed]}
-            onChange={(v) => setSpeed((v[0] ?? 1) as 0 | 1 | 2)}
-          />
-        </div>
+        {zoom && (
+          <div className="h5-zoom-rocker">
+            {hold(PTZ.ZOOM_IN, '放大', '＋')}
+            {hold(PTZ.ZOOM_OUT, '缩小', '－')}
+          </div>
+        )}
       </div>
-      <p className="h5-muted" style={{ textAlign: 'center', fontSize: 11, marginTop: 6, marginBottom: 0 }}>
-        {locked ? '云台调整中，稍候可继续控制…' : '按住按钮转动，松开停止'}
-      </p>
+      <div className="h5-ptz-speed" role="group" aria-label="速度">
+        {SPEEDS.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            aria-pressed={speed === item.value}
+            disabled={active !== null || locked}
+            onClick={() => setSpeed(item.value)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <p className="h5-ptz-hint">{locked ? '云台调整中，稍候可继续控制…' : '按住方向键转动，松开停止'}</p>
       {uncertain !== null && (
-        <div style={{ marginTop: 6 }}>
-          <p className="h5-warning" style={{ margin: '0 0 6px 0', fontSize: 12 }}>
-            停止指令未确认，请重试停止并检查摄像头。
-          </p>
+        <div className="h5-ptz-alert">
+          <p>停止指令未确认，请重试停止并检查摄像头。</p>
           <Button color="danger" block size="small" onClick={() => void retryStop()}>
             重试停止
           </Button>
