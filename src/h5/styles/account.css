@@ -42,6 +42,69 @@
   color: #3d846a;
 }
 
+.h5-company-profile .h5-company {
+  margin-bottom: 0;
+}
+
+.h5-company-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.h5-company-tags small,
+.h5-company-note {
+  color: var(--h5-muted);
+  font-size: 12px;
+}
+
+.h5-company-note {
+  margin: 4px 0 0;
+}
+
+.h5-company-desc {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.h5-company-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #dce7d5;
+}
+
+.h5-company-stats a,
+.h5-company-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 64px;
+}
+
+.h5-company-stats strong {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.h5-company-stats span {
+  font-size: 11px;
+  color: #718d82;
+}
+
+.h5-inline-link {
+  color: var(--h5-primary);
+}
+
 .h5-upload input {
   position: absolute;
   inset: 0;

@@ -801,6 +801,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/company": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询当前企业资料 */
+        get: operations["app-get-company"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/devices": {
         parameters: {
             query?: never;
@@ -5654,6 +5675,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppAlarm"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "app-get-company": {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": number;
+                /** @description 不参与授权 */
+                "X-Company-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDetail"];
                 };
             };
             /** @description Error */

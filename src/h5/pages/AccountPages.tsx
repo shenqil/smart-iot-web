@@ -1,4 +1,5 @@
 import { authKeys, logout } from '@shared/api/auth'
+import { appDeviceSummaryQuery } from '@shared/api/device'
 import { useDeviceTypes } from '@shared/api/dict'
 import { appSitesQuery } from '@shared/api/site'
 import { channelName, isVideoDeviceType } from '@shared/telemetry/lib/realtime'
@@ -9,12 +10,25 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { api, unwrap } from '@/api/client'
 import { useCompanyId, useCurrentCompany, useMe, useMyCompanies } from '@/hooks/session'
 import { companyDenyReason } from '@/lib/portal'
-import { fmtDateTime } from '@/lib/time'
+import { dayjs, fmtDate, fmtDateTime } from '@/lib/time'
 import { useSession } from '@/stores/session'
-import { mobileDeviceQuery } from '../api'
+import { SitePreview } from '../components/SiteCard'
+import { appCompanyQuery, manageableCompanyQuery, mobileDeviceQuery } from '../api'
 import { positiveId } from '../filters'
 import { preferenceKey, useMobilePreferences } from '../preferences'
-import { Card, mobileDialog as Dialog, Empty, Failure, Loading, Page, showFailure, mobileToast as Toast } from '../ui'
+import {
+  Card,
+  DetailList,
+  mobileDialog as Dialog,
+  Empty,
+  Failure,
+  Loading,
+  Page,
+  SectionHeading,
+  StatusTag,
+  showFailure,
+  mobileToast as Toast,
+} from '../ui'
 
 export default function AccountPages() {
   const path = useLocation().pathname.split('/').at(-1)
@@ -58,7 +72,10 @@ function Me() {
       </Card>
       <Card title="当前企业" extra={<Link to={`${base}/company-info`}>查看资料 ›</Link>}>
         <h3>{company?.name}</h3>
-        <p className="h5-muted">{company?.role === 'admin' ? '企业管理员' : '企业成员'}</p>
+        <p className="h5-muted">
+          {company?.role === 'admin' ? '企业管理员' : '企业成员'}
+          {company?.joinedAt ? ` · ${fmtDate(company.joinedAt)} 加入` : ''}
+        </p>
         <List>
           {companies.map((c) => (
             <List.Item
@@ -299,34 +316,117 @@ function Password() {
     </Page>
   )
 }
+function companyStanding(status: string | undefined, expiredAt: string | null | undefined) {
+  const inactive = status === 'inactive'
+  const days = expiredAt ? dayjs(expiredAt).diff(dayjs(), 'day', true) : null
+  const expired = days != null && days <= 0
+  const soon = days != null && days > 0 && days <= 30
+  return {
+    label: inactive ? '已停用' : '正常',
+    tone: inactive || expired ? 'danger' : soon ? 'warning' : 'success',
+    expiry: !expiredAt
+      ? '长期有效'
+      : expired
+        ? `已于 ${fmtDate(expiredAt)} 过期`
+        : soon
+          ? `有效期至 ${fmtDate(expiredAt)} · 剩 ${Math.ceil(days)} 天`
+          : `有效期至 ${fmtDate(expiredAt)}`,
+  } as const
+}
+
 function CompanyInfo() {
   const company = useCurrentCompany(),
     cid = useCompanyId(),
-    sites = useQuery(appSitesQuery(cid))
+    base = `/h5/${cid}`,
+    summary = useQuery(appDeviceSummaryQuery(cid)),
+    sites = useQuery(appSitesQuery(cid)),
+    appProfile = useQuery({ ...appCompanyQuery(cid), retry: false, meta: { silent: true } }),
+    tenantProfile = useQuery({
+      ...manageableCompanyQuery(cid),
+      enabled: company?.manageable === true && appProfile.isError,
+      retry: false,
+    }),
+    profile = appProfile.data ?? tenantProfile.data,
+    name = profile?.name || company?.name || '当前企业',
+    logo = profile?.logo || company?.logo,
+    standing = companyStanding(profile?.status ?? company?.status, profile ? profile.expiredAt : company?.expiredAt),
+    description = profile?.description.trim() ?? '',
+    contact = [
+      profile?.contactPerson.trim() ? { label: '联系人', value: profile.contactPerson.trim() } : null,
+      profile?.contactPhone.trim()
+        ? {
+            label: '电话',
+            value: (
+              <a className="h5-inline-link" href={`tel:${profile.contactPhone.replace(/[^\d+]/g, '')}`}>
+                {profile.contactPhone.trim()}
+              </a>
+            ),
+          }
+        : null,
+      profile?.contactEmail.trim()
+        ? {
+            label: '邮箱',
+            value: (
+              <a className="h5-inline-link" href={`mailto:${profile.contactEmail.trim()}`}>
+                {profile.contactEmail.trim()}
+              </a>
+            ),
+          }
+        : null,
+      profile?.address.trim() ? { label: '地址', value: profile.address.trim() } : null,
+    ].filter((item) => item != null)
   return (
     <Page title="企业资料">
-      <Card title={company?.name}>
-        <List>
-          <List.Item extra={company?.role === 'admin' ? '管理员' : '成员'}>我的角色</List.Item>
-          <List.Item extra={company?.status === 'active' ? '正常' : company?.status}>企业状态</List.Item>
-          <List.Item extra={company?.expiredAt ? fmtDateTime(company.expiredAt) : '长期有效'}>有效期</List.Item>
-          <List.Item extra={fmtDateTime(company?.joinedAt)}>加入时间</List.Item>
-        </List>
-        <p className="h5-muted">资料由企业管理员维护</p>
+      <Card className="h5-company-profile h5-overview">
+        <div className="h5-company">
+          <span className="h5-company-mark">{logo ? <img src={logo} alt="" /> : name.slice(0, 1)}</span>
+          <div>
+            <strong>{name}</strong>
+            <div className="h5-company-tags">
+              <StatusTag tone={standing.tone}>{standing.label}</StatusTag>
+              <small>{standing.expiry}</small>
+            </div>
+          </div>
+        </div>
+        {description && <p className="h5-company-desc">{description}</p>}
+        <div className="h5-company-stats">
+          <Link to={`${base}/sites`}>
+            <strong>{summary.data?.siteCount ?? '—'}</strong>
+            <span>园区</span>
+          </Link>
+          <Link to={`${base}/devices`}>
+            <strong>{summary.data?.deviceCount ?? '—'}</strong>
+            <span>设备</span>
+          </Link>
+          {profile && (
+            <div>
+              <strong>{profile.memberCount}</strong>
+              <span>成员</span>
+            </div>
+          )}
+        </div>
+        {profile && <p className="h5-muted h5-company-note">创建于 {fmtDate(profile.createdAt)}</p>}
       </Card>
-      <Card title="企业园区">
-        {sites.isPending ? (
-          <Loading />
-        ) : sites.isError ? (
-          <Failure error={sites.error} retry={() => void sites.refetch()} />
-        ) : (
-          sites.data?.map((s) => (
-            <Link key={s.id} className="h5-list-link" to={`/h5/${cid}/sites/${s.id}`}>
-              {s.name} ›
-            </Link>
-          ))
-        )}
-      </Card>
+      {contact.length > 0 && (
+        <Card title="联系方式">
+          <DetailList items={contact} />
+        </Card>
+      )}
+      <SectionHeading title="企业园区" extra={<Link to={`${base}/sites`}>全部园区 ›</Link>} />
+      {sites.isPending ? (
+        <Loading />
+      ) : sites.isError ? (
+        <Failure
+          error={sites.error}
+          retry={() => {
+            void sites.refetch()
+          }}
+        />
+      ) : !sites.data?.length ? (
+        <Empty title="暂无园区" />
+      ) : (
+        sites.data.slice(0, 6).map((site) => <SitePreview key={site.id} site={site} />)
+      )}
     </Page>
   )
 }
