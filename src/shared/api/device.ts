@@ -5,17 +5,19 @@ import { fetchAllPages } from '@/api/page'
 export type AppDevice = Schemas['AppDevice']
 export type DeviceSummary = Schemas['AppDeviceSummary']
 
-/** 数据端：某园区下全部设备 (含在线状态与通道配置)，30s 刷新在线状态 */
-export const appSiteDevicesQuery = (companyId: number, siteId: number) =>
+/** 数据端：某园区下全部设备 (含在线状态与通道配置)，30s 刷新在线状态。maxPages 防止把截断结果当成全部。 */
+export const appSiteDevicesQuery = (companyId: number, siteId: number, maxPages = 25) =>
   queryOptions({
-    queryKey: ['app', companyId, 'devices', 'site', siteId],
+    queryKey: ['app', companyId, 'devices', 'site', siteId, maxPages],
     queryFn: () =>
-      fetchAllPages((page, pageSize) =>
-        unwrap(
-          api.GET('/api/v1/app/devices', {
-            params: { header: companyHeader(companyId), query: { siteId, page, pageSize, sort: 'name' } },
-          }),
-        ),
+      fetchAllPages(
+        (page, pageSize) =>
+          unwrap(
+            api.GET('/api/v1/app/devices', {
+              params: { header: companyHeader(companyId), query: { siteId, page, pageSize, sort: 'name' } },
+            }),
+          ),
+        maxPages,
       ),
     refetchInterval: 30_000,
   })

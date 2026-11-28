@@ -177,7 +177,7 @@
   font-size: 13px;
 }
 
-.h5-ptz-speed button[aria-pressed='true'] {
+.h5-ptz-speed button[aria-pressed="true"] {
   background: #e7f3ea;
   border-color: var(--h5-primary);
   color: #1d6b52;
@@ -204,29 +204,12 @@
 }
 
 .h5-map {
-  height: 48dvh;
-  min-height: 280px;
+  height: calc(100svh - 168px);
+  min-height: 360px;
   overflow: hidden;
   border-radius: var(--h5-radius);
   border: 1px solid #d8e7dc;
-  margin-bottom: 14px;
-}
-
-.h5-map-tools {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.h5-map-dot {
-  width: 22px;
-  height: 22px;
-  border: 3px solid #fff;
-  background: #99aaa1;
-  box-shadow: 0 2px 8px #163b3c40;
-  display: block;
-  border-radius: 50%;
+  margin-top: 12px;
 }
 
 .h5-video video {
@@ -260,15 +243,19 @@
   z-index: 1;
 }
 
-.h5-map-dot.online {
-  background: #0f9375;
+/* 缩放和图层放在地图下半部分，方便单手点 */
+.h5-map .leaflet-top {
+  top: auto;
+  bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
-.h5-map-dot.has-alarm {
-  box-shadow: 0 0 0 3px #d87a5e;
-  background: #d87a5e;
+.h5-map .leaflet-touch .leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
 }
 
-.h5-map-dot.has-alarm.online {
-  background: #0f9375;
+.h5-map .leaflet-touch .leaflet-control-layers-toggle {
+  width: 44px;
+  height: 44px;
 }
